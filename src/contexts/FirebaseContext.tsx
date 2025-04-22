@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
   User, 
@@ -66,13 +65,11 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [loading, setLoading] = useState(true);
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
 
-  // Monitor auth state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       
       if (user) {
-        // Load user settings if the user is logged in
         await loadUserSettings(user.uid);
       } else {
         setUserSettings(null);
@@ -84,7 +81,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => unsubscribe();
   }, []);
 
-  // Load user settings
   const loadUserSettings = async (userId: string) => {
     try {
       const settingsRef = doc(db, 'userSettings', userId);
@@ -93,7 +89,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (settingsDoc.exists()) {
         setUserSettings(settingsDoc.data() as UserSettings);
       } else {
-        // Initialize default settings for new users
         await setDoc(settingsRef, defaultUserSettings);
         setUserSettings(defaultUserSettings);
       }
@@ -103,15 +98,12 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Authentication functions
   const createAccount = async (email: string, password: string, displayName: string) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
-      // Update profile with display name
       await updateProfile(userCredential.user, { displayName });
       
-      // Initialize user settings
       const settingsRef = doc(db, 'userSettings', userCredential.user.uid);
       await setDoc(settingsRef, defaultUserSettings);
       
@@ -140,7 +132,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Task management functions
   const getTasks = async () => {
     if (!user) return [];
     
@@ -177,7 +168,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         createdAt: now
       };
       
-      // Convert Date objects to Firestore Timestamps
       const firestoreTask = {
         ...task,
         dueDate: task.dueDate ? Timestamp.fromDate(task.dueDate) : null,
@@ -198,7 +188,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const taskRef = doc(db, 'users', user.uid, 'tasks', taskId);
       
-      // Convert Date objects to Firestore Timestamps if present
       const updateData = { ...data };
       if (updateData.dueDate) {
         updateData.dueDate = Timestamp.fromDate(updateData.dueDate);
@@ -223,7 +212,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Category management
   const getCategories = async () => {
     if (!user) return [];
     
@@ -245,7 +233,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!user) throw new Error('User not authenticated');
     
     try {
-      // Batch write all categories
       for (const category of categories) {
         const categoryRef = doc(db, 'users', user.uid, 'categories', category.id);
         await setDoc(categoryRef, {
@@ -259,7 +246,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Settings management
   const updateSettings = async (settings: Partial<UserSettings>) => {
     if (!user) throw new Error('User not authenticated');
     
@@ -267,7 +253,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const settingsRef = doc(db, 'userSettings', user.uid);
       await updateDoc(settingsRef, settings);
       
-      // Update local state
       setUserSettings(prev => prev ? { ...prev, ...settings } : null);
     } catch (error) {
       console.error('Error updating settings:', error);
