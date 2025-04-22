@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
   User, 
@@ -188,12 +189,15 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const taskRef = doc(db, 'users', user.uid, 'tasks', taskId);
       
-      const updateData = { ...data };
-      if (updateData.dueDate) {
-        updateData.dueDate = Timestamp.fromDate(updateData.dueDate);
+      // Create a new object for Firestore update
+      const firestoreData: Record<string, any> = { ...data };
+      
+      // Convert Date to Timestamp if present
+      if (firestoreData.dueDate instanceof Date) {
+        firestoreData.dueDate = Timestamp.fromDate(firestoreData.dueDate);
       }
       
-      await updateDoc(taskRef, updateData);
+      await updateDoc(taskRef, firestoreData);
     } catch (error) {
       console.error('Error updating task:', error);
       throw error;
