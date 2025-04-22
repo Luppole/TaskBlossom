@@ -3,12 +3,15 @@ import React, { useState } from 'react';
 import { mockTasks } from '@/data/mockData';
 import TaskList from '@/components/tasks/TaskList';
 import AddTaskButton from '@/components/common/AddTaskButton';
+import TaskModal from '@/components/tasks/TaskModal';
 import { Input } from '@/components/ui/input';
+import { Task } from '@/types/task';
 import { Search } from 'lucide-react';
 
 const Tasks: React.FC = () => {
   const [tasks, setTasks] = useState(mockTasks);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   
   const handleToggleComplete = (taskId: string) => {
     setTasks(prevTasks =>
@@ -21,8 +24,12 @@ const Tasks: React.FC = () => {
   };
   
   const handleAddTask = () => {
-    console.log('Opening task creation modal');
-    // This would open a modal to add a new task
+    setIsAddTaskModalOpen(true);
+  };
+  
+  const handleTaskSave = (newTask: Task) => {
+    setTasks(prevTasks => [...prevTasks, newTask]);
+    setIsAddTaskModalOpen(false);
   };
   
   // Filter tasks based on search query
@@ -79,6 +86,14 @@ const Tasks: React.FC = () => {
       />
       
       <AddTaskButton onClick={handleAddTask} />
+      
+      {isAddTaskModalOpen && (
+        <TaskModal 
+          isOpen={isAddTaskModalOpen}
+          onClose={() => setIsAddTaskModalOpen(false)}
+          onSave={handleTaskSave}
+        />
+      )}
     </div>
   );
 };

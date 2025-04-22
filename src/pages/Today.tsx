@@ -5,10 +5,13 @@ import { mockTasks, motivationalQuotes } from '@/data/mockData';
 import TaskList from '@/components/tasks/TaskList';
 import ProductivityBar from '@/components/common/ProductivityBar';
 import AddTaskButton from '@/components/common/AddTaskButton';
+import TaskModal from '@/components/tasks/TaskModal';
+import { Task } from '@/types/task';
 
 const Today: React.FC = () => {
   const [tasks, setTasks] = useState(mockTasks);
   const [quote, setQuote] = useState('');
+  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   
   useEffect(() => {
     // Set a random quote
@@ -27,8 +30,12 @@ const Today: React.FC = () => {
   };
   
   const handleAddTask = () => {
-    console.log('Opening task creation modal');
-    // This would open a modal to add a new task
+    setIsAddTaskModalOpen(true);
+  };
+  
+  const handleTaskSave = (newTask: Task) => {
+    setTasks(prevTasks => [...prevTasks, newTask]);
+    setIsAddTaskModalOpen(false);
   };
   
   // Get greeting based on time of day
@@ -83,6 +90,15 @@ const Today: React.FC = () => {
       </section>
       
       <AddTaskButton onClick={handleAddTask} />
+      
+      {isAddTaskModalOpen && (
+        <TaskModal 
+          isOpen={isAddTaskModalOpen}
+          onClose={() => setIsAddTaskModalOpen(false)}
+          onSave={handleTaskSave}
+          initialDate={new Date()} // Set initial date to today
+        />
+      )}
     </div>
   );
 };
