@@ -99,30 +99,66 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading;
   }
+  
+  /* Enhance keyboard shortcuts display */
+  kbd {
+    @apply px-1.5 py-0.5 text-xs font-mono bg-secondary rounded border border-border shadow-sm text-secondary-foreground;
+  }
 }
 
 @layer components {
   .task-card {
-    @apply bg-white rounded-lg shadow-sm border p-4 mb-3 transition-all hover:shadow-md;
+    @apply bg-white dark:bg-card rounded-lg shadow-sm border p-4 mb-3 transition-all hover:shadow-md;
   }
 
   .category-badge {
-    @apply text-xs px-2 py-1 rounded-full font-medium;
+    @apply text-xs px-2 py-1 rounded-full font-medium transition-all;
   }
 
   .priority-indicator {
-    @apply w-2 h-2 rounded-full inline-block mr-2;
+    @apply w-3 h-3 rounded-full inline-block mr-2 transition-all;
   }
 
   .priority-high {
-    @apply bg-red-500;
+    @apply bg-red-500 shadow-sm shadow-red-300;
   }
 
   .priority-medium {
-    @apply bg-amber-500;
+    @apply bg-amber-500 shadow-sm shadow-amber-300;
   }
 
   .priority-low {
-    @apply bg-green-500;
+    @apply bg-green-500 shadow-sm shadow-green-300;
+  }
+  
+  /* Focus mode styles */
+  .focus-mode {
+    @apply bg-gradient-to-br from-indigo-900 to-purple-900 text-white;
+  }
+  
+  /* Card hover/active states */
+  .card-interactive {
+    @apply transition-all hover:shadow-md active:shadow-sm active:translate-y-0.5;
+  }
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Responsive optimizations for thumb zone */
+@media (max-width: 640px) {
+  .mobile-bottom-safe {
+    padding-bottom: 5rem;
   }
 }

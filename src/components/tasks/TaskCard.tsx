@@ -4,6 +4,8 @@ import { format } from 'date-fns';
 import { Task } from '@/types/task';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
+import confetti from 'canvas-confetti';
 
 interface TaskCardProps {
   task: Task;
@@ -13,15 +15,37 @@ interface TaskCardProps {
 const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete }) => {
   const isOverdue = task.dueDate && task.dueDate < new Date() && !task.completed;
   
+  const handleCheckboxClick = () => {
+    onToggleComplete(task.id);
+    
+    // Play completion animation if task is being completed
+    if (!task.completed) {
+      // Create confetti when task is completed
+      confetti({
+        particleCount: 50,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    }
+  };
+  
   return (
-    <div className={cn(
-      "task-card group",
-      task.completed && "opacity-70"
-    )}>
+    <motion.div 
+      className={cn(
+        "task-card group relative",
+        isOverdue && !task.completed && "border-destructive",
+        task.completed && "opacity-70"
+      )}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.2 }}
+      whileHover={{ scale: 1.01 }}
+    >
       <div className="flex items-start gap-3">
         <Checkbox 
           checked={task.completed}
-          onCheckedChange={() => onToggleComplete(task.id)}
+          onCheckedChange={handleCheckboxClick}
           className="mt-1"
         />
         
@@ -38,10 +62,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete }) => {
           <div className="flex flex-wrap gap-2 items-center mb-2">
             {task.category && (
               <span 
-                className="category-badge"
+                className="category-badge text-xs px-2 py-1 rounded-full font-medium"
                 style={{
                   backgroundColor: `${task.category.color}30`, // 30% opacity
-                  color: task.category.color.replace('30', ''), // Remove opacity for text
+                  color: task.category.color,
                   borderColor: task.category.color,
                   borderWidth: '1px'
                 }}
@@ -85,7 +109,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete }) => {
           />
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
