@@ -59,7 +59,8 @@ const setupTaskReminders = (tasks: Task[]) => {
         showTaskReminder(task);
       }, reminderTime);
       
-      window.taskReminderTimers.push(timerId);
+      // Convert NodeJS.Timeout to number for TypeScript compatibility
+      window.taskReminderTimers.push(timerId as unknown as number);
     }
   });
 };
