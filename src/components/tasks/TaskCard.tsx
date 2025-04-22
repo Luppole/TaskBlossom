@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface TaskCardProps {
   task: Task;
@@ -13,6 +14,7 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete }) => {
+  const { direction } = useTheme();
   const isOverdue = task.dueDate && task.dueDate < new Date() && !task.completed;
   
   const handleCheckboxClick = () => {
@@ -22,7 +24,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete }) => {
     if (!task.completed) {
       // Create confetti when task is completed
       confetti({
-        particleCount: 50,
+        particleCount: 80,
         spread: 70,
         origin: { y: 0.6 }
       });
@@ -32,27 +34,33 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete }) => {
   return (
     <motion.div 
       className={cn(
-        "task-card group relative",
-        isOverdue && !task.completed && "border-destructive",
-        task.completed && "opacity-70"
+        "task-card p-4 rounded-lg border group relative",
+        isOverdue && !task.completed && "border-destructive shadow-[0_0_0_1px_rgba(239,68,68,0.3)]",
+        task.completed && "opacity-80 bg-muted/50"
       )}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.2 }}
-      whileHover={{ scale: 1.01 }}
+      whileHover={{ scale: 1.01, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}
+      dir={direction}
     >
       <div className="flex items-start gap-3">
-        <Checkbox 
-          checked={task.completed}
-          onCheckedChange={handleCheckboxClick}
-          className="mt-1"
-        />
+        <motion.div
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.8 }}
+        >
+          <Checkbox 
+            checked={task.completed}
+            onCheckedChange={() => handleCheckboxClick()}
+            className="mt-1"
+          />
+        </motion.div>
         
         <div className="flex-1">
           <div className="flex justify-between items-start">
             <h3 className={cn(
-              "font-medium text-base mb-1",
+              "font-medium text-base mb-1 transition-all duration-300",
               task.completed && "line-through text-muted-foreground"
             )}>
               {task.title}
@@ -76,8 +84,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete }) => {
             
             {task.dueDate && (
               <span className={cn(
-                "text-xs",
-                isOverdue ? "text-destructive font-medium" : "text-muted-foreground",
+                "text-xs rounded-md px-1.5 py-0.5",
+                isOverdue ? "bg-destructive/10 text-destructive font-medium" : "bg-muted text-muted-foreground",
               )}>
                 {format(task.dueDate, 'MMM d')} 
                 {format(task.dueDate, 'HH:mm') !== '00:00' && (
@@ -96,14 +104,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete }) => {
         </div>
         
         <div className="flex-shrink-0">
+          {/* Task priority indicator */}
           <span 
             className={cn(
-              "priority-indicator",
-              {
-                "priority-high": task.priority === 'high',
-                "priority-medium": task.priority === 'medium',
-                "priority-low": task.priority === 'low',
-              }
+              "inline-block h-3 w-3 rounded-full",
+              task.priority === 'high' && "bg-red-500",
+              task.priority === 'medium' && "bg-amber-500",
+              task.priority === 'low' && "bg-green-500",
             )}
             title={`Priority: ${task.priority}`}
           />

@@ -1,0 +1,2 @@
+
+This file is a placeholder. The actual sound files (start.mp3, tick.mp3, complete.mp3) would need to be added separately.

@@ -13,8 +13,17 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import AppShell from "./components/layout/AppShell";
 import PageTransition from "./components/common/PageTransition";
+import { FirebaseProvider } from "./contexts/FirebaseContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      staleTime: 60000,
+    },
+  },
+});
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -35,15 +44,19 @@ const AnimatedRoutes = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AppShell>
-          <AnimatedRoutes />
-        </AppShell>
-      </BrowserRouter>
-    </TooltipProvider>
+    <FirebaseProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppShell>
+              <AnimatedRoutes />
+            </AppShell>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
+    </FirebaseProvider>
   </QueryClientProvider>
 );
 
