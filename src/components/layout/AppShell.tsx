@@ -3,30 +3,21 @@ import React, { useState } from 'react';
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { ModeToggle } from '@/components/common/ModeToggle';
-import { NavigationMenu, NavigationMenuItem, NavigationMenuList, NavigationMenuLink, NavigationMenuTrigger } from '@/components/ui/navigation-menu';
 import { Link, NavLink } from 'react-router-dom';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Settings } from 'lucide-react';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut } from '@/components/ui/command';
+import { Settings, User } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { useTheme } from '@/contexts/ThemeContext';
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
 
 const AppShell = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex">
-      <aside className="min-w-[56px] md:min-w-[220px] ml-2 md:ml-6">
+      <aside className="min-w-[56px] md:min-w-[220px] ml-3 md:ml-8"> {/* Increased margin to the left */}
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="p-0">
@@ -66,80 +57,68 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
 
 const Sidebar = () => {
   const { user, logOut } = useFirebase();
-  const { theme, toggleTheme, direction, setDirection } = useTheme();
   const [open, setOpen] = React.useState(false);
 
   return (
-    <div className="flex flex-col h-screen p-4">
-      <Link to="/" className="font-bold text-xl mb-4">
-        TaskBlossom 🌸
+    <div className="flex flex-col h-screen py-8 pr-4 pl-2 bg-background rounded-lg shadow-md min-w-[190px]"> {/* thicc menu, left margin, nice look */}
+      <Link to="/" className="font-bold text-2xl mb-8 pl-2 text-primary">
+        TaskBlossom <span role="img" aria-label="flower">🌸</span>
       </Link>
-
-      <NavigationMenu>
-        <NavigationMenuList className="flex flex-col space-y-1">
-          <NavigationMenuItem>
-            <NavigationMenuLink asChild>
-              <NavLink
-                to="/"
-                className={({ isActive }) =>
-                  `block px-4 py-2 rounded-md hover:bg-secondary ${isActive ? 'bg-secondary text-secondary-foreground' : ''}`
-                }
-              >
-                Today
-              </NavLink>
-            </NavigationMenuLink>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <NavigationMenuLink asChild>
-              <NavLink
-                to="/calendar"
-                className={({ isActive }) =>
-                  `block px-4 py-2 rounded-md hover:bg-secondary ${isActive ? 'bg-secondary text-secondary-foreground' : ''}`
-                }
-              >
-                Calendar
-              </NavLink>
-            </NavigationMenuLink>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <NavigationMenuLink asChild>
-              <NavLink
-                to="/tasks"
-                className={({ isActive }) =>
-                  `block px-4 py-2 rounded-md hover:bg-secondary ${isActive ? 'bg-secondary text-secondary-foreground' : ''}`
-                }
-              >
-                Tasks
-              </NavLink>
-            </NavigationMenuLink>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <NavigationMenuLink asChild>
-              <NavLink
-                to="/categories"
-                className={({ isActive }) =>
-                  `block px-4 py-2 rounded-md hover:bg-secondary ${isActive ? 'bg-secondary text-secondary-foreground' : ''}`
-                }
-              >
-                Categories
-              </NavLink>
-            </NavigationMenuLink>
-          </NavigationMenuItem>
-        </NavigationMenuList>
-      </NavigationMenu>
-
-      <div className="mt-auto">
-        <div className="flex items-center justify-between mb-2">
+      {/* Menu items */}
+      <nav className="flex flex-col gap-1 mb-6">
+        <NavLink
+          to="/"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-6 py-3 rounded-lg transition-colors hover:bg-secondary font-medium ${
+              isActive ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground'
+            }`
+          }
+        >
+          <span className="text-lg">📅</span>
+          Today
+        </NavLink>
+        <NavLink
+          to="/calendar"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-6 py-3 rounded-lg transition-colors hover:bg-secondary font-medium ${
+              isActive ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground'
+            }`
+          }
+        >
+          <span className="text-lg">🗓️</span>
+          Calendar
+        </NavLink>
+        <NavLink
+          to="/tasks"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-6 py-3 rounded-lg transition-colors hover:bg-secondary font-medium ${
+              isActive ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground'
+            }`
+          }
+        >
+          <span className="text-lg">✅</span>
+          Tasks
+        </NavLink>
+        <NavLink
+          to="/categories"
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-6 py-3 rounded-lg transition-colors hover:bg-secondary font-medium ${
+              isActive ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground'
+            }`
+          }
+        >
+          <span className="text-lg">🏷️</span>
+          Categories
+        </NavLink>
+      </nav>
+      <div className="mt-auto flex flex-col gap-3">
+        <div className="flex items-center justify-between mb-2 px-2">
           <ModeToggle />
         </div>
-
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <Button variant="ghost" className="w-full justify-start pl-4">
-              <Avatar className="mr-2 h-6 w-6">
-                <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-                <AvatarFallback>CN</AvatarFallback>
-              </Avatar>
+            <Button variant="ghost" className="w-full justify-start px-6 py-3 rounded-lg hover:bg-secondary text-muted-foreground font-medium flex items-center gap-3">
+              <User className="h-5 w-5 mr-2 opacity-80" />
               <span>{user ? user.displayName : 'Profile'}</span>
             </Button>
           </PopoverTrigger>
