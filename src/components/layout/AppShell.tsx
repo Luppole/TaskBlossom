@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Sheet,
   SheetContent,
@@ -12,15 +12,16 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Settings, User } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useTheme } from '@/contexts/ThemeContext';
 
 const AppShell = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex">
-      <aside className="min-w-[56px] md:min-w-[220px] ml-3 md:ml-8"> {/* Increased margin to the left */}
+      {/* Left sidebar with larger left margin and top spacing */}
+      <aside className="min-w-[60px] md:min-w-[220px] ml-6 md:ml-12">
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="p-0">
+            <Button variant="ghost" size="icon" className="p-0 mt-4">
+              {/* Hamburger menu icon */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -44,13 +45,11 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
             <Sidebar />
           </SheetContent>
         </Sheet>
-        <div className="hidden md:block">
+        <div className="hidden md:block mt-4">
           <Sidebar />
         </div>
       </aside>
-      <main className="flex-1">
-        {children}
-      </main>
+      <main className="flex-1">{children}</main>
     </div>
   );
 };
@@ -60,64 +59,84 @@ const Sidebar = () => {
   const [open, setOpen] = React.useState(false);
 
   return (
-    <div className="flex flex-col h-screen py-8 pr-4 pl-2 bg-background rounded-lg shadow-md min-w-[190px]"> {/* thicc menu, left margin, nice look */}
-      <Link to="/" className="font-bold text-2xl mb-8 pl-2 text-primary">
-        TaskBlossom <span role="img" aria-label="flower">🌸</span>
-      </Link>
-      {/* Menu items */}
-      <nav className="flex flex-col gap-1 mb-6">
-        <NavLink
+    <div className="flex flex-col h-[90vh] pt-6 pr-4 pl-3 bg-background rounded-xl shadow-lg min-w-[192px]">
+      <div className="mb-9 flex items-center justify-start px-3">
+        <Link
           to="/"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 rounded-lg transition-colors hover:bg-secondary font-medium ${
-              isActive ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground'
-            }`
-          }
+          className="font-bold text-2xl tracking-tight text-primary flex items-center gap-1"
         >
-          <span className="text-lg">📅</span>
-          Today
-        </NavLink>
-        <NavLink
-          to="/calendar"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 rounded-lg transition-colors hover:bg-secondary font-medium ${
-              isActive ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground'
-            }`
-          }
-        >
-          <span className="text-lg">🗓️</span>
-          Calendar
-        </NavLink>
-        <NavLink
-          to="/tasks"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 rounded-lg transition-colors hover:bg-secondary font-medium ${
-              isActive ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground'
-            }`
-          }
-        >
-          <span className="text-lg">✅</span>
-          Tasks
-        </NavLink>
-        <NavLink
-          to="/categories"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-6 py-3 rounded-lg transition-colors hover:bg-secondary font-medium ${
-              isActive ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground'
-            }`
-          }
-        >
-          <span className="text-lg">🏷️</span>
-          Categories
-        </NavLink>
+          TaskBlossom <span role="img" aria-label="flower">🌸</span>
+        </Link>
+      </div>
+      {/* Menu group container */}
+      <nav className="flex flex-col gap-2 mb-10">
+        {/* TODAY */}
+        <div className="rounded-lg bg-secondary px-2 py-1 mx-2 mb-1">
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-2 rounded-md transition-colors hover:bg-accent font-medium ${
+                isActive ? 'bg-muted text-secondary-foreground' : 'text-muted-foreground'
+              }`
+            }
+          >
+            <span className="text-lg">📅</span>
+            Today
+          </NavLink>
+        </div>
+        {/* CALENDAR */}
+        <div className="rounded-lg bg-secondary px-2 py-1 mx-2 mb-1">
+          <NavLink
+            to="/calendar"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-2 rounded-md transition-colors hover:bg-accent font-medium ${
+                isActive ? 'bg-muted text-secondary-foreground' : 'text-muted-foreground'
+              }`
+            }
+          >
+            <span className="text-lg">🗓️</span>
+            Calendar
+          </NavLink>
+        </div>
+        {/* TASKS */}
+        <div className="rounded-lg bg-secondary px-2 py-1 mx-2 mb-1">
+          <NavLink
+            to="/tasks"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-2 rounded-md transition-colors hover:bg-accent font-medium ${
+                isActive ? 'bg-muted text-secondary-foreground' : 'text-muted-foreground'
+              }`
+            }
+          >
+            <span className="text-lg">✅</span>
+            Tasks
+          </NavLink>
+        </div>
+        {/* CATEGORIES */}
+        <div className="rounded-lg bg-secondary px-2 py-1 mx-2 mb-1">
+          <NavLink
+            to="/categories"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-2 rounded-md transition-colors hover:bg-accent font-medium ${
+                isActive ? 'bg-muted text-secondary-foreground' : 'text-muted-foreground'
+              }`
+            }
+          >
+            <span className="text-lg">🏷️</span>
+            Categories
+          </NavLink>
+        </div>
       </nav>
-      <div className="mt-auto flex flex-col gap-3">
-        <div className="flex items-center justify-between mb-2 px-2">
+      <div className="mt-auto flex flex-col gap-4 px-3">
+        <div className="flex items-center justify-between">
           <ModeToggle />
         </div>
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <Button variant="ghost" className="w-full justify-start px-6 py-3 rounded-lg hover:bg-secondary text-muted-foreground font-medium flex items-center gap-3">
+            <Button
+              variant="ghost"
+              className="w-full justify-start px-4 py-2 rounded-lg hover:bg-accent text-muted-foreground font-medium flex items-center gap-3"
+            >
               <User className="h-5 w-5 mr-2 opacity-80" />
               <span>{user ? user.displayName : 'Profile'}</span>
             </Button>
