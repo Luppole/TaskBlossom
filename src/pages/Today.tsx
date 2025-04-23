@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
-import { mockTasks, motivationalQuotes } from '@/data/mockData';
+import { motivationalQuotes } from '@/data/mockData';
 import TaskList from '@/components/tasks/TaskList';
 import ProductivityBar from '@/components/common/ProductivityBar';
 import AddTaskButton from '@/components/common/AddTaskButton';
@@ -10,24 +10,55 @@ import FocusMode from '@/components/focus/FocusMode';
 import { Task } from '@/types/task';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Focus } from 'lucide-react';
+import { useFirebase } from '@/contexts/FirebaseContext';
+import { setupTaskNotifications } from '@/lib/notification-service';
 
 const Today: React.FC = () => {
-  const [tasks, setTasks] = useState(mockTasks);
+  const { 
+    user,
+    getTasks,
+    createTask,
+    updateTask,
+    deleteTask,
+    userSettings,
+    loading: firebaseLoading 
+  } = useFirebase();
+  
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [quote, setQuote] = useState('');
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [isFocusModeOpen, setIsFocusModeOpen] = useState(false);
   const [filter, setFilter] = useState('all');
   const [isFirstVisit, setIsFirstVisit] = useState(true);
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
   
   // Register keyboard shortcuts
   useKeyboardShortcuts({
     onNewTask: () => setIsAddTaskModalOpen(true)
   });
+  
+  // Fetch tasks function
+  const fetchTasks = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      if (user) {
+        const fetchedTasks = await getTasks();
+        setTasks(fetchedTasks);
+      } else {
+        setTasks([]); // Clear tasks if no user is logged in
+      }
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      toast.error('Failed to load tasks');
+      setTasks([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getTasks, user]);
   
   useEffect(() => {
     // Set a random quote
@@ -42,30 +73,96 @@ const Today: React.FC = () => {
     } else {
       setIsFirstVisit(false);
     }
-  }, []);
+    
+    // Load tasks
+    fetchTasks();
+  }, [fetchTasks]);
   
-  const handleToggleComplete = (taskId: string) => {
-    setTasks(prevTasks =>
-      prevTasks.map(task =>
-        task.id === taskId
-          ? { ...task, completed: !task.completed }
-          : task
-      )
-    );
+  // Setup notifications when tasks or settings change
+  useEffect(() => {
+    if (user && userSettings && tasks.length > 0) {
+      setupTaskNotifications(tasks, {
+        taskReminders: userSettings.taskReminders,
+        overdueAlerts: userSettings.overdueAlerts
+      });
+    }
+  }, [tasks, userSettings, user]);
+  
+  const handleToggleComplete = async (taskId: string) => {
+    try {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+      
+      // Optimistically update UI
+      setTasks(prev => 
+        prev.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t)
+      );
+      
+      // If user is signed in, persist to Firebase
+      if (user) {
+        await updateTask(taskId, { completed: !task.completed });
+      }
+    } catch (error) {
+      console.error('Error toggling task completion:', error);
+      toast.error('Failed to update task');
+      
+      // Revert on error
+      setTasks(prev => 
+        prev.map(t => t.id === taskId ? { ...t, completed: task.completed } : t)
+      );
+    }
+  };
+  
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      // Optimistically remove from UI
+      const taskToDelete = tasks.find(t => t.id === taskId);
+      if (!taskToDelete) return;
+      
+      setTasks(prev => prev.filter(t => t.id !== taskId));
+      
+      // If user is signed in, delete from Firebase
+      if (user) {
+        await deleteTask(taskId);
+        toast.success('Task deleted');
+      }
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast.error('Failed to delete task');
+      
+      // Revert deletion on error
+      fetchTasks();
+    }
   };
   
   const handleAddTask = () => {
     setIsAddTaskModalOpen(true);
   };
   
-  const handleTaskSave = (newTask: Task) => {
-    setTasks(prevTasks => [...prevTasks, newTask]);
-    setIsAddTaskModalOpen(false);
-    
-    toast({
-      title: "Task added",
-      description: "Your new task has been created.",
-    });
+  const handleTaskSave = async (newTask: Task) => {
+    try {
+      if (user) {
+        const savedTask = await createTask({
+          title: newTask.title,
+          completed: newTask.completed,
+          dueDate: newTask.dueDate,
+          priority: newTask.priority,
+          category: newTask.category,
+          notes: newTask.notes,
+        });
+        
+        setTasks(prev => [savedTask, ...prev]);
+      } else {
+        // If no user, just add to local state
+        setTasks(prev => [newTask, ...prev]);
+      }
+      
+      setIsAddTaskModalOpen(false);
+      toast.success('Task added');
+    } catch (error) {
+      console.error('Error saving task:', error);
+      toast.error('Failed to add task');
+    }
   };
   
   const handleStartFocusMode = () => {
@@ -125,7 +222,7 @@ const Today: React.FC = () => {
         transition={{ duration: 0.5 }}
       >
         <h1 className="font-heading text-2xl font-bold mb-2">
-          {getGreeting()}, User
+          {getGreeting()}, {user?.displayName || 'Guest'}
         </h1>
         <p className="text-muted-foreground italic">
           "{quote}"
@@ -167,17 +264,21 @@ const Today: React.FC = () => {
             Today's Tasks ({format(new Date(), 'MMMM d')})
           </h2>
           
-          {pendingCount > 0 ? (
-            <motion.div 
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              className="flex items-center text-sm font-medium"
-            >
-              <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
-              <span>{pendingCount} pending</span>
-            </motion.div>
-          ) : (
-            <span className="text-sm text-green-500 font-medium">All done for today! 🎉</span>
+          {!isLoading && (
+            pendingCount > 0 ? (
+              <motion.div 
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                className="flex items-center text-sm font-medium"
+              >
+                <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+                <span>{pendingCount} pending</span>
+              </motion.div>
+            ) : (
+              todaysTasks.length > 0 ? (
+                <span className="text-sm text-green-500 font-medium">All done for today! 🎉</span>
+              ) : null
+            )
           )}
         </div>
         
@@ -215,7 +316,16 @@ const Today: React.FC = () => {
         <TaskList
           tasks={filteredTasks}
           onToggleComplete={handleToggleComplete}
+          onDeleteTask={handleDeleteTask}
+          isLoading={isLoading || firebaseLoading}
         />
+        
+        {!isLoading && !user && (
+          <div className="mt-4 p-4 bg-muted rounded-lg text-center">
+            <p className="mb-2">Sign in to save your tasks and access them from any device.</p>
+            <p className="text-sm text-muted-foreground">Your tasks will be stored locally until you sign in.</p>
+          </div>
+        )}
       </section>
       
       <AddTaskButton onClick={handleAddTask} />

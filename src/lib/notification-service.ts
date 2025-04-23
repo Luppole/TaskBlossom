@@ -15,6 +15,7 @@ export const setupTaskNotifications = async (tasks: Task[], settings: {
   const hasPermission = await requestNotificationPermission();
   
   if (!hasPermission) {
+    console.log('Notification permission not granted');
     return;
   }
   
@@ -33,9 +34,10 @@ const setupTaskReminders = (tasks: Task[]) => {
   // Clear any existing reminder timers
   if (window.taskReminderTimers) {
     window.taskReminderTimers.forEach(timerId => clearTimeout(timerId));
+    window.taskReminderTimers = [];
+  } else {
+    window.taskReminderTimers = [];
   }
-  
-  window.taskReminderTimers = [];
   
   // Only set reminders for incomplete tasks with future due dates
   const tasksWithDueDates = tasks.filter(task => 
@@ -91,8 +93,8 @@ const showTaskReminder = (task: Task) => {
       action: {
         label: 'View',
         onClick: () => {
-          // You could add navigation to the task details here
-          console.log('View task', task.id);
+          // Navigate to tasks page
+          window.location.href = '/tasks';
         }
       }
     }
@@ -100,10 +102,19 @@ const showTaskReminder = (task: Task) => {
   
   // Also send a browser notification
   if (Notification.permission === 'granted') {
-    new Notification('Task Reminder', {
-      body: `"${task.title}" is due in 30 minutes`,
-      icon: '/favicon.ico'
-    });
+    try {
+      const notification = new Notification('Task Reminder', {
+        body: `"${task.title}" is due in 30 minutes`,
+        icon: '/favicon.ico'
+      });
+      
+      notification.onclick = () => {
+        window.focus();
+        window.location.href = '/tasks';
+      };
+    } catch (error) {
+      console.error('Error showing notification:', error);
+    }
   }
 };
 
@@ -117,7 +128,7 @@ const showOverdueAlert = (task: Task) => {
       action: {
         label: 'Complete',
         onClick: () => {
-          // You could add a function to mark as complete here
+          // You could add logic here to mark the task as complete
           console.log('Complete task', task.id);
         }
       }
@@ -126,10 +137,19 @@ const showOverdueAlert = (task: Task) => {
   
   // Also send a browser notification
   if (Notification.permission === 'granted') {
-    new Notification('Overdue Task', {
-      body: `"${task.title}" is overdue`,
-      icon: '/favicon.ico'
-    });
+    try {
+      const notification = new Notification('Overdue Task', {
+        body: `"${task.title}" is overdue`,
+        icon: '/favicon.ico'
+      });
+      
+      notification.onclick = () => {
+        window.focus();
+        window.location.href = '/tasks';
+      };
+    } catch (error) {
+      console.error('Error showing notification:', error);
+    }
   }
 };
 

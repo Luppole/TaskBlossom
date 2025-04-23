@@ -1,5 +1,5 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lexend:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lexend:wght@300;400;500;600;700&family=Rubik:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -104,6 +104,29 @@
   kbd {
     @apply px-1.5 py-0.5 text-xs font-mono bg-secondary rounded border border-border shadow-sm text-secondary-foreground;
   }
+  
+  /* Hebrew language support */
+  html[lang="he"] body {
+    @apply font-hebrew;
+  }
+  
+  /* Improved RTL support */
+  [dir="rtl"] * {
+    letter-spacing: 0;
+  }
+  
+  [dir="rtl"] .task-card {
+    text-align: right;
+  }
+  
+  [dir="rtl"] .rtl-mirror {
+    transform: scaleX(-1);
+  }
+  
+  /* Proper RTL flex direction override */
+  [dir="rtl"] .reverse-on-rtl {
+    flex-direction: row-reverse;
+  }
 }
 
 @layer components {
@@ -162,3 +185,22 @@
     padding-bottom: 5rem;
   }
 }
+
+/* RTL Support for margins and paddings */
+[dir="rtl"] .ml-1, [dir="rtl"] .ml-2, [dir="rtl"] .ml-3, [dir="rtl"] .ml-4 {
+  margin-left: 0 !important;
+}
+
+[dir="rtl"] .mr-1 { margin-right: 0 !important; margin-left: 0.25rem !important; }
+[dir="rtl"] .mr-2 { margin-right: 0 !important; margin-left: 0.5rem !important; }
+[dir="rtl"] .mr-3 { margin-right: 0 !important; margin-left: 0.75rem !important; }
+[dir="rtl"] .mr-4 { margin-right: 0 !important; margin-left: 1rem !important; }
+
+[dir="rtl"] .pl-1, [dir="rtl"] .pl-2, [dir="rtl"] .pl-3, [dir="rtl"] .pl-4 {
+  padding-left: 0 !important;
+}
+
+[dir="rtl"] .pr-1 { padding-right: 0 !important; padding-left: 0.25rem !important; }
+[dir="rtl"] .pr-2 { padding-right: 0 !important; padding-left: 0.5rem !important; }
+[dir="rtl"] .pr-3 { padding-right: 0 !important; padding-left: 0.75rem !important; }
+[dir="rtl"] .pr-4 { padding-right: 0 !important; padding-left: 1rem !important; }

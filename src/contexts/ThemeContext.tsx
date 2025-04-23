@@ -2,68 +2,107 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useFirebase } from './FirebaseContext';
 
-type Theme = 'light' | 'dark';
-type Direction = 'ltr' | 'rtl';
-
 interface ThemeContextType {
-  theme: Theme;
-  direction: Direction;
+  theme: 'light' | 'dark';
+  direction: 'ltr' | 'rtl';
   toggleTheme: () => void;
   toggleDirection: () => void;
+  setDirection: (dir: 'ltr' | 'rtl') => void;
 }
 
-const ThemeContext = createContext<ThemeContextType | null>(null);
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>('light');
-  const [direction, setDirection] = useState<Direction>('ltr');
-  const { userSettings, updateSettings } = useFirebase();
-  
-  // Initialize theme from user settings
+  const { userSettings } = useFirebase();
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [direction, setDirection] = useState<'ltr' | 'rtl'>('ltr');
+
+  // Initialize theme and direction based on user settings or local storage
   useEffect(() => {
+    // Check for saved preferences in local storage first
+    const savedTheme = localStorage.getItem('theme');
+    const savedDirection = localStorage.getItem('direction');
+    
+    if (savedTheme === 'dark') {
+      setTheme('dark');
+      document.documentElement.classList.add('dark');
+    } else {
+      setTheme('light');
+      document.documentElement.classList.remove('dark');
+    }
+    
+    if (savedDirection === 'rtl') {
+      setDirection('rtl');
+      document.documentElement.dir = 'rtl';
+      document.documentElement.lang = 'he';
+    } else {
+      setDirection('ltr');
+      document.documentElement.dir = 'ltr';
+      document.documentElement.lang = 'en';
+    }
+    
+    // User settings override local storage if they exist
     if (userSettings) {
-      setTheme(userSettings.darkMode ? 'dark' : 'light');
-      setDirection(userSettings.rtlLayout ? 'rtl' : 'ltr');
+      if (userSettings.darkMode) {
+        setTheme('dark');
+        document.documentElement.classList.add('dark');
+      } else {
+        setTheme('light');
+        document.documentElement.classList.remove('dark');
+      }
+      
+      if (userSettings.rtlLayout) {
+        setDirection('rtl');
+        document.documentElement.dir = 'rtl';
+        document.documentElement.lang = 'he';
+      } else {
+        setDirection('ltr');
+        document.documentElement.dir = 'ltr';
+        document.documentElement.lang = 'en';
+      }
     }
   }, [userSettings]);
-  
-  // Apply theme to the document
-  useEffect(() => {
-    const root = document.documentElement;
-    
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    
-    // Set RTL direction
-    document.dir = direction;
-    
-  }, [theme, direction]);
-  
+
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
     
-    // Update user settings in Firebase if the user is logged in
-    if (userSettings) {
-      updateSettings({ darkMode: newTheme === 'dark' });
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
   };
-  
+
   const toggleDirection = () => {
     const newDirection = direction === 'ltr' ? 'rtl' : 'ltr';
-    setDirection(newDirection);
-    
-    // Update user settings in Firebase if the user is logged in
-    if (userSettings) {
-      updateSettings({ rtlLayout: newDirection === 'rtl' });
-    }
+    setDirectionWithSideEffects(newDirection);
   };
   
+  const setDirectionWithSideEffects = (newDirection: 'ltr' | 'rtl') => {
+    setDirection(newDirection);
+    localStorage.setItem('direction', newDirection);
+    
+    if (newDirection === 'rtl') {
+      document.documentElement.dir = 'rtl';
+      document.documentElement.lang = 'he';
+    } else {
+      document.documentElement.dir = 'ltr';
+      document.documentElement.lang = 'en';
+    }
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, direction, toggleTheme, toggleDirection }}>
+    <ThemeContext.Provider 
+      value={{ 
+        theme, 
+        direction, 
+        toggleTheme, 
+        toggleDirection,
+        setDirection: setDirectionWithSideEffects 
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );
@@ -71,7 +110,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;

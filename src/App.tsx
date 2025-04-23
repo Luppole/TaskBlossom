@@ -31,12 +31,12 @@ const AnimatedRoutes = () => {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageTransition><Index /></PageTransition>} />
-        <Route path="/calendar" element={<PageTransition><Calendar /></PageTransition>} />
-        <Route path="/tasks" element={<PageTransition><Tasks /></PageTransition>} />
-        <Route path="/categories" element={<PageTransition><Categories /></PageTransition>} />
-        <Route path="/settings" element={<PageTransition><Settings /></PageTransition>} />
-        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+        <Route path="/" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Index /></div></PageTransition>} />
+        <Route path="/calendar" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Calendar /></div></PageTransition>} />
+        <Route path="/tasks" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Tasks /></div></PageTransition>} />
+        <Route path="/categories" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Categories /></div></PageTransition>} />
+        <Route path="/settings" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Settings /></div></PageTransition>} />
+        <Route path="*" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><NotFound /></div></PageTransition>} />
       </Routes>
     </AnimatePresence>
   );

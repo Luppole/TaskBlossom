@@ -7,13 +7,16 @@ import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { useTheme } from '@/contexts/ThemeContext';
+import { Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface TaskCardProps {
   task: Task;
   onToggleComplete: (taskId: string) => void;
+  onDelete?: (taskId: string) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete, onDelete }) => {
   const { direction } = useTheme();
   const isOverdue = task.dueDate && task.dueDate < new Date() && !task.completed;
   
@@ -103,7 +106,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete }) => {
           )}
         </div>
         
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 flex items-center">
           {/* Task priority indicator */}
           <span 
             className={cn(
@@ -114,6 +117,29 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete }) => {
             )}
             title={`Priority: ${task.priority}`}
           />
+          
+          {/* Delete button that appears on hover */}
+          {onDelete && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0 }}
+              whileHover={{ opacity: 1 }}
+              className="group-hover:opacity-100 opacity-0 transition-opacity ml-2"
+            >
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(task.id);
+                }}
+                className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                title="Delete Task"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </motion.div>
+          )}
         </div>
       </div>
     </motion.div>

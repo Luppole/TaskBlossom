@@ -9,10 +9,16 @@ import { toast } from 'sonner';
 interface TaskListProps {
   tasks: Task[];
   onToggleComplete: (taskId: string) => void;
+  onDeleteTask?: (taskId: string) => void;
   isLoading?: boolean;
 }
 
-const TaskList: React.FC<TaskListProps> = ({ tasks, onToggleComplete, isLoading = false }) => {
+const TaskList: React.FC<TaskListProps> = ({ 
+  tasks, 
+  onToggleComplete, 
+  onDeleteTask,
+  isLoading = false 
+}) => {
   const { user, updateTask } = useFirebase();
   
   // Handle toggling task completion
@@ -101,6 +107,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onToggleComplete, isLoading 
             <TaskCard
               task={task}
               onToggleComplete={handleToggleComplete}
+              onDelete={onDeleteTask}
             />
           </motion.div>
         ))}

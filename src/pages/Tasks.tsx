@@ -5,10 +5,9 @@ import AddTaskButton from '@/components/common/AddTaskButton';
 import TaskModal from '@/components/tasks/TaskModal';
 import { Input } from '@/components/ui/input';
 import { Task } from '@/types/task';
-import { Search, Trash2 } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 const Tasks: React.FC = () => {
@@ -30,47 +29,69 @@ const Tasks: React.FC = () => {
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
     try {
-      const fetchedTasks = await getTasks();
-      setTasks(fetchedTasks);
+      if (user) {
+        const fetchedTasks = await getTasks();
+        setTasks(fetchedTasks);
+      } else {
+        setTasks([]);
+      }
     } catch (error) {
       toast.error('Failed to load tasks.');
       setTasks([]);
     } finally {
       setIsLoading(false);
     }
-  }, [getTasks]);
+  }, [getTasks, user]);
 
   useEffect(() => {
-    if (user) {
-      fetchTasks();
-    } else {
-      setTasks([]);
-      setIsLoading(false);
-    }
-  }, [user, fetchTasks]);
+    fetchTasks();
+  }, [fetchTasks, user]);
 
   const handleToggleComplete = async (taskId: string) => {
     try {
       const task = tasks.find((t) => t.id === taskId);
       if (!task) return;
-      await updateTask(taskId, { completed: !task.completed });
+      
+      // Optimistically update UI
       setTasks((prev) =>
         prev.map((t) =>
           t.id === taskId ? { ...t, completed: !t.completed } : t
         )
       );
+      
+      // If user is signed in, persist to Firebase
+      if (user) {
+        await updateTask(taskId, { completed: !task.completed });
+      }
     } catch (error) {
+      console.error('Error updating task completion:', error);
       toast.error('Failed to update task.');
+      
+      // Revert on error
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === taskId ? { ...t, completed: task.completed } : t
+        )
+      );
     }
   };
 
   const handleDeleteTask = async (taskId: string) => {
     try {
-      await deleteTask(taskId);
+      // Optimistically remove from UI
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
-      toast.success('Task deleted');
+      
+      // If user is signed in, delete from Firebase
+      if (user) {
+        await deleteTask(taskId);
+        toast.success('Task deleted');
+      }
     } catch (error) {
+      console.error('Error deleting task:', error);
       toast.error('Failed to delete task.');
+      
+      // Revert deletion on error
+      fetchTasks();
     }
   };
 
@@ -80,19 +101,27 @@ const Tasks: React.FC = () => {
 
   const handleTaskSave = async (newTask: Task) => {
     try {
-      const savedTask = await createTask({
-        // omit id and createdAt because context will assign them
-        title: newTask.title,
-        completed: newTask.completed,
-        dueDate: newTask.dueDate,
-        priority: newTask.priority,
-        category: newTask.category,
-        notes: newTask.notes,
-      });
-      setTasks((prev) => [savedTask, ...prev]);
+      if (user) {
+        const savedTask = await createTask({
+          // omit id and createdAt because context will assign them
+          title: newTask.title,
+          completed: newTask.completed,
+          dueDate: newTask.dueDate,
+          priority: newTask.priority,
+          category: newTask.category,
+          notes: newTask.notes,
+        });
+        
+        setTasks((prev) => [savedTask, ...prev]);
+      } else {
+        // If no user, just add to local state with generated id
+        setTasks((prev) => [newTask, ...prev]);
+      }
+      
       setIsAddTaskModalOpen(false);
       toast.success('Task added');
     } catch (error) {
+      console.error('Error adding task:', error);
       toast.error('Failed to add task.');
     }
   };
@@ -142,37 +171,24 @@ const Tasks: React.FC = () => {
       </div>
 
       <div className="mb-2 text-sm text-muted-foreground">
-        Showing {sortedTasks.length} of {tasks.length} tasks
+        {!isLoading && (
+          <span>Showing {sortedTasks.length} {sortedTasks.length === 1 ? 'task' : 'tasks'}</span>
+        )}
       </div>
 
-      {/* Task list with delete option */}
+      {/* Task list with delete functionality */}
       <div>
         <TaskList
           tasks={sortedTasks}
           onToggleComplete={handleToggleComplete}
+          onDeleteTask={handleDeleteTask}
           isLoading={firebaseLoading || isLoading}
         />
-        {/* TaskList does not expose a delete button, so we add them below each card */}
-        {!firebaseLoading && !isLoading && sortedTasks.length > 0 && (
-          <div className="mt-2 space-y-3">
-            {sortedTasks.map((task) => (
-              <div
-                key={task.id}
-                className="flex justify-end"
-                style={{ marginTop: '-2.5rem', marginBottom: '0.5rem' }}
-              >
-                <motion.div whileHover={{ scale: 1.2 }}>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => handleDeleteTask(task.id)}
-                    title="Delete Task"
-                  >
-                    <Trash2 className="w-5 h-5 text-destructive" />
-                  </Button>
-                </motion.div>
-              </div>
-            ))}
+        
+        {!isLoading && !user && (
+          <div className="mt-4 p-4 bg-muted rounded-lg text-center">
+            <p className="mb-2">Sign in to save your tasks and access them from any device.</p>
+            <p className="text-sm text-muted-foreground">Your tasks will be stored locally until you sign in.</p>
           </div>
         )}
       </div>
@@ -191,4 +207,3 @@ const Tasks: React.FC = () => {
 };
 
 export default Tasks;
-
