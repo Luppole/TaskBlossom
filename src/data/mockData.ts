@@ -1,4 +1,3 @@
-
 import { Task, TaskCategory } from '../types/task';
 
 export const mockCategories: TaskCategory[] = [
@@ -47,6 +46,7 @@ export const mockTasks: Task[] = [
     dueDate: new Date(2025, 3, 22, 8, 0), // Today at 8am
     priority: 'medium',
     category: mockCategories[2], // Health
+    notes: null,
     createdAt: new Date(2025, 3, 19)
   },
   {
@@ -56,6 +56,7 @@ export const mockTasks: Task[] = [
     dueDate: new Date(2025, 3, 20, 23, 59), // Yesterday
     priority: 'high',
     category: mockCategories[4], // Finance
+    notes: null,
     createdAt: new Date(2025, 3, 18)
   },
   {
@@ -65,6 +66,7 @@ export const mockTasks: Task[] = [
     dueDate: new Date(2025, 3, 22, 18, 0), // Today at 6pm
     priority: 'medium',
     category: mockCategories[0], // Personal
+    notes: null,
     createdAt: new Date(2025, 3, 21)
   },
   {
@@ -94,11 +96,11 @@ export const mockTasks: Task[] = [
     dueDate: new Date(2025, 3, 26, 17, 0), // Next week
     priority: 'low',
     category: mockCategories[1], // Work
+    notes: null,
     createdAt: new Date(2025, 3, 20)
   }
 ];
 
-// Generate motivational quotes
 export const motivationalQuotes = [
   "The secret of getting ahead is getting started.",
   "Don't watch the clock; do what it does. Keep going.",
