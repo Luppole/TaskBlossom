@@ -147,7 +147,8 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           ...data,
           id: doc.id,
           dueDate: data.dueDate ? (data.dueDate as Timestamp).toDate() : undefined,
-          createdAt: (data.createdAt as Timestamp).toDate()
+          createdAt: (data.createdAt as Timestamp).toDate(),
+          notes: data.notes || null // Ensure notes is never undefined
         } as Task;
       });
     } catch (error) {
@@ -166,13 +167,17 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const task: Task = {
         ...taskData,
         id: taskRef.id,
-        createdAt: now
+        createdAt: now,
+        // Ensure notes is never undefined
+        notes: taskData.notes || null
       };
       
       const firestoreTask = {
         ...task,
         dueDate: task.dueDate ? Timestamp.fromDate(task.dueDate) : null,
-        createdAt: Timestamp.fromDate(now)
+        createdAt: Timestamp.fromDate(now),
+        // Explicitly set notes to null if it's empty or undefined
+        notes: task.notes || null
       };
       
       await setDoc(taskRef, firestoreTask);
@@ -192,9 +197,14 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Create a new object for Firestore update
       const firestoreData: Record<string, any> = { ...data };
       
-      // Convert Date to Timestamp if present
+      // Handle special cases for Firestore
       if (firestoreData.dueDate instanceof Date) {
         firestoreData.dueDate = Timestamp.fromDate(firestoreData.dueDate);
+      }
+      
+      // Ensure notes is never undefined
+      if ('notes' in firestoreData && firestoreData.notes === undefined) {
+        firestoreData.notes = null;
       }
       
       await updateDoc(taskRef, firestoreData);

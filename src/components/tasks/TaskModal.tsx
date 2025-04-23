@@ -51,7 +51,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
       dueDate,
       priority,
       category,
-      notes: notes || undefined,
+      // Important: Always provide a string for notes or explicitly set to null
+      notes: notes.trim() || null,
       createdAt: initialTask?.createdAt || new Date(),
     };
     

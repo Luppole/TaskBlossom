@@ -14,6 +14,6 @@ export interface Task {
   dueDate?: Date;
   priority: TaskPriority;
   category?: TaskCategory;
-  notes?: string;
+  notes: string | null;
   createdAt: Date;
 }

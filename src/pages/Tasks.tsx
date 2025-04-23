@@ -106,7 +106,6 @@ const Tasks: React.FC = () => {
     try {
       if (user) {
         const savedTask = await createTask({
-          // omit id and createdAt because context will assign them
           title: newTask.title,
           completed: newTask.completed,
           dueDate: newTask.dueDate,
