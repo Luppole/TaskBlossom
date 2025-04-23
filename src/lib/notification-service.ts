@@ -1,4 +1,3 @@
-
 import { Task } from '@/types/task';
 import { toast } from 'sonner';
 import { messaging, requestNotificationPermission } from './firebase';
@@ -84,7 +83,7 @@ const checkOverdueTasks = (tasks: Task[]) => {
 };
 
 const showTaskReminder = (task: Task) => {
-  // Show in-app toast notification
+  // Show in-app toast notification only (in-app Sonner toast)
   toast.info(
     `Task reminder: ${task.title}`, 
     {
@@ -99,27 +98,10 @@ const showTaskReminder = (task: Task) => {
       }
     }
   );
-  
-  // Also send a browser notification
-  if (Notification.permission === 'granted') {
-    try {
-      const notification = new Notification('Task Reminder', {
-        body: `"${task.title}" is due in 30 minutes`,
-        icon: '/favicon.ico'
-      });
-      
-      notification.onclick = () => {
-        window.focus();
-        window.location.href = '/tasks';
-      };
-    } catch (error) {
-      console.error('Error showing notification:', error);
-    }
-  }
 };
 
 const showOverdueAlert = (task: Task) => {
-  // Show in-app toast notification
+  // Show in-app toast notification only (in-app Sonner toast)
   toast.error(
     `Overdue task: ${task.title}`, 
     {
@@ -134,23 +116,6 @@ const showOverdueAlert = (task: Task) => {
       }
     }
   );
-  
-  // Also send a browser notification
-  if (Notification.permission === 'granted') {
-    try {
-      const notification = new Notification('Overdue Task', {
-        body: `"${task.title}" is overdue`,
-        icon: '/favicon.ico'
-      });
-      
-      notification.onclick = () => {
-        window.focus();
-        window.location.href = '/tasks';
-      };
-    } catch (error) {
-      console.error('Error showing notification:', error);
-    }
-  }
 };
 
 // Add this to the global Window interface

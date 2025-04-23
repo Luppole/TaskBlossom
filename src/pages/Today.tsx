@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { motivationalQuotes } from '@/data/mockData';
@@ -36,12 +35,10 @@ const Today: React.FC = () => {
   const [isFirstVisit, setIsFirstVisit] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Register keyboard shortcuts
   useKeyboardShortcuts({
     onNewTask: () => setIsAddTaskModalOpen(true)
   });
   
-  // Fetch tasks function
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -49,7 +46,7 @@ const Today: React.FC = () => {
         const fetchedTasks = await getTasks();
         setTasks(fetchedTasks);
       } else {
-        setTasks([]); // Clear tasks if no user is logged in
+        setTasks([]);
       }
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -61,11 +58,9 @@ const Today: React.FC = () => {
   }, [getTasks, user]);
   
   useEffect(() => {
-    // Set a random quote
     const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
     setQuote(motivationalQuotes[randomIndex]);
     
-    // Check if this is the first visit
     const hasVisitedBefore = localStorage.getItem('hasVisitedBefore');
     if (!hasVisitedBefore) {
       setIsFirstVisit(true);
@@ -74,11 +69,9 @@ const Today: React.FC = () => {
       setIsFirstVisit(false);
     }
     
-    // Load tasks
     fetchTasks();
   }, [fetchTasks]);
   
-  // Setup notifications when tasks or settings change
   useEffect(() => {
     if (user && userSettings && tasks.length > 0) {
       setupTaskNotifications(tasks, {
@@ -93,12 +86,10 @@ const Today: React.FC = () => {
       const taskToToggle = tasks.find(t => t.id === taskId);
       if (!taskToToggle) return;
       
-      // Optimistically update UI
       setTasks(prev => 
         prev.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t)
       );
       
-      // If user is signed in, persist to Firebase
       if (user) {
         await updateTask(taskId, { completed: !taskToToggle.completed });
       }
@@ -106,7 +97,6 @@ const Today: React.FC = () => {
       console.error('Error toggling task completion:', error);
       toast.error('Failed to update task');
       
-      // Revert on error
       const taskToToggle = tasks.find(t => t.id === taskId);
       if (!taskToToggle) return;
       
@@ -118,13 +108,11 @@ const Today: React.FC = () => {
   
   const handleDeleteTask = async (taskId: string) => {
     try {
-      // Optimistically remove from UI
       const taskToDelete = tasks.find(t => t.id === taskId);
       if (!taskToDelete) return;
       
       setTasks(prev => prev.filter(t => t.id !== taskId));
       
-      // If user is signed in, delete from Firebase
       if (user) {
         await deleteTask(taskId);
         toast.success('Task deleted');
@@ -133,7 +121,6 @@ const Today: React.FC = () => {
       console.error('Error deleting task:', error);
       toast.error('Failed to delete task');
       
-      // Revert deletion on error
       fetchTasks();
     }
   };
@@ -153,13 +140,10 @@ const Today: React.FC = () => {
           category: newTask.category,
           notes: newTask.notes,
         });
-        
         setTasks(prev => [savedTask, ...prev]);
       } else {
-        // If no user, just add to local state
         setTasks(prev => [newTask, ...prev]);
       }
-      
       setIsAddTaskModalOpen(false);
       toast.success('Task added');
     } catch (error) {
@@ -172,7 +156,6 @@ const Today: React.FC = () => {
     setIsFocusModeOpen(true);
   };
   
-  // Get greeting based on time of day
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return '🌞 Good Morning';
@@ -180,31 +163,28 @@ const Today: React.FC = () => {
     return '🌙 Good Evening';
   };
   
-  // Filter tasks for today
   const todaysTasks = tasks.filter(task => 
     task.dueDate && 
     task.dueDate.toDateString() === new Date().toDateString()
   );
   
-  // Filter tasks based on selected filter
   const getFilteredTasks = () => {
     switch (filter) {
       case 'completed':
-        return sortedTasks.filter(task => task.completed);
+        return todaysTasks.filter(task => task.completed);
       case 'pending':
-        return sortedTasks.filter(task => !task.completed);
+        return todaysTasks.filter(task => !task.completed);
       case 'overdue':
-        return sortedTasks.filter(task => 
+        return todaysTasks.filter(task => 
           task.dueDate && 
           task.dueDate < new Date() && 
           !task.completed
         );
       default:
-        return sortedTasks;
+        return todaysTasks;
     }
   };
   
-  // Sort tasks by priority and completion status
   const sortedTasks = [...todaysTasks].sort((a, b) => {
     if (a.completed && !b.completed) return 1;
     if (!a.completed && b.completed) return -1;

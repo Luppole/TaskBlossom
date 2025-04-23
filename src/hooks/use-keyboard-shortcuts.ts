@@ -11,11 +11,11 @@ export function useKeyboardShortcuts(actions: {
 }) {
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     // Alt+N for new task
-    if (event.key === 'n' && event.altKey) {
+    if ((event.key === 'n' && event.altKey) || (event.key === 'n' && event.getModifierState('Tab'))) {
       event.preventDefault();
       if (actions.onNewTask) {
         actions.onNewTask();
-        toast.success('Keyboard shortcut: Alt+N triggered');
+        toast.success('Keyboard shortcut triggered: ' + (event.altKey ? 'Alt+N' : 'Tab+N'));
       }
     }
   }, [actions]);

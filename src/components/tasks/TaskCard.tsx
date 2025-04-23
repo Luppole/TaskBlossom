@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format } from 'date-fns';
 import { Task } from '@/types/task';
@@ -22,10 +21,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete, onDelete })
   
   const handleCheckboxClick = () => {
     onToggleComplete(task.id);
-    
-    // Play completion animation if task is being completed
     if (!task.completed) {
-      // Create confetti when task is completed
       confetti({
         particleCount: 80,
         spread: 70,
@@ -59,7 +55,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete, onDelete })
             className="mt-1"
           />
         </motion.div>
-        
         <div className="flex-1">
           <div className="flex justify-between items-start">
             <h3 className={cn(
@@ -69,13 +64,12 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete, onDelete })
               {task.title}
             </h3>
           </div>
-          
           <div className="flex flex-wrap gap-2 items-center mb-2">
             {task.category && (
               <span 
                 className="category-badge text-xs px-2 py-1 rounded-full font-medium"
                 style={{
-                  backgroundColor: `${task.category.color}30`, // 30% opacity
+                  backgroundColor: `${task.category.color}30`,
                   color: task.category.color,
                   borderColor: task.category.color,
                   borderWidth: '1px'
@@ -84,7 +78,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete, onDelete })
                 {task.category.name}
               </span>
             )}
-            
             {task.dueDate && (
               <span className={cn(
                 "text-xs rounded-md px-1.5 py-0.5",
@@ -98,16 +91,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete, onDelete })
               </span>
             )}
           </div>
-          
           {task.notes && (
             <p className="text-sm text-muted-foreground line-clamp-2 mb-1">
               {task.notes}
             </p>
           )}
         </div>
-        
         <div className="flex-shrink-0 flex items-center">
-          {/* Task priority indicator */}
           <span 
             className={cn(
               "inline-block h-3 w-3 rounded-full",
@@ -117,12 +107,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete, onDelete })
             )}
             title={`Priority: ${task.priority}`}
           />
-          
-          {/* Delete button that appears on hover */}
           {onDelete && (
             <motion.div 
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               whileHover={{ opacity: 1 }}
               className="group-hover:opacity-100 opacity-0 transition-opacity ml-2"
             >

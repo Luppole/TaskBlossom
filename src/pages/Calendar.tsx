@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, startOfWeek, endOfWeek, addMonths, subMonths } from 'date-fns';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
@@ -19,7 +18,6 @@ const CalendarPage: React.FC = () => {
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [tasks, setTasks] = useState(mockTasks);
   
-  // Get tasks for the selected date
   const selectedDateTasks = tasks.filter(task => 
     task.dueDate && isSameDay(task.dueDate, selectedDate)
   );
@@ -54,7 +52,11 @@ const CalendarPage: React.FC = () => {
       )
     );
   };
-  
+
+  const handleDeleteTask = (taskId: string) => {
+    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
       <header className="mb-6">
@@ -117,7 +119,6 @@ const CalendarPage: React.FC = () => {
                   start: startOfWeek(startOfMonth(currentDate)),
                   end: endOfWeek(endOfMonth(currentDate))
                 }).map((day) => {
-                  // Get tasks for this day
                   const dayTasks = tasks.filter(task => 
                     task.dueDate && isSameDay(task.dueDate, day)
                   );
@@ -188,7 +189,8 @@ const CalendarPage: React.FC = () => {
               {selectedDateTasks.length > 0 ? (
                 <TaskList 
                   tasks={selectedDateTasks} 
-                  onToggleComplete={handleToggleComplete} 
+                  onToggleComplete={handleToggleComplete}
+                  onDeleteTask={handleDeleteTask}
                 />
               ) : (
                 <div className="text-center py-6">

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -8,12 +7,12 @@ interface AddTaskButtonProps {
   onClick: () => void;
 }
 
-const AddTaskButton: React.FC<AddTaskButtonProps> = ({ onClick }) => {
+const AddTaskButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
   return (
     <motion.button 
       onClick={onClick} 
       className={cn(
-        "fixed bottom-20 right-4 md:bottom-8 md:right-8 h-14 w-14 rounded-full",
+        "fixed bottom-28 right-4 md:bottom-10 md:right-8 h-14 w-14 rounded-full",
         "bg-primary text-primary-foreground shadow-lg z-40",
         "flex items-center justify-center",
       )}
