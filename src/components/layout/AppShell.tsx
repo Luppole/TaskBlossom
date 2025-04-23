@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Sheet,
@@ -65,7 +66,7 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
 
 const Sidebar = () => {
   const { user, logOut } = useFirebase();
-  const { theme, setTheme, direction, setDirection } = useTheme();
+  const { theme, toggleTheme, direction, setDirection } = useTheme();
   const [open, setOpen] = React.useState(false);
 
   return (
