@@ -90,8 +90,8 @@ const Today: React.FC = () => {
   
   const handleToggleComplete = async (taskId: string) => {
     try {
-      const task = tasks.find(t => t.id === taskId);
-      if (!task) return;
+      const taskToToggle = tasks.find(t => t.id === taskId);
+      if (!taskToToggle) return;
       
       // Optimistically update UI
       setTasks(prev => 
@@ -100,15 +100,18 @@ const Today: React.FC = () => {
       
       // If user is signed in, persist to Firebase
       if (user) {
-        await updateTask(taskId, { completed: !task.completed });
+        await updateTask(taskId, { completed: !taskToToggle.completed });
       }
     } catch (error) {
       console.error('Error toggling task completion:', error);
       toast.error('Failed to update task');
       
       // Revert on error
+      const taskToToggle = tasks.find(t => t.id === taskId);
+      if (!taskToToggle) return;
+      
       setTasks(prev => 
-        prev.map(t => t.id === taskId ? { ...t, completed: task.completed } : t)
+        prev.map(t => t.id === taskId ? { ...t, completed: taskToToggle.completed } : t)
       );
     }
   };
@@ -214,7 +217,7 @@ const Today: React.FC = () => {
   const pendingCount = todaysTasks.filter(task => !task.completed).length;
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 md:px-8">
       <motion.header 
         className="mb-6"
         initial={{ opacity: 0, y: -20 }}
