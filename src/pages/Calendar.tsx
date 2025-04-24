@@ -1,25 +1,38 @@
 
-import React, { useState } from 'react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, startOfWeek, endOfWeek, addMonths, subMonths } from 'date-fns';
+import React, { useState, useEffect } from 'react';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek, addMonths, subMonths } from 'date-fns';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
-import { mockTasks } from '@/data/mockData';
 import { Task } from '@/types/task';
 import TaskList from '@/components/tasks/TaskList';
 import AddTaskButton from '@/components/common/AddTaskButton';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import TaskModal from '@/components/tasks/TaskModal';
 import { motion } from 'framer-motion';
 import CalendarDay from '@/components/calendar/EnhancedCalendarView';
+import { useFirebase } from '@/contexts/FirebaseContext';
+import { toast } from 'sonner';
 
 const CalendarPage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
-  const [tasks, setTasks] = useState(mockTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const { getTasks, createTask, updateTask, deleteTask } = useFirebase();
+
+  useEffect(() => {
+    const loadTasks = async () => {
+      try {
+        const fetchedTasks = await getTasks();
+        setTasks(fetchedTasks);
+      } catch (error) {
+        toast.error('Failed to load tasks');
+      }
+    };
+    loadTasks();
+  }, [getTasks]);
   
   const selectedDateTasks = tasks.filter(task => 
     task.dueDate && isSameDay(task.dueDate, selectedDate)
