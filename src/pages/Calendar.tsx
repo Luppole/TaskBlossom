@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import TaskModal from '@/components/tasks/TaskModal';
+import { motion } from 'framer-motion';
 
 const CalendarPage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -58,23 +59,28 @@ const CalendarPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <header className="mb-6">
-        <h1 className="font-heading text-2xl font-bold">Calendar</h1>
-        <p className="text-muted-foreground">
+    <div className="container max-w-7xl mx-auto p-8">
+      <header className="mb-8">
+        <h1 className="font-heading text-3xl font-bold tracking-tight">Calendar</h1>
+        <p className="text-muted-foreground mt-2">
           Visualize your tasks and schedule across time
         </p>
       </header>
       
-      <div className="grid grid-cols-1 md:grid-cols-7 md:gap-6">
-        <div className="md:col-span-5 mb-6 md:mb-0">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-heading text-lg font-semibold">
+      <div className="grid grid-cols-1 md:grid-cols-7 gap-8">
+        <motion.div 
+          className="md:col-span-5"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Card className="overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-heading text-xl font-semibold">
                   {format(currentDate, 'MMMM yyyy')}
                 </h2>
-                <div className="flex space-x-2">
+                <div className="flex items-center space-x-2">
                   <Button 
                     variant="outline" 
                     size="icon"
@@ -108,9 +114,9 @@ const CalendarPage: React.FC = () => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-7 gap-1 text-center">
+              <div className="grid grid-cols-7 gap-2">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                  <div key={day} className="text-xs font-medium text-muted-foreground py-2">
+                  <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
                     {day}
                   </div>
                 ))}
@@ -123,61 +129,31 @@ const CalendarPage: React.FC = () => {
                     task.dueDate && isSameDay(task.dueDate, day)
                   );
                   
-                  const isCurrentMonth = isSameMonth(day, currentDate);
-                  const isSelected = isSameDay(day, selectedDate);
-                  const isToday = isSameDay(day, new Date());
-                  
                   return (
-                    <div
+                    <CalendarDay
                       key={day.toString()}
+                      day={day}
+                      tasks={dayTasks}
+                      isSelected={isSameDay(day, selectedDate)}
+                      isToday={isSameDay(day, new Date())}
                       onClick={() => handleDateSelect(day)}
-                      className={cn(
-                        "h-12 md:h-16 flex flex-col items-center justify-start p-1 rounded-md cursor-pointer transition-colors relative",
-                        isCurrentMonth ? "bg-card" : "bg-muted/50 text-muted-foreground",
-                        isSelected ? "ring-2 ring-primary" : "",
-                        isToday ? "bg-accent" : ""
-                      )}
-                    >
-                      <span className={cn(
-                        "text-xs md:text-sm",
-                        isToday && "font-bold"
-                      )}>
-                        {format(day, 'd')}
-                      </span>
-                      {dayTasks.length > 0 && (
-                        <div className="absolute bottom-1 flex gap-1 justify-center w-full">
-                          {dayTasks.length <= 3 ? (
-                            dayTasks.map((task, i) => (
-                              <div 
-                                key={i}
-                                className="w-1.5 h-1.5 rounded-full"
-                                style={{ 
-                                  backgroundColor: task.category?.color || '#9b87f5',
-                                  opacity: task.completed ? 0.5 : 1
-                                }}
-                              />
-                            ))
-                          ) : (
-                            <>
-                              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                              <div className="text-xs font-medium">+{dayTasks.length - 2}</div>
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    />
                   );
                 })}
               </div>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
         
-        <div className="md:col-span-2">
+        <motion.div 
+          className="md:col-span-2"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-4">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-6">
                 <h3 className="font-heading text-lg font-semibold">
                   {format(selectedDate, 'MMMM d, yyyy')}
                 </h3>
@@ -193,11 +169,10 @@ const CalendarPage: React.FC = () => {
                   onDeleteTask={handleDeleteTask}
                 />
               ) : (
-                <div className="text-center py-6">
-                  <p className="text-muted-foreground">No tasks for this day</p>
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">No tasks for this day</p>
                   <Button 
                     variant="outline" 
-                    className="mt-2"
                     onClick={handleAddTask}
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -207,7 +182,7 @@ const CalendarPage: React.FC = () => {
               )}
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
       </div>
       
       <AddTaskButton onClick={handleAddTask} />

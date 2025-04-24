@@ -15,13 +15,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 const AppShell = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="flex">
-      {/* Left sidebar with larger left margin and top spacing */}
+    <div className="flex min-h-screen">
       <aside className="min-w-[60px] md:min-w-[220px] ml-6 md:ml-12">
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="p-0 mt-4">
-              {/* Hamburger menu icon */}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -49,7 +47,9 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
           <Sidebar />
         </div>
       </aside>
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 px-6 py-8">
+        {children}
+      </main>
     </div>
   );
 };
@@ -68,6 +68,7 @@ const Sidebar = () => {
           TaskBlossom <span role="img" aria-label="flower">🌸</span>
         </Link>
       </div>
+
       {/* Menu group container */}
       <nav className="flex flex-col gap-2 mb-10">
         {/* TODAY */}
@@ -84,6 +85,7 @@ const Sidebar = () => {
             Today
           </NavLink>
         </div>
+
         {/* CALENDAR */}
         <div className="rounded-lg bg-secondary px-2 py-1 mx-2 mb-1">
           <NavLink
@@ -98,6 +100,7 @@ const Sidebar = () => {
             Calendar
           </NavLink>
         </div>
+
         {/* TASKS */}
         <div className="rounded-lg bg-secondary px-2 py-1 mx-2 mb-1">
           <NavLink
@@ -112,6 +115,7 @@ const Sidebar = () => {
             Tasks
           </NavLink>
         </div>
+
         {/* CATEGORIES */}
         <div className="rounded-lg bg-secondary px-2 py-1 mx-2 mb-1">
           <NavLink
@@ -127,10 +131,12 @@ const Sidebar = () => {
           </NavLink>
         </div>
       </nav>
+
       <div className="mt-auto flex flex-col gap-4 px-3">
         <div className="flex items-center justify-between">
           <ModeToggle />
         </div>
+
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
