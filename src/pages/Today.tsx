@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
-import { motivationalQuotes } from '@/data/mockData';
+import { motivationalQuotes } from '@/data/taskData';
 import TaskList from '@/components/tasks/TaskList';
 import ProductivityBar from '@/components/common/ProductivityBar';
 import AddTaskButton from '@/components/common/AddTaskButton';

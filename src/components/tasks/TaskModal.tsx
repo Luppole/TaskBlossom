@@ -1,10 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { X, CalendarIcon, Clock } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import { Task, TaskPriority } from '@/types/task';
-import { mockCategories } from '@/data/mockData';
+import { Task, TaskPriority, TaskCategory } from '@/types/task';
+import { defaultCategories } from '@/data/taskData';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { useFirebase } from '@/contexts/FirebaseContext';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -31,17 +32,36 @@ const TaskModal: React.FC<TaskModalProps> = ({
   initialTask,
   initialDate
 }) => {
+  const { user, getCategories } = useFirebase();
   const [title, setTitle] = useState(initialTask?.title || '');
   const [dueDate, setDueDate] = useState<Date | undefined>(initialTask?.dueDate || initialDate || undefined);
   const [notes, setNotes] = useState(initialTask?.notes || '');
   const [priority, setPriority] = useState<TaskPriority>(initialTask?.priority || 'medium');
   const [categoryId, setCategoryId] = useState<string | undefined>(initialTask?.category?.id || undefined);
+  const [categories, setCategories] = useState<TaskCategory[]>(defaultCategories);
+  
+  useEffect(() => {
+    const loadCategories = async () => {
+      if (user) {
+        try {
+          const fetchedCategories = await getCategories();
+          if (fetchedCategories.length > 0) {
+            setCategories(fetchedCategories);
+          }
+        } catch (error) {
+          console.error('Error loading categories:', error);
+        }
+      }
+    };
+    
+    loadCategories();
+  }, [user, getCategories]);
   
   const handleSave = () => {
     if (!title.trim()) return;
     
     const category = categoryId 
-      ? mockCategories.find(cat => cat.id === categoryId) 
+      ? categories.find(cat => cat.id === categoryId) 
       : undefined;
     
     const newTask: Task = {
@@ -51,7 +71,6 @@ const TaskModal: React.FC<TaskModalProps> = ({
       dueDate,
       priority,
       category,
-      // Important: Always provide a string for notes or explicitly set to null
       notes: notes.trim() || null,
       createdAt: initialTask?.createdAt || new Date(),
     };
@@ -113,7 +132,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockCategories.map((category) => (
+                  {categories.map((category) => (
                     <SelectItem 
                       key={category.id} 
                       value={category.id}

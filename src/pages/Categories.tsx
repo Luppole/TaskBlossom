@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { mockCategories, mockTasks } from '@/data/mockData';
+import React, { useState, useEffect } from 'react';
+import { defaultCategories } from '@/data/taskData';
 import { TaskCategory } from '@/types/task';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,15 +8,49 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Plus } from 'lucide-react';
+import { useFirebase } from '@/contexts/FirebaseContext';
+import { toast } from 'sonner';
 
 const Categories: React.FC = () => {
-  const [categories, setCategories] = useState(mockCategories);
-  const [tasks, setTasks] = useState(mockTasks);
+  const { user, getCategories, saveCategories, getTasks } = useFirebase();
+  const [categories, setCategories] = useState<TaskCategory[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#B4A7D6');
+  const [isLoading, setIsLoading] = useState(true);
   
-  const handleAddCategory = () => {
+  // Load categories and tasks
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        if (user) {
+          // Load categories from Firebase
+          const fetchedCategories = await getCategories();
+          setCategories(fetchedCategories.length > 0 ? fetchedCategories : defaultCategories);
+          
+          // Load tasks for calculating progress
+          const fetchedTasks = await getTasks();
+          setTasks(fetchedTasks);
+        } else {
+          // Use default categories for non-logged in users
+          setCategories(defaultCategories);
+          setTasks([]);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+        toast.error('Failed to load categories');
+        setCategories(defaultCategories);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
+  }, [user, getCategories, getTasks]);
+  
+  const handleAddCategory = async () => {
     if (!newCategoryName.trim()) return;
     
     const newCategory: TaskCategory = {
@@ -25,10 +59,23 @@ const Categories: React.FC = () => {
       color: newCategoryColor
     };
     
-    setCategories([...categories, newCategory]);
-    setNewCategoryName('');
-    setNewCategoryColor('#B4A7D6');
-    setIsAddModalOpen(false);
+    try {
+      const updatedCategories = [...categories, newCategory];
+      setCategories(updatedCategories);
+      
+      if (user) {
+        // Save to Firebase if user is logged in
+        await saveCategories(updatedCategories);
+        toast.success('Category added');
+      }
+      
+      setNewCategoryName('');
+      setNewCategoryColor('#B4A7D6');
+      setIsAddModalOpen(false);
+    } catch (error) {
+      console.error('Error adding category:', error);
+      toast.error('Failed to add category');
+    }
   };
   
   const getTaskCountForCategory = (categoryId: string) => {
@@ -64,42 +111,54 @@ const Categories: React.FC = () => {
         </Button>
       </header>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {categories.map((category) => {
-          const taskCount = getTaskCountForCategory(category.id);
-          const progress = calculateProgress(category.id);
-          
-          return (
-            <Card key={category.id}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-4 h-4 rounded-full" 
-                      style={{ backgroundColor: category.color }}
-                    />
-                    <h3 className="font-heading text-lg font-semibold">{category.name}</h3>
-                  </div>
-                </div>
-                
-                <div className="text-sm text-muted-foreground mb-3">
-                  {taskCount} tasks · {progress}% complete
-                </div>
-                
-                <div className="w-full bg-muted rounded-full h-2 mb-4">
-                  <div 
-                    className="h-2 rounded-full" 
-                    style={{ 
-                      width: `${progress}%`, 
-                      backgroundColor: category.color
-                    }} 
-                  />
-                </div>
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="opacity-70">
+              <CardContent className="p-4 h-24 flex items-center justify-center">
+                <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
               </CardContent>
             </Card>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {categories.map((category) => {
+            const taskCount = getTaskCountForCategory(category.id);
+            const progress = calculateProgress(category.id);
+            
+            return (
+              <Card key={category.id}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-4 h-4 rounded-full" 
+                        style={{ backgroundColor: category.color }}
+                      />
+                      <h3 className="font-heading text-lg font-semibold">{category.name}</h3>
+                    </div>
+                  </div>
+                  
+                  <div className="text-sm text-muted-foreground mb-3">
+                    {taskCount} tasks · {progress}% complete
+                  </div>
+                  
+                  <div className="w-full bg-muted rounded-full h-2 mb-4">
+                    <div 
+                      className="h-2 rounded-full" 
+                      style={{ 
+                        width: `${progress}%`, 
+                        backgroundColor: category.color
+                      }} 
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
       
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent>
