@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek, addMonths, subMonths } from 'date-fns';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
@@ -74,24 +73,24 @@ const CalendarPage: React.FC = () => {
   };
 
   return (
-    <div className="container max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-      <header className="mb-8">
-        <h1 className="font-heading text-4xl font-bold tracking-tight mb-2">Calendar</h1>
-        <p className="text-muted-foreground text-lg">
+    <div className="container max-w-7xl mx-auto h-screen p-4 flex flex-col">
+      <header className="mb-4">
+        <h1 className="font-heading text-3xl font-bold tracking-tight mb-1">Calendar</h1>
+        <p className="text-muted-foreground">
           Visualize and manage your schedule
         </p>
       </header>
       
       <motion.div 
-        className="grid gap-8"
+        className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="font-heading text-2xl font-semibold">
+        <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow lg:col-span-2">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-heading text-xl font-semibold">
                 {format(currentDate, 'MMMM yyyy')}
               </h2>
               <div className="flex items-center space-x-2">
@@ -101,12 +100,12 @@ const CalendarPage: React.FC = () => {
                   onClick={handlePreviousMonth}
                   className="hover:bg-accent"
                 >
-                  <ChevronLeft className="h-5 w-5" />
+                  <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="icon" className="hover:bg-accent">
-                      <CalendarIcon className="h-5 w-5" />
+                      <CalendarIcon className="h-4 w-4" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="center">
@@ -115,7 +114,7 @@ const CalendarPage: React.FC = () => {
                       selected={selectedDate}
                       onSelect={(date) => date && handleDateSelect(date)}
                       initialFocus
-                      className="p-3 pointer-events-auto"
+                      className="p-2"
                     />
                   </PopoverContent>
                 </Popover>
@@ -125,14 +124,14 @@ const CalendarPage: React.FC = () => {
                   onClick={handleNextMonth}
                   className="hover:bg-accent"
                 >
-                  <ChevronRight className="h-5 w-5" />
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
             
-            <div className="grid grid-cols-7 gap-4">
+            <div className="grid grid-cols-7 gap-2 text-sm">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
+                <div key={day} className="text-center text-xs font-medium text-muted-foreground py-1">
                   {day}
                 </div>
               ))}
@@ -160,55 +159,47 @@ const CalendarPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <motion.div 
-          className="w-full"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <Card className="shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-heading text-xl font-semibold">
-                  Tasks for {format(selectedDate, 'MMMM d, yyyy')}
-                </h3>
-                <Button onClick={() => setIsAddTaskModalOpen(true)} className="bg-primary hover:bg-primary/90 text-white shadow-md transition-all">
-                  <Plus className="h-5 w-5 mr-2" />
-                  Add Task
-                </Button>
-              </div>
-              
-              <div className="space-y-4">
+        <Card className="shadow-lg overflow-y-auto">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-heading text-lg font-semibold">
+                Tasks for {format(selectedDate, 'MMM d')}
+              </h3>
+              <Button onClick={handleAddTask} size="sm" className="bg-primary hover:bg-primary/90 text-white shadow-sm">
+                <Plus className="h-4 w-4 mr-1" />
+                Add
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 auto-rows-min">
+              {selectedDateTasks.length > 0 ? (
                 <TaskList 
                   tasks={selectedDateTasks} 
                   onToggleComplete={handleToggleComplete}
                   onDeleteTask={handleDeleteTask}
                 />
-
-                {selectedDateTasks.length === 0 && (
-                  <motion.div 
-                    className="text-center py-8"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+              ) : (
+                <motion.div 
+                  className="text-center py-6 col-span-full"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <p className="text-muted-foreground text-sm mb-3">No tasks scheduled</p>
+                  <Button 
+                    variant="outline"
+                    onClick={handleAddTask}
+                    className="hover:bg-accent"
+                    size="sm"
                   >
-                    <p className="text-muted-foreground mb-4">No tasks scheduled for this day</p>
-                    <Button 
-                      variant="outline"
-                      onClick={() => setIsAddTaskModalOpen(true)}
-                      className="hover:bg-accent"
-                    >
-                      <Plus className="h-5 w-5 mr-2" />
-                      Add Your First Task
-                    </Button>
-                  </motion.div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Your First Task
+                  </Button>
+                </motion.div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
-      
-      <AddTaskButton onClick={() => setIsAddTaskModalOpen(true)} />
       
       {isAddTaskModalOpen && (
         <TaskModal 
