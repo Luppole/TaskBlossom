@@ -13,6 +13,7 @@ import { motion } from 'framer-motion';
 import CalendarDay from '@/components/calendar/EnhancedCalendarView';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { toast } from 'sonner';
+import { Calendar } from '@/components/ui/calendar';
 
 const CalendarPage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -73,7 +74,7 @@ const CalendarPage: React.FC = () => {
   };
 
   return (
-    <div className="container max-w-7xl mx-auto p-8 space-y-8">
+    <div className="container max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
       <header className="mb-8">
         <h1 className="font-heading text-4xl font-bold tracking-tight mb-2">Calendar</h1>
         <p className="text-muted-foreground text-lg">
@@ -171,7 +172,7 @@ const CalendarPage: React.FC = () => {
                 <h3 className="font-heading text-xl font-semibold">
                   Tasks for {format(selectedDate, 'MMMM d, yyyy')}
                 </h3>
-                <Button onClick={() => setIsAddTaskModalOpen(true)}>
+                <Button onClick={() => setIsAddTaskModalOpen(true)} className="bg-primary hover:bg-primary/90 text-white shadow-md transition-all">
                   <Plus className="h-5 w-5 mr-2" />
                   Add Task
                 </Button>
