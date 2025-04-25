@@ -11,6 +11,7 @@ import Tasks from "./pages/Tasks";
 import Categories from "./pages/Categories";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import Fitness from "./pages/Fitness";
 import AppShell from "./components/layout/AppShell";
 import PageTransition from "./components/common/PageTransition";
 import { FirebaseProvider } from "./contexts/FirebaseContext";
@@ -36,6 +37,7 @@ const AnimatedRoutes = () => {
         <Route path="/tasks" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Tasks /></div></PageTransition>} />
         <Route path="/categories" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Categories /></div></PageTransition>} />
         <Route path="/settings" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Settings /></div></PageTransition>} />
+        <Route path="/fitness" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Fitness /></div></PageTransition>} />
         <Route path="*" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><NotFound /></div></PageTransition>} />
       </Routes>
     </AnimatePresence>

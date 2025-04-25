@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { CalendarDays, FolderKanban, CheckCircle, Settings, LayoutDashboard } from 'lucide-react';
+import { CalendarDays, FolderKanban, CheckCircle, Settings, LayoutDashboard, Dumbbell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const MobileNavbar: React.FC = () => {
@@ -24,9 +24,9 @@ const MobileNavbar: React.FC = () => {
       icon: CheckCircle,
     },
     {
-      title: 'Categories',
-      path: '/categories',
-      icon: FolderKanban,
+      title: 'Fitness',
+      path: '/fitness',
+      icon: Dumbbell,
     },
     {
       title: 'Settings',

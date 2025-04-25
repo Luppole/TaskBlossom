@@ -10,7 +10,7 @@ import { Link, NavLink } from 'react-router-dom';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Settings, User } from 'lucide-react';
+import { Settings, User, Dumbbell } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const AppShell = ({ children }: { children: React.ReactNode }) => {
@@ -173,6 +173,18 @@ const Sidebar = () => {
           >
             <span className="text-lg">🏷️</span>
             <span className="text-sm">Categories</span>
+          </NavLink>
+          
+          <NavLink
+            to="/fitness"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-accent/50 ${
+                isActive ? 'bg-accent text-accent-foreground font-medium' : 'text-muted-foreground'
+              }`
+            }
+          >
+            <Dumbbell className="h-5 w-5" />
+            <span className="text-sm">Fitness</span>
           </NavLink>
         </div>
       </nav>
