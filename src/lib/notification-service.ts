@@ -129,3 +129,14 @@ declare global {
 if (typeof window !== 'undefined' && !window.taskReminderTimers) {
   window.taskReminderTimers = [];
 }
+
+export const getFirebaseNotificationPermission = async () => {
+  try {
+    const permission = await Notification.requestPermission();
+    console.log("Browser notification permission status:", permission);
+    return permission;
+  } catch (error) {
+    console.error("Error checking notification permission:", error);
+    return "denied";
+  }
+};

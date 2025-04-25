@@ -29,6 +29,7 @@ let messaging: any = null;
 if (typeof window !== 'undefined') {
   try {
     messaging = getMessaging(app);
+    console.log("Firebase messaging initialized successfully");
   } catch (error) {
     console.error("Firebase messaging failed to initialize:", error);
   }
@@ -38,15 +39,27 @@ export { messaging };
 
 // Function to request notification permission
 export const requestNotificationPermission = async () => {
-  if (!messaging) return false;
+  if (!messaging) {
+    console.log("Messaging is not available");
+    return false;
+  }
   
   try {
+    console.log("Requesting notification permission...");
     const permission = await Notification.requestPermission();
+    console.log("Permission status:", permission);
+    
     if (permission === 'granted') {
-      const token = await getToken(messaging, {
-        vapidKey: 'BMkP2IlsKCXZJKLCKfmJSjnhKqQqB4x3QnOr54KtgXeYHx_FIlIkB2g_SyRXJD8otzB5ffY7r_9w4s8iWd7G8Xk' // This is a placeholder - you need to generate your own VAPID key
-      });
-      return !!token;
+      try {
+        const token = await getToken(messaging, {
+          vapidKey: 'BMkP2IlsKCXZJKLCKfmJSjnhKqQqB4x3QnOr54KtgXeYHx_FIlIkB2g_SyRXJD8otzB5ffY7r_9w4s8iWd7G8Xk' // This is a placeholder - you need to generate your own VAPID key
+        });
+        console.log("Notification token received:", token ? "Success" : "Failed");
+        return !!token;
+      } catch (tokenError) {
+        console.error("Error getting token:", tokenError);
+        return false;
+      }
     }
     return false;
   } catch (error) {
