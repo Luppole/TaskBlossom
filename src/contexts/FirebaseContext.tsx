@@ -20,7 +20,8 @@ import {
   deleteDoc, 
   onSnapshot, 
   Timestamp,
-  addDoc
+  addDoc,
+  DocumentData
 } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { Task, TaskCategory, WorkoutSession, MealLog, FoodItem, Exercise, ProgressLog, FitnessGoals } from '@/types/task';
@@ -386,12 +387,14 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const querySnapshot = await getDocs(q);
       
       return querySnapshot.docs.map(doc => {
-        const data = doc.data();
+        const data = doc.data() as DocumentData;
         return {
-          ...data,
           id: doc.id,
-          date: (data.date as Timestamp).toDate(),
-          foods: data.foods || []
+          date: data.date ? (data.date as Timestamp).toDate() : new Date(),
+          mealType: data.mealType || 'snack',
+          foods: Array.isArray(data.foods) ? data.foods : [],
+          notes: data.notes || null,
+          userId: data.userId
         } as MealLog;
       });
     } catch (error) {
