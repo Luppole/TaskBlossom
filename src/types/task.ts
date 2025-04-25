@@ -11,6 +11,7 @@ export interface Task {
   id: string;
   title: string;
   completed: boolean;
+  completedAt?: string | null;
   dueDate?: Date;
   priority: TaskPriority;
   category?: TaskCategory;
