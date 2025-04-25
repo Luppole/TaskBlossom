@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { motivationalQuotes } from '@/data/taskData';
@@ -16,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Clock, Focus } from 'lucide-react';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { setupTaskNotifications } from '@/lib/notification-service';
+import { calculateStreak } from '@/utils/streak-calculator';
 
 const Today: React.FC = () => {
   const { 
@@ -87,12 +87,21 @@ const Today: React.FC = () => {
       const taskToToggle = tasks.find(t => t.id === taskId);
       if (!taskToToggle) return;
       
+      const now = new Date().toISOString();
+      
       setTasks(prev => 
-        prev.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t)
+        prev.map(t => t.id === taskId ? { 
+          ...t, 
+          completed: !t.completed,
+          completedAt: !t.completed ? now : null 
+        } : t)
       );
       
       if (user) {
-        await updateTask(taskId, { completed: !taskToToggle.completed });
+        await updateTask(taskId, { 
+          completed: !taskToToggle.completed,
+          completedAt: !taskToToggle.completed ? now : null
+        });
       }
     } catch (error) {
       console.error('Error toggling task completion:', error);
@@ -102,7 +111,11 @@ const Today: React.FC = () => {
       if (!taskToToggle) return;
       
       setTasks(prev => 
-        prev.map(t => t.id === taskId ? { ...t, completed: taskToToggle.completed } : t)
+        prev.map(t => t.id === taskId ? { 
+          ...t, 
+          completed: taskToToggle.completed,
+          completedAt: taskToToggle.completedAt 
+        } : t)
       );
     }
   };
@@ -164,10 +177,16 @@ const Today: React.FC = () => {
     return '🌙 Good Evening';
   };
   
-  const todaysTasks = tasks.filter(task => 
-    task.dueDate && 
-    task.dueDate.toDateString() === new Date().toDateString()
-  );
+  const todaysTasks = tasks.filter(task => {
+    const isToday = task.dueDate && 
+      task.dueDate.toDateString() === new Date().toDateString();
+      
+    const isOverdue = task.dueDate && 
+      task.dueDate < new Date() && 
+      !task.completed;
+      
+    return isToday || isOverdue;
+  });
   
   const getFilteredTasks = () => {
     switch (filter) {
@@ -196,6 +215,8 @@ const Today: React.FC = () => {
 
   const filteredTasks = getFilteredTasks();
   const pendingCount = todaysTasks.filter(task => !task.completed).length;
+
+  const streak = calculateStreak(tasks);
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 md:px-8">
@@ -226,7 +247,7 @@ const Today: React.FC = () => {
       </motion.header>
       
       <section className="mb-6">
-        <ProductivityBar tasks={tasks} />
+        <ProductivityBar tasks={todaysTasks} streak={streak} />
       </section>
       
       <motion.div
