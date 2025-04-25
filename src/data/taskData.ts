@@ -1,3 +1,4 @@
+
 export const motivationalQuotes = [
   "The only way to do great work is to love what you do.",
   "Believe you can and you're halfway there.",
@@ -34,12 +35,17 @@ export const defaultCategories = [
   },
   {
     id: '3',
-    name: 'Shopping',
+    name: 'Education',
     color: '#10b981'
   },
   {
     id: '4',
-    name: 'GYM',
+    name: 'Finance',
     color: '#f97316'
+  },
+  {
+    id: '5',
+    name: 'GYM',
+    color: '#8b5cf6'
   }
 ];

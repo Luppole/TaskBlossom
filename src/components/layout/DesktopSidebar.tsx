@@ -10,11 +10,13 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import { CalendarDays, FolderKanban, CheckCircle, Settings, LayoutDashboard } from 'lucide-react';
+import { CalendarDays, FolderKanban, CheckCircle, Settings, LayoutDashboard, Dumbbell } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFirebase } from '@/contexts/FirebaseContext';
 
 const DesktopSidebar: React.FC = () => {
   const location = useLocation();
+  const { user } = useFirebase();
   
   const menuItems = [
     {
@@ -38,11 +40,20 @@ const DesktopSidebar: React.FC = () => {
       icon: FolderKanban,
     },
     {
+      title: 'Fitness',
+      path: '/fitness',
+      icon: Dumbbell,
+      requiresAuth: true,
+    },
+    {
       title: 'Settings',
       path: '/settings',
       icon: Settings,
     },
   ];
+
+  // Filter out items that require authentication if user is not logged in
+  const filteredMenuItems = menuItems.filter(item => !item.requiresAuth || user);
 
   return (
     <Sidebar>
@@ -55,7 +66,7 @@ const DesktopSidebar: React.FC = () => {
       
       <SidebarContent>
         <SidebarMenu>
-          {menuItems.map((item) => (
+          {filteredMenuItems.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild className={cn(
                 "flex items-center gap-3",

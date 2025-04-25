@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import WorkoutModal from './WorkoutModal';
 import { WorkoutSession } from '@/types/task';
@@ -11,35 +11,31 @@ import { useFirebase } from '@/contexts/FirebaseContext';
 import { toast } from 'sonner';
 
 const WorkoutLog = () => {
-  const { user } = useFirebase();
-  const [workouts, setWorkouts] = useState<WorkoutSession[]>([
-    {
-      id: '1',
-      date: new Date(),
-      type: 'Upper Body',
-      duration: 45,
-      notes: 'Felt good, increased weight on bench press',
-      exercises: [
-        { id: '1', name: 'Bench Press', sets: 3, reps: 10, weight: 70, notes: null },
-        { id: '2', name: 'Pull-ups', sets: 3, reps: 8, weight: 0, notes: 'Bodyweight' },
-        { id: '3', name: 'Shoulder Press', sets: 3, reps: 12, weight: 20, notes: null },
-      ],
-    },
-    {
-      id: '2',
-      date: new Date(Date.now() - 86400000 * 2), // 2 days ago
-      type: 'Lower Body',
-      duration: 60,
-      notes: 'Focused on form for squats',
-      exercises: [
-        { id: '1', name: 'Squats', sets: 4, reps: 8, weight: 90, notes: null },
-        { id: '2', name: 'Deadlifts', sets: 3, reps: 6, weight: 100, notes: null },
-        { id: '3', name: 'Leg Press', sets: 3, reps: 12, weight: 150, notes: null },
-      ],
-    }
-  ]);
+  const { user, getWorkouts, createWorkout, updateWorkout, deleteWorkout } = useFirebase();
+  const [workouts, setWorkouts] = useState<WorkoutSession[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedWorkout, setSelectedWorkout] = useState<WorkoutSession | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load workouts from Firebase
+  useEffect(() => {
+    const loadWorkouts = async () => {
+      if (user) {
+        setIsLoading(true);
+        try {
+          const fetchedWorkouts = await getWorkouts();
+          setWorkouts(fetchedWorkouts);
+        } catch (error) {
+          console.error('Error loading workouts:', error);
+          toast.error('Failed to load workouts');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadWorkouts();
+  }, [user, getWorkouts]);
 
   const handleAddWorkout = () => {
     setSelectedWorkout(null);
@@ -51,17 +47,35 @@ const WorkoutLog = () => {
     setIsModalOpen(true);
   };
 
-  const handleSaveWorkout = (workout: WorkoutSession) => {
-    if (selectedWorkout) {
-      // Edit existing workout
-      setWorkouts(workouts.map(w => w.id === workout.id ? workout : w));
-      toast.success('Workout updated successfully');
-    } else {
-      // Add new workout
-      setWorkouts([...workouts, workout]);
-      toast.success('Workout added successfully');
+  const handleSaveWorkout = async (workout: WorkoutSession) => {
+    try {
+      if (selectedWorkout) {
+        // Edit existing workout
+        await updateWorkout(workout.id, workout);
+        setWorkouts(workouts.map(w => w.id === workout.id ? workout : w));
+        toast.success('Workout updated successfully');
+      } else {
+        // Add new workout
+        const newWorkout = await createWorkout(workout);
+        setWorkouts([newWorkout, ...workouts]);
+        toast.success('Workout added successfully');
+      }
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Error saving workout:', error);
+      toast.error('Failed to save workout');
     }
-    setIsModalOpen(false);
+  };
+
+  const handleDeleteWorkout = async (workoutId: string) => {
+    try {
+      await deleteWorkout(workoutId);
+      setWorkouts(workouts.filter(w => w.id !== workoutId));
+      toast.success('Workout deleted successfully');
+    } catch (error) {
+      console.error('Error deleting workout:', error);
+      toast.error('Failed to delete workout');
+    }
   };
 
   return (
@@ -74,7 +88,11 @@ const WorkoutLog = () => {
         </Button>
       </div>
       
-      {workouts.length === 0 ? (
+      {isLoading ? (
+        <div className="text-center py-10">
+          <div className="animate-pulse">Loading workouts...</div>
+        </div>
+      ) : workouts.length === 0 ? (
         <div className="text-center py-10">
           <motion.div 
             animate={{ y: [0, -10, 0] }} 

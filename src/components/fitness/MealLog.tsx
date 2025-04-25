@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MealLog as MealLogType, FoodItem } from '@/types/task';
@@ -13,38 +13,37 @@ import { Label } from '@/components/ui/label';
 import { v4 as uuidv4 } from 'uuid';
 
 const MealLog = () => {
-  const { user } = useFirebase();
+  const { user, getMeals, createMeal, updateMeal } = useFirebase();
+  const [meals, setMeals] = useState<MealLogType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const today = new Date();
   
-  const [meals, setMeals] = useState<MealLogType[]>([
-    {
-      id: '1',
-      date: today,
-      mealType: 'breakfast',
-      foods: [
-        { id: '1', name: 'Oatmeal', quantity: 1, unit: 'bowl', calories: 200 },
-        { id: '2', name: 'Banana', quantity: 1, unit: 'medium', calories: 105 },
-      ],
-      notes: null,
-    },
-    {
-      id: '2',
-      date: today,
-      mealType: 'lunch',
-      foods: [
-        { id: '1', name: 'Chicken Salad', quantity: 1, unit: 'bowl', calories: 350 },
-        { id: '2', name: 'Whole Grain Bread', quantity: 2, unit: 'slice', calories: 180 },
-      ],
-      notes: null,
-    },
-  ]);
-
   const [newFoods, setNewFoods] = useState<Record<string, FoodItem>>({
     breakfast: { id: uuidv4(), name: '', quantity: 1, unit: 'serving', calories: 0 },
     lunch: { id: uuidv4(), name: '', quantity: 1, unit: 'serving', calories: 0 },
     dinner: { id: uuidv4(), name: '', quantity: 1, unit: 'serving', calories: 0 },
     snack: { id: uuidv4(), name: '', quantity: 1, unit: 'serving', calories: 0 },
   });
+  
+  // Load meals from Firebase
+  useEffect(() => {
+    const loadMeals = async () => {
+      if (user) {
+        setIsLoading(true);
+        try {
+          const todayMeals = await getMeals(today);
+          setMeals(todayMeals);
+        } catch (error) {
+          console.error('Error loading meals:', error);
+          toast.error('Failed to load meals');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadMeals();
+  }, [user, getMeals, today]);
   
   const mealTypeIcons = {
     breakfast: <Coffee className="h-5 w-5" />,
@@ -77,7 +76,7 @@ const MealLog = () => {
     };
   };
   
-  const handleAddFood = (mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack') => {
+  const handleAddFood = async (mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack') => {
     const food = newFoods[mealType];
     
     if (!food.name.trim() || food.calories <= 0) {
@@ -85,51 +84,81 @@ const MealLog = () => {
       return;
     }
     
-    const existingMeal = meals.find(meal => meal.mealType === mealType);
-    
-    if (existingMeal) {
-      // Add to existing meal
-      const updatedMeals = meals.map(meal => 
-        meal.mealType === mealType 
-          ? { ...meal, foods: [...meal.foods, food] }
-          : meal
-      );
-      setMeals(updatedMeals);
-    } else {
-      // Create new meal
-      const newMeal: MealLogType = {
-        id: uuidv4(),
-        date: today,
-        mealType,
-        foods: [food],
-        notes: null,
-      };
-      setMeals([...meals, newMeal]);
+    try {
+      const existingMeal = meals.find(meal => meal.mealType === mealType);
+      
+      if (existingMeal) {
+        // Add to existing meal
+        const updatedFoods = [...existingMeal.foods, food];
+        await updateMeal(existingMeal.id, { foods: updatedFoods });
+        
+        // Update local state
+        setMeals(meals.map(meal => 
+          meal.id === existingMeal.id 
+            ? { ...meal, foods: updatedFoods }
+            : meal
+        ));
+      } else {
+        // Create new meal
+        const newMeal: Omit<MealLogType, 'id'> = {
+          date: today,
+          mealType,
+          foods: [food],
+          notes: null,
+        };
+        
+        const savedMeal = await createMeal(newMeal);
+        setMeals([...meals, savedMeal]);
+      }
+      
+      // Reset input
+      setNewFoods({
+        ...newFoods,
+        [mealType]: { id: uuidv4(), name: '', quantity: 1, unit: 'serving', calories: 0 }
+      });
+      
+      toast.success('Food added');
+    } catch (error) {
+      console.error('Error adding food:', error);
+      toast.error('Failed to add food');
     }
-    
-    // Reset input
-    setNewFoods({
-      ...newFoods,
-      [mealType]: { id: uuidv4(), name: '', quantity: 1, unit: 'serving', calories: 0 }
-    });
-    
-    toast.success('Food added');
   };
   
-  const handleRemoveFood = (mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack', foodId: string) => {
-    const updatedMeals = meals.map(meal => {
-      if (meal.mealType === mealType) {
-        return {
-          ...meal,
-          foods: meal.foods.filter(food => food.id !== foodId)
-        };
+  const handleRemoveFood = async (mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack', foodId: string) => {
+    try {
+      const meal = meals.find(m => m.mealType === mealType);
+      if (!meal) return;
+      
+      const updatedFoods = meal.foods.filter(food => food.id !== foodId);
+      
+      if (updatedFoods.length > 0) {
+        // Update meal with remaining foods
+        await updateMeal(meal.id, { foods: updatedFoods });
+        
+        // Update local state
+        setMeals(meals.map(m => 
+          m.id === meal.id 
+            ? { ...m, foods: updatedFoods }
+            : m
+        ));
+      } else {
+        // If no foods left, we could delete the meal entirely
+        // But for now, let's just update with empty foods array
+        await updateMeal(meal.id, { foods: [] });
+        
+        // Update local state
+        setMeals(meals.map(m => 
+          m.id === meal.id 
+            ? { ...m, foods: [] }
+            : m
+        ));
       }
-      return meal;
-    })
-    .filter(meal => meal.foods.length > 0);
-    
-    setMeals(updatedMeals);
-    toast.success('Food removed');
+      
+      toast.success('Food removed');
+    } catch (error) {
+      console.error('Error removing food:', error);
+      toast.error('Failed to remove food');
+    }
   };
   
   const handleFoodChange = (
@@ -176,7 +205,11 @@ const MealLog = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-4">
-          {meal.foods.length > 0 ? (
+          {isLoading ? (
+            <div className="text-center py-4">
+              <div className="animate-pulse">Loading...</div>
+            </div>
+          ) : meal.foods.length > 0 ? (
             <div className="space-y-2">
               {meal.foods.map(food => (
                 <div key={food.id} className="flex justify-between items-center text-sm">
