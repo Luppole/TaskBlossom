@@ -738,7 +738,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             return {
               id: doc.id,
               ...data,
-              timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate() : data.timestamp,
+              timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate() : new Date(data.timestamp),
               friendId: friend.userId,
               friendName: friend.displayName
             } as ActivityItem;
@@ -784,7 +784,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           return {
             id: doc.id,
             ...data,
-            date: data.date instanceof Timestamp ? data.date.toDate() : data.date
+            date: data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date)
           };
         });
         
@@ -802,7 +802,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           return {
             id: doc.id,
             ...data,
-            date: data.date instanceof Timestamp ? data.date.toDate() : data.date
+            date: data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date)
           };
         });
         
