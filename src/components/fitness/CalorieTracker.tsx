@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,11 +9,11 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import { useFirebase } from '@/contexts/FirebaseContext';
+import { useSupabase } from '@/contexts/SupabaseContext';
 import { ProgressLog, FitnessGoals } from '@/types/task';
 
 const CalorieTracker = () => {
-  const { user, getMeals, getProgressLogs, createProgressLog, getFitnessGoals, updateFitnessGoals } = useFirebase();
+  const { user, getMeals, getProgressLogs, createProgressLog, getFitnessGoals, updateFitnessGoals } = useSupabase();
   
   const [weight, setWeight] = useState("");
   const [dailyCalorieGoal, setDailyCalorieGoal] = useState(2000);
@@ -22,7 +21,7 @@ const CalorieTracker = () => {
   const [caloriesConsumed, setCaloriesConsumed] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load data from Firebase
+  // Load data from Supabase
   useEffect(() => {
     const loadData = async () => {
       if (user) {
@@ -31,7 +30,7 @@ const CalorieTracker = () => {
           // Load fitness goals
           const goals = await getFitnessGoals();
           if (goals) {
-            setDailyCalorieGoal(goals.dailyCalorieGoal);
+            setDailyCalorieGoal(goals.daily_calorie_goal);
           }
           
           // Load progress logs for weight tracking
@@ -44,8 +43,8 @@ const CalorieTracker = () => {
           
           let totalCalories = 0;
           meals.forEach(meal => {
-            meal.foods.forEach(food => {
-              totalCalories += food.calories;
+            (meal.foods || []).forEach((food: any) => {
+              totalCalories += food.calories || 0;
             });
           });
           

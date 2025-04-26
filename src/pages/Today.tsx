@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { motivationalQuotes } from '@/data/taskData';
@@ -8,7 +9,7 @@ import FocusMode from '@/components/focus/FocusMode';
 import { Task } from '@/types/task';
 import { toast } from 'sonner';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
-import { useFirebase } from '@/contexts/FirebaseContext';
+import { useSupabase } from '@/contexts/SupabaseContext';
 import { setupTaskNotifications } from '@/lib/notification-service';
 import { calculateStreak } from '@/utils/streak-calculator';
 import TodayHeader from '@/components/today/TodayHeader';
@@ -23,9 +24,8 @@ const Today: React.FC = () => {
     createTask,
     updateTask,
     deleteTask,
-    userSettings,
-    loading: firebaseLoading 
-  } = useFirebase();
+    loading: supabaseLoading 
+  } = useSupabase();
   
   const [tasks, setTasks] = useState<Task[]>([]);
   const [quote, setQuote] = useState('');
@@ -40,7 +40,7 @@ const Today: React.FC = () => {
   });
   
   const fetchTasks = useCallback(async () => {
-    if (isLoading && !firebaseLoading) {
+    if (isLoading && !supabaseLoading) {
       try {
         if (user) {
           const fetchedTasks = await getTasks();
@@ -56,7 +56,7 @@ const Today: React.FC = () => {
         setIsLoading(false);
       }
     }
-  }, [getTasks, user, isLoading, firebaseLoading]);
+  }, [getTasks, user, isLoading, supabaseLoading]);
   
   const memoizedQuote = useMemo(() => {
     const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
@@ -76,21 +76,21 @@ const Today: React.FC = () => {
   }, [memoizedQuote]);
   
   useEffect(() => {
-    if (!firebaseLoading) {
-      console.log("Firebase loading complete, fetching tasks now");
+    if (!supabaseLoading) {
+      console.log("Supabase loading complete, fetching tasks now");
       fetchTasks();
     }
-  }, [fetchTasks, firebaseLoading]);
+  }, [fetchTasks, supabaseLoading]);
   
   useEffect(() => {
-    if (!notificationsSetupComplete && user && userSettings && tasks.length > 0) {
+    if (!notificationsSetupComplete && user && tasks.length > 0) {
       notificationsSetupComplete = true;
       setupTaskNotifications(tasks, {
-        taskReminders: userSettings?.taskReminders || false,
-        overdueAlerts: userSettings?.overdueAlerts || false
+        taskReminders: true,
+        overdueAlerts: true
       });
     }
-  }, [tasks, userSettings, user]);
+  }, [tasks, user]);
   
   const handleToggleComplete = async (taskId: string) => {
     try {
@@ -218,7 +218,7 @@ const Today: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 md:px-8">
       <TodayHeader
-        greeting={`${getGreeting()}, ${user?.displayName || 'Guest'}`}
+        greeting={`${getGreeting()}, ${user?.user_metadata?.display_name || 'Guest'}`}
         quote={quote}
         isFirstVisit={isFirstVisit}
         onStartFocusMode={() => setIsFocusModeOpen(true)}
@@ -233,8 +233,8 @@ const Today: React.FC = () => {
         filter={filter}
         onFilterChange={setFilter}
         onToggleComplete={handleToggleComplete}
-        onDeleteTask={deleteTask}
-        isLoading={isLoading || firebaseLoading}
+        onDeleteTask={handleDeleteTask}
+        isLoading={isLoading || supabaseLoading}
         user={user}
         pendingCount={pendingCount}
       />

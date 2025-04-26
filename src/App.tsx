@@ -18,7 +18,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import AppShell from "./components/layout/AppShell";
 import PageTransition from "./components/common/PageTransition";
-import { FirebaseProvider, useFirebase } from "./contexts/FirebaseContext";
+import { SupabaseProvider, useSupabase } from "./contexts/SupabaseContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import "./i18n/i18n";
 
@@ -32,7 +32,7 @@ const queryClient = new QueryClient({
 });
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useFirebase();
+  const { user, loading } = useSupabase();
   
   if (loading) {
     return null;
@@ -74,7 +74,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <FirebaseProvider>
+        <SupabaseProvider>
           <ThemeProvider>
             <TooltipProvider>
               <Toaster />
@@ -82,7 +82,7 @@ const App = () => {
               <AnimatedRoutes />
             </TooltipProvider>
           </ThemeProvider>
-        </FirebaseProvider>
+        </SupabaseProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );

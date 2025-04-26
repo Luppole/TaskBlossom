@@ -1,44 +1,35 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import LoginForm from '@/components/auth/LoginForm';
-import { GoogleAuthProvider, signInWithPopup, signInWithRedirect } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { toast } from 'sonner';
-import { Info } from 'lucide-react';  // Changed from InfoCircle to Info
+import { Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useSupabase } from '@/contexts/SupabaseContext';
+import { toast } from 'sonner';
 
 const Login = () => {
   const navigate = useNavigate();
   const [showDomainAlert, setShowDomainAlert] = useState(false);
+  const { user } = useSupabase();
+  
+  useEffect(() => {
+    // If user is already logged in, redirect to home
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
   
   const handleGoogleLogin = async () => {
     try {
-      const provider = new GoogleAuthProvider();
-      // First try with popup (works on most environments)
-      await signInWithPopup(auth, provider);
-      toast.success('Successfully logged in with Google!');
-      navigate('/');
+      // Implement Supabase Google login here when needed
+      toast.error('Google login is not implemented yet');
     } catch (error: any) {
       console.error('Google login error:', error);
-      
-      // Handle unauthorized domain error
-      if (error.code === 'auth/unauthorized-domain') {
-        setShowDomainAlert(true);
-        toast.error('This domain is not authorized for Google login');
-      } else {
-        // Try with redirect as fallback for some environments
-        try {
-          const provider = new GoogleAuthProvider();
-          await signInWithRedirect(auth, provider);
-        } catch (redirectError) {
-          console.error('Google redirect login error:', redirectError);
-          toast.error('Failed to log in with Google');
-        }
-      }
+      setShowDomainAlert(true);
+      toast.error('This domain is not authorized for Google login');
     }
   };
 
@@ -50,11 +41,11 @@ const Login = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {showDomainAlert && (
-            <Alert variant="default">  {/* Changed from "warning" to "default" */}
+            <Alert variant="default">
               <Info className="h-4 w-4" />
               <AlertDescription>
                 This domain is not authorized for Google login. In a development environment, 
-                use email/password login instead or add this domain to Firebase authorized domains.
+                use email/password login instead or add this domain to Supabase authorized domains.
               </AlertDescription>
             </Alert>
           )}
@@ -109,4 +100,3 @@ const Login = () => {
 };
 
 export default Login;
-

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useFirebase } from '@/contexts/FirebaseContext';
+import { useSupabase } from '@/contexts/SupabaseContext';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
@@ -17,7 +17,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ setLoading, onSuccess }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   
-  const { signIn } = useFirebase();
+  const { signIn } = useSupabase();
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,12 +37,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ setLoading, onSuccess }) => {
     } catch (error: any) {
       let errorMessage = 'Failed to log in';
       
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+      // Handle Supabase auth errors
+      if (error.message.includes('Email not confirmed')) {
+        errorMessage = 'Please confirm your email before logging in';
+      } else if (error.message.includes('Invalid login credentials')) {
         errorMessage = 'Invalid email or password';
-      } else if (error.code === 'auth/too-many-requests') {
+      } else if (error.message.includes('Too many requests')) {
         errorMessage = 'Too many failed login attempts. Please try again later';
-      } else if (error.code === 'auth/invalid-credential') {
-        errorMessage = 'Invalid credentials';
       }
       
       setError(errorMessage);

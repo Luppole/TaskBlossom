@@ -6,7 +6,7 @@ import TaskModal from '@/components/tasks/TaskModal';
 import { Input } from '@/components/ui/input';
 import { Task } from '@/types/task';
 import { Search, AlertCircle } from 'lucide-react';
-import { useFirebase } from '@/contexts/FirebaseContext';
+import { useSupabase } from '@/contexts/SupabaseContext';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -20,8 +20,8 @@ const Tasks: React.FC = () => {
     createTask,
     updateTask,
     deleteTask,
-    loading: firebaseLoading,
-  } = useFirebase();
+    loading: supabaseLoading,
+  } = useSupabase();
 
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -30,7 +30,7 @@ const Tasks: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  // Load tasks from Firestore
+  // Load tasks from Supabase
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -52,18 +52,18 @@ const Tasks: React.FC = () => {
   }, [getTasks, user]);
 
   useEffect(() => {
-    if (!firebaseLoading) {
+    if (!supabaseLoading) {
       fetchTasks();
     }
-  }, [fetchTasks, user, firebaseLoading]);
+  }, [fetchTasks, user, supabaseLoading]);
 
   // Redirect to login if not authenticated after loading
   useEffect(() => {
-    if (!firebaseLoading && !user) {
+    if (!supabaseLoading && !user) {
       toast.error('Please login to view your tasks');
       navigate('/login');
     }
-  }, [firebaseLoading, user, navigate]);
+  }, [supabaseLoading, user, navigate]);
 
   const handleToggleComplete = async (taskId: string) => {
     try {
@@ -77,7 +77,7 @@ const Tasks: React.FC = () => {
         )
       );
       
-      // If user is signed in, persist to Firebase
+      // If user is signed in, persist to Supabase
       if (user) {
         await updateTask(taskId, { completed: !taskToToggle.completed });
       }
@@ -102,7 +102,7 @@ const Tasks: React.FC = () => {
       // Optimistically remove from UI
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
       
-      // If user is signed in, delete from Firebase
+      // If user is signed in, delete from Supabase
       if (user) {
         await deleteTask(taskId);
         toast.success('Task deleted');
@@ -172,7 +172,7 @@ const Tasks: React.FC = () => {
   });
 
   // Show login prompt if not authenticated
-  if (!firebaseLoading && !user) {
+  if (!supabaseLoading && !user) {
     return (
       <div className="max-w-2xl mx-auto px-4 sm:px-6 md:px-8 py-12">
         <div className="text-center">
@@ -233,7 +233,7 @@ const Tasks: React.FC = () => {
           tasks={sortedTasks}
           onToggleComplete={handleToggleComplete}
           onDeleteTask={handleDeleteTask}
-          isLoading={firebaseLoading || isLoading}
+          isLoading={supabaseLoading || isLoading}
           error={error}
         />
       </div>

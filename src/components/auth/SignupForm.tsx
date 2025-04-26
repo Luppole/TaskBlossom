@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useFirebase } from '@/contexts/FirebaseContext';
+import { useSupabase } from '@/contexts/SupabaseContext';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
@@ -19,7 +19,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ setLoading, onSuccess }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   
-  const { createAccount } = useFirebase();
+  const { signUp } = useSupabase();
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,17 +43,18 @@ const SignupForm: React.FC<SignupFormProps> = ({ setLoading, onSuccess }) => {
     setLoading(true);
     
     try {
-      await createAccount(email, password, name);
-      toast.success('Account created successfully!');
+      await signUp(email, password, name);
+      toast.success('Account created successfully! Please check your email to confirm your account.');
       onSuccess();
     } catch (error: any) {
       let errorMessage = 'Failed to create account';
       
-      if (error.code === 'auth/email-already-in-use') {
+      // Handle Supabase specific errors
+      if (error.message.includes('already registered')) {
         errorMessage = 'Email already in use';
-      } else if (error.code === 'auth/invalid-email') {
+      } else if (error.message.includes('invalid email')) {
         errorMessage = 'Invalid email address';
-      } else if (error.code === 'auth/weak-password') {
+      } else if (error.message.includes('weak-password')) {
         errorMessage = 'Password is too weak';
       }
       
