@@ -733,13 +733,16 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           
           const querySnapshot = await getDocs(q);
           
-          const friendActivities = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            timestamp: (doc.data().timestamp as Timestamp).toDate(),
-            friendId: friend.userId,
-            friendName: friend.displayName
-          } as ActivityItem));
+          const friendActivities = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate() : data.timestamp,
+              friendId: friend.userId,
+              friendName: friend.displayName
+            } as ActivityItem;
+          });
           
           activities.push(...friendActivities);
         }
@@ -776,11 +779,14 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const workoutsQuery = query(workoutsRef, orderBy('date', 'desc'), limit(5));
         const workoutsSnapshot = await getDocs(workoutsQuery);
         
-        const workouts = workoutsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          date: (doc.data().date as Timestamp).toDate()
-        }));
+        const workouts = workoutsSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            date: data.date instanceof Timestamp ? data.date.toDate() : data.date
+          };
+        });
         
         fitnessData = { workouts };
       }
@@ -791,11 +797,14 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const progressQuery = query(progressRef, orderBy('date', 'desc'), limit(10));
         const progressSnapshot = await getDocs(progressQuery);
         
-        const progress = progressSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          date: (doc.data().date as Timestamp).toDate()
-        }));
+        const progress = progressSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            date: data.date instanceof Timestamp ? data.date.toDate() : data.date
+          };
+        });
         
         progressData = { progress };
       }
