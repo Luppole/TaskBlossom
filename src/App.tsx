@@ -50,29 +50,25 @@ const AnimatedRoutes = () => {
   );
 };
 
-// Key component that wraps the app with the correct provider order
-const AppWithProviders = () => {
+// New App component that properly orders the providers
+const App = () => {
   return (
-    <BrowserRouter>
-      <FirebaseProvider>
-        <ThemeProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <AppShell>
-              <AnimatedRoutes />
-            </AppShell>
-          </TooltipProvider>
-        </ThemeProvider>
-      </FirebaseProvider>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <FirebaseProvider>
+          <ThemeProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <AppShell>
+                <AnimatedRoutes />
+              </AppShell>
+            </TooltipProvider>
+          </ThemeProvider>
+        </FirebaseProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 };
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AppWithProviders />
-  </QueryClientProvider>
-);
 
 export default App;

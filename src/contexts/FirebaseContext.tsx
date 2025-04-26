@@ -30,8 +30,13 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setUser(user);
       
       if (user) {
-        const settings = await loadUserSettings(user.uid);
-        setUserSettings(settings);
+        try {
+          const settings = await loadUserSettings(user.uid);
+          setUserSettings(settings);
+        } catch (error) {
+          console.error("Error loading user settings:", error);
+          setUserSettings(null);
+        }
       } else {
         setUserSettings(null);
       }
