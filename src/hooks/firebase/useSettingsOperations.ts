@@ -7,6 +7,7 @@ import { defaultUserSettings } from '@/lib/constants';
 import { convertFirebaseTimestamp, convertFirebaseTimestamps } from '@/utils/firebaseHelpers';
 
 export const useSettingsOperations = () => {
+  // This will no longer throw an error if called during initialization
   const { user } = useFirebaseUser();
 
   const loadUserSettings = async (userId: string) => {
