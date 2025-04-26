@@ -4,19 +4,26 @@ import { NavLink } from 'react-router-dom';
 import { Home, Calendar, CheckSquare, Settings, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 const MobileNavbar = () => {
   const { t } = useTranslation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border">
+    <motion.nav 
+      className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-t border-border"
+      initial={{ y: 100 }}
+      animate={{ y: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+    >
       <div className="flex justify-around items-center h-16">
         <NavLink 
           to="/" 
-          className={({ isActive }) => `
-            flex flex-col items-center justify-center w-full h-full
-            ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary'}
-          `}
+          className={({ isActive }) => cn(
+            "flex flex-col items-center justify-center w-full h-full transition-all",
+            isActive ? "text-primary" : "text-muted-foreground hover:text-primary",
+            "hover:scale-110 active:scale-95"
+          )}
           end
         >
           <Home className="h-5 w-5" />
@@ -25,10 +32,11 @@ const MobileNavbar = () => {
         
         <NavLink 
           to="/calendar" 
-          className={({ isActive }) => `
-            flex flex-col items-center justify-center w-full h-full
-            ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary'}
-          `}
+          className={({ isActive }) => cn(
+            "flex flex-col items-center justify-center w-full h-full transition-all",
+            isActive ? "text-primary" : "text-muted-foreground hover:text-primary",
+            "hover:scale-110 active:scale-95"
+          )}
         >
           <Calendar className="h-5 w-5" />
           <span className="text-xs mt-1">{t('navigation.calendar')}</span>
@@ -36,10 +44,11 @@ const MobileNavbar = () => {
         
         <NavLink 
           to="/tasks" 
-          className={({ isActive }) => `
-            flex flex-col items-center justify-center w-full h-full
-            ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary'}
-          `}
+          className={({ isActive }) => cn(
+            "flex flex-col items-center justify-center w-full h-full transition-all",
+            isActive ? "text-primary" : "text-muted-foreground hover:text-primary",
+            "hover:scale-110 active:scale-95"
+          )}
         >
           <CheckSquare className="h-5 w-5" />
           <span className="text-xs mt-1">{t('navigation.tasks')}</span>
@@ -47,10 +56,11 @@ const MobileNavbar = () => {
         
         <NavLink 
           to="/social" 
-          className={({ isActive }) => `
-            flex flex-col items-center justify-center w-full h-full
-            ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary'}
-          `}
+          className={({ isActive }) => cn(
+            "flex flex-col items-center justify-center w-full h-full transition-all",
+            isActive ? "text-primary" : "text-muted-foreground hover:text-primary",
+            "hover:scale-110 active:scale-95"
+          )}
         >
           <Users className="h-5 w-5" />
           <span className="text-xs mt-1">{t('navigation.social')}</span>
@@ -58,16 +68,17 @@ const MobileNavbar = () => {
         
         <NavLink 
           to="/settings" 
-          className={({ isActive }) => `
-            flex flex-col items-center justify-center w-full h-full
-            ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary'}
-          `}
+          className={({ isActive }) => cn(
+            "flex flex-col items-center justify-center w-full h-full transition-all",
+            isActive ? "text-primary" : "text-muted-foreground hover:text-primary",
+            "hover:scale-110 active:scale-95"
+          )}
         >
           <Settings className="h-5 w-5" />
           <span className="text-xs mt-1">{t('navigation.settings')}</span>
         </NavLink>
       </div>
-    </nav>
+    </motion.nav>
   );
 };
 

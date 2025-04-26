@@ -8,14 +8,28 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { motion } from 'framer-motion';
-import { Moon, Bell, Shield, Bell as BellIcon } from 'lucide-react';
+import { 
+  Moon, 
+  Bell, 
+  Shield, 
+  Bell as BellIcon, 
+  Globe, 
+  Palette,
+  Eye,
+  BarChart,
+  Dumbbell,
+  UserCog
+} from 'lucide-react';
 import LanguageSwitcher from '@/components/settings/LanguageSwitcher';
 import { toast } from 'sonner';
 import { getFirebaseNotificationPermission } from '@/lib/notification-service';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
+
+const MotionSwitch = motion(Switch);
 
 const Settings = () => {
-  const { userSettings, updateSettings } = useFirebase();
+  const { user, userSettings, updateSettings, signIn } = useFirebase();
   const { t } = useTranslation();
   const [notificationPermission, setNotificationPermission] = useState<string | null>(null);
 
@@ -30,7 +44,7 @@ const Settings = () => {
 
   // Check notification permission on load
   useEffect(() => {
-    if (Notification.permission) {
+    if (typeof Notification !== 'undefined' && Notification.permission) {
       setNotificationPermission(Notification.permission);
     }
   }, []);
@@ -86,6 +100,37 @@ const Settings = () => {
     }
   };
 
+  // If no user is signed in, show sign-in prompt
+  if (!user) {
+    return (
+      <motion.div
+        className="max-w-md mx-auto py-20 space-y-8 text-center"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="flex flex-col items-center">
+          <div className="bg-primary/10 p-6 rounded-full mb-6">
+            <UserCog className="h-12 w-12 text-primary" />
+          </div>
+          <h1 className="text-3xl font-bold mb-2">{t('settings.signInNeeded')}</h1>
+          <p className="text-muted-foreground mb-8">
+            {t('settings.signInDescription')}
+          </p>
+          
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button size="lg" onClick={() => signIn()} className="px-8">
+              Sign In
+            </Button>
+          </motion.div>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       className="max-w-4xl mx-auto py-8 space-y-6"
@@ -97,39 +142,47 @@ const Settings = () => {
         <h1 className="text-3xl font-bold">{t('settings.title')}</h1>
       </div>
 
-      <Card>
+      <Card as={motion.div} whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
         <CardHeader>
           <div className="flex items-center space-x-2">
-            <Moon className="h-5 w-5 text-primary" />
+            <Palette className="h-5 w-5 text-primary" />
             <CardTitle>{t('settings.appearance')}</CardTitle>
           </div>
           <CardDescription>
-            {t('settings.appearance')}
+            {t('settings.appearanceDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <Label htmlFor="dark-mode" className="flex items-center space-x-2">
+              <Moon className="h-4 w-4 mr-2 text-muted-foreground" />
               <span>{t('settings.darkMode')}</span>
             </Label>
-            <Switch
+            <MotionSwitch
               id="dark-mode"
               checked={userSettings?.darkMode || false}
               onCheckedChange={(checked) => handleToggle('darkMode', checked)}
+              whileTap={{ scale: 0.9 }}
             />
           </div>
 
           <Separator />
 
           <div className="space-y-2">
-            <Label htmlFor="language-select">{t('settings.language')}</Label>
+            <Label htmlFor="language-select" className="flex items-center">
+              <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
+              {t('settings.language')}
+            </Label>
             <LanguageSwitcher />
           </div>
 
           <Separator />
 
           <div className="space-y-2">
-            <Label htmlFor="default-view">{t('settings.defaultView')}</Label>
+            <Label htmlFor="default-view" className="flex items-center">
+              <Eye className="h-4 w-4 mr-2 text-muted-foreground" />
+              {t('settings.defaultView')}
+            </Label>
             <Select
               value={userSettings?.defaultView || 'today'}
               onValueChange={(value) => handleSelectChange('defaultView', value as 'today' | 'calendar' | 'tasks')}
@@ -147,7 +200,7 @@ const Settings = () => {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card as={motion.div} whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
         <CardHeader>
           <div className="flex items-center space-x-2">
             <Bell className="h-5 w-5 text-primary" />
@@ -169,14 +222,16 @@ const Settings = () => {
                   <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
                     {t('settings.notificationsPermissionDescription')}
                   </p>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="mt-2 bg-yellow-100 dark:bg-yellow-800/30 border-yellow-300 dark:border-yellow-700"
-                    onClick={requestNotificationPermission}
-                  >
-                    {t('settings.enableNotifications')}
-                  </Button>
+                  <motion.div whileTap={{ scale: 0.95 }}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-2 bg-yellow-100 dark:bg-yellow-800/30 border-yellow-300 dark:border-yellow-700"
+                      onClick={requestNotificationPermission}
+                    >
+                      {t('settings.enableNotifications')}
+                    </Button>
+                  </motion.div>
                 </div>
               </div>
             </div>
@@ -184,13 +239,15 @@ const Settings = () => {
 
           <div className="flex items-center justify-between">
             <Label htmlFor="push-notifications" className="flex items-center space-x-2">
+              <Bell className="h-4 w-4 mr-2 text-muted-foreground" />
               <span>{t('settings.pushNotifications')}</span>
             </Label>
-            <Switch
+            <MotionSwitch
               id="push-notifications"
               disabled={notificationPermission !== 'granted'}
               checked={userSettings?.pushNotifications || false}
               onCheckedChange={(checked) => handleToggle('pushNotifications', checked)}
+              whileTap={{ scale: 0.9 }}
             />
           </div>
 
@@ -198,13 +255,15 @@ const Settings = () => {
 
           <div className="flex items-center justify-between">
             <Label htmlFor="task-reminders" className="flex items-center space-x-2">
+              <Bell className="h-4 w-4 mr-2 text-muted-foreground" />
               <span>{t('settings.taskReminders')}</span>
             </Label>
-            <Switch
+            <MotionSwitch
               id="task-reminders"
               disabled={notificationPermission !== 'granted'}
               checked={userSettings?.taskReminders || false}
               onCheckedChange={(checked) => handleToggle('taskReminders', checked)}
+              whileTap={{ scale: 0.9 }}
             />
           </div>
 
@@ -212,37 +271,41 @@ const Settings = () => {
 
           <div className="flex items-center justify-between">
             <Label htmlFor="overdue-alerts" className="flex items-center space-x-2">
+              <Bell className="h-4 w-4 mr-2 text-muted-foreground" />
               <span>{t('settings.overdueAlerts')}</span>
             </Label>
-            <Switch
+            <MotionSwitch
               id="overdue-alerts"
               disabled={notificationPermission !== 'granted'}
               checked={userSettings?.overdueAlerts || false}
               onCheckedChange={(checked) => handleToggle('overdueAlerts', checked)}
+              whileTap={{ scale: 0.9 }}
             />
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card as={motion.div} whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
         <CardHeader>
           <div className="flex items-center space-x-2">
             <Shield className="h-5 w-5 text-primary" />
             <CardTitle>{t('settings.privacySettings')}</CardTitle>
           </div>
           <CardDescription>
-            {t('settings.privacySettings')}
+            {t('settings.privacySettingsDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <Label htmlFor="public-profile" className="flex items-center space-x-2">
+              <UserCog className="h-4 w-4 mr-2 text-muted-foreground" />
               <span>{t('settings.publicProfile')}</span>
             </Label>
-            <Switch
+            <MotionSwitch
               id="public-profile"
               checked={userSettings?.publicProfile || false}
               onCheckedChange={(checked) => handleToggle('publicProfile', checked)}
+              whileTap={{ scale: 0.9 }}
             />
           </div>
 
@@ -250,12 +313,14 @@ const Settings = () => {
 
           <div className="flex items-center justify-between">
             <Label htmlFor="share-progress" className="flex items-center space-x-2">
+              <BarChart className="h-4 w-4 mr-2 text-muted-foreground" />
               <span>{t('settings.shareProgress')}</span>
             </Label>
-            <Switch
+            <MotionSwitch
               id="share-progress"
               checked={userSettings?.shareProgress || false}
               onCheckedChange={(checked) => handleToggle('shareProgress', checked)}
+              whileTap={{ scale: 0.9 }}
             />
           </div>
 
@@ -263,12 +328,14 @@ const Settings = () => {
 
           <div className="flex items-center justify-between">
             <Label htmlFor="share-fitness" className="flex items-center space-x-2">
+              <Dumbbell className="h-4 w-4 mr-2 text-muted-foreground" />
               <span>{t('settings.shareFitness')}</span>
             </Label>
-            <Switch
+            <MotionSwitch
               id="share-fitness"
               checked={userSettings?.shareFitness || false}
               onCheckedChange={(checked) => handleToggle('shareFitness', checked)}
+              whileTap={{ scale: 0.9 }}
             />
           </div>
         </CardContent>

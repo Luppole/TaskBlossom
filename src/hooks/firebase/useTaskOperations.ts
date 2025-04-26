@@ -3,12 +3,18 @@ import { collection, doc, setDoc, updateDoc, deleteDoc, getDocs, query, orderBy,
 import { db } from '@/lib/firebase';
 import { Task } from '@/types/task';
 import { useFirebaseUser } from './useFirebaseUser';
+import { useContext } from 'react';
+import { FirebaseContext } from '@/contexts/FirebaseContext';
 
 export const useTaskOperations = () => {
   const { user } = useFirebaseUser();
-
+  const context = useContext(FirebaseContext);
+  
   const getTasks = async () => {
-    if (!user) return [];
+    if (!user) {
+      // Return local tasks if no user is authenticated
+      return context?.localTasks || [];
+    }
     
     try {
       const tasksRef = collection(db, 'users', user.uid, 'tasks');
@@ -32,7 +38,13 @@ export const useTaskOperations = () => {
   };
 
   const createTask = async (taskData: Omit<Task, 'id' | 'createdAt'>) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user) {
+      // Use local task creation for guests
+      if (context?.createLocalTask) {
+        return context.createLocalTask(taskData);
+      }
+      throw new Error('No context available for local task creation');
+    }
     
     try {
       const taskRef = doc(collection(db, 'users', user.uid, 'tasks'));
@@ -60,7 +72,13 @@ export const useTaskOperations = () => {
   };
 
   const updateTask = async (taskId: string, data: Partial<Task>) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user) {
+      // Use local task update for guests
+      if (context?.updateLocalTask) {
+        return context.updateLocalTask(taskId, data);
+      }
+      throw new Error('No context available for local task update');
+    }
     
     try {
       const taskRef = doc(db, 'users', user.uid, 'tasks', taskId);
@@ -78,7 +96,13 @@ export const useTaskOperations = () => {
   };
 
   const deleteTask = async (taskId: string) => {
-    if (!user) throw new Error('User not authenticated');
+    if (!user) {
+      // Use local task deletion for guests
+      if (context?.deleteLocalTask) {
+        return context.deleteLocalTask(taskId);
+      }
+      throw new Error('No context available for local task deletion');
+    }
     
     try {
       const taskRef = doc(db, 'users', user.uid, 'tasks', taskId);

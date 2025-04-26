@@ -5,6 +5,7 @@ import TaskCard from './TaskCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { toast } from 'sonner';
+import TaskProgressBar from './TaskProgressBar';
 
 interface TaskListProps {
   tasks: Task[];
@@ -20,6 +21,10 @@ const TaskList: React.FC<TaskListProps> = ({
   isLoading = false 
 }) => {
   const { user, updateTask } = useFirebase();
+  
+  // Calculate completed tasks
+  const completedTasks = tasks.filter(task => task.completed).length;
+  const totalTasks = tasks.length;
   
   // Handle toggling task completion
   const handleToggleComplete = async (taskId: string) => {
@@ -89,11 +94,25 @@ const TaskList: React.FC<TaskListProps> = ({
 
   return (
     <motion.div
-      className="space-y-3"
+      className="space-y-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ staggerChildren: 0.1 }}
     >
+      {tasks.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <TaskProgressBar 
+            completed={completedTasks} 
+            total={totalTasks}
+            className="mb-6"
+          />
+        </motion.div>
+      )}
+      
       <AnimatePresence mode="popLayout">
         {tasks.map((task) => (
           <motion.div
@@ -103,6 +122,7 @@ const TaskList: React.FC<TaskListProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20, height: 0, marginBottom: 0 }}
             transition={{ duration: 0.3 }}
+            whileHover={{ scale: 1.02, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)" }}
           >
             <TaskCard
               task={task}
