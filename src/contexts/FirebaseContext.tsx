@@ -738,7 +738,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             return {
               id: doc.id,
               ...data,
-              timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate() : new Date(data.timestamp),
+              timestamp: convertTimestampToDate(data.timestamp) || new Date(),
               friendId: friend.userId,
               friendName: friend.displayName
             } as ActivityItem;
@@ -784,7 +784,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           return {
             id: doc.id,
             ...data,
-            date: data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date)
+            date: convertTimestampToDate(data.date) || new Date()
           };
         });
         
@@ -802,7 +802,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           return {
             id: doc.id,
             ...data,
-            date: data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date)
+            date: convertTimestampToDate(data.date) || new Date()
           };
         });
         
@@ -900,6 +900,16 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     ].join('\n');
     
     return csvContent;
+  };
+
+  const convertTimestampToDate = (timestamp: Timestamp | Date | null | undefined): Date | null => {
+    if (timestamp instanceof Timestamp) {
+      return timestamp.toDate();
+    }
+    if (timestamp instanceof Date) {
+      return timestamp;
+    }
+    return null;
   };
 
   const value = {
