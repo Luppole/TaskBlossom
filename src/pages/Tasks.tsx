@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 const Tasks: React.FC = () => {
   const {
@@ -22,6 +23,7 @@ const Tasks: React.FC = () => {
     loading: firebaseLoading,
   } = useFirebase();
 
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
@@ -37,6 +39,7 @@ const Tasks: React.FC = () => {
         const fetchedTasks = await getTasks();
         setTasks(fetchedTasks);
       } else {
+        // If no user is signed in, show empty state
         setTasks([]);
       }
     } catch (error) {
@@ -49,8 +52,18 @@ const Tasks: React.FC = () => {
   }, [getTasks, user]);
 
   useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks, user]);
+    if (!firebaseLoading) {
+      fetchTasks();
+    }
+  }, [fetchTasks, user, firebaseLoading]);
+
+  // Redirect to login if not authenticated after loading
+  useEffect(() => {
+    if (!firebaseLoading && !user) {
+      toast.error('Please login to view your tasks');
+      navigate('/login');
+    }
+  }, [firebaseLoading, user, navigate]);
 
   const handleToggleComplete = async (taskId: string) => {
     try {
@@ -158,6 +171,19 @@ const Tasks: React.FC = () => {
     return priorityValues[a.priority] - priorityValues[b.priority];
   });
 
+  // Show login prompt if not authenticated
+  if (!firebaseLoading && !user) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 md:px-8 py-12">
+        <div className="text-center">
+          <h1 className="font-heading text-2xl font-bold mb-4">Sign In Required</h1>
+          <p className="mb-6">Please sign in to view and manage your tasks.</p>
+          <Button onClick={() => navigate('/login')}>Go to Login</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 md:px-8">
       <header className="mb-6">
@@ -210,13 +236,6 @@ const Tasks: React.FC = () => {
           isLoading={firebaseLoading || isLoading}
           error={error}
         />
-        
-        {!isLoading && !error && !user && (
-          <div className="mt-4 p-4 bg-muted rounded-lg text-center">
-            <p className="mb-2">Sign in to save your tasks and access them from any device.</p>
-            <p className="text-sm text-muted-foreground">Your tasks will be stored locally until you sign in.</p>
-          </div>
-        )}
       </div>
 
       <AddTaskButton onClick={handleAddTask} />

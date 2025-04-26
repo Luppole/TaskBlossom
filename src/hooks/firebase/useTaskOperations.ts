@@ -1,5 +1,5 @@
 
-import { collection, doc, setDoc, updateDoc, deleteDoc, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, updateDoc, deleteDoc, getDocs, query, orderBy, Timestamp, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Task } from '@/types/task';
 import { useFirebaseUser } from './useFirebaseUser';
@@ -11,6 +11,7 @@ export const useTaskOperations = () => {
     if (!user) return [];
     
     try {
+      // Use the correct path to ensure we're accessing tasks properly
       const tasksRef = collection(db, 'users', user.uid, 'tasks');
       const q = query(tasksRef, orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
@@ -27,7 +28,7 @@ export const useTaskOperations = () => {
       });
     } catch (error) {
       console.error('Error getting tasks:', error);
-      return [];
+      throw error; // Propagate the error so it can be handled in the UI
     }
   };
 

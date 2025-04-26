@@ -23,6 +23,11 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isUser(userId);
       allow write: if isUser(userId);
+      
+      // Critical fix: Tasks subcollection permissions
+      match /tasks/{taskId} {
+        allow read, write: if isUser(userId);
+      }
     }
     
     // User settings
@@ -30,7 +35,7 @@ service cloud.firestore {
       allow read, write: if isUser(userId);
     }
     
-    // Tasks
+    // Tasks - Ensure this is separate from the nested rule above
     match /users/{userId}/tasks/{taskId} {
       allow read, write: if isUser(userId);
     }
