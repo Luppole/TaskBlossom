@@ -1,8 +1,7 @@
-
-import { collection, doc, setDoc, getDoc, getDocs, query, where, addDoc, updateDoc, deleteDoc, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, getDocs, query, where, addDoc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useFirebaseUser } from './useFirebaseUser';
-import { Friend, FriendRequest } from '@/types/friend';
+import { FriendRequest, FriendData } from '@/types/friend';
 import { toast } from 'sonner';
 import { convertFirebaseTimestamps } from '@/utils/firebaseHelpers';
 
@@ -10,7 +9,7 @@ export const useFriendOperations = () => {
   const { user } = useFirebaseUser();
 
   // Get friends
-  const getFriends = async (): Promise<Friend[]> => {
+  const getFriends = async (): Promise<FriendData[]> => {
     if (!user) return [];
     
     try {
@@ -22,10 +21,8 @@ export const useFriendOperations = () => {
         return {
           id: doc.id,
           userId: data.userId,
-          username: data.username,
-          displayName: data.displayName,
-          photoURL: data.photoURL,
-          since: data.since ? data.since.toDate() : new Date(),
+          displayName: data.displayName || data.username || 'User',
+          addedAt: data.since ? data.since.toDate() : new Date(),
         };
       });
     } catch (error) {
@@ -39,8 +36,6 @@ export const useFriendOperations = () => {
     if (!user) return [];
     
     try {
-      // Change the query to work without the complex index
-      // Just get all friend requests for the current user without sorting
       const friendRequestsRef = collection(db, 'friendRequests');
       const q = query(
         friendRequestsRef,
@@ -63,7 +58,6 @@ export const useFriendOperations = () => {
       });
     } catch (error) {
       console.error('Error getting friend requests:', error);
-      // If there's a missing index error, provide information to the user
       if (error.toString().includes('requires an index')) {
         toast.error('Friend requests need database indexing. Please check the admin console.');
       }
@@ -78,7 +72,6 @@ export const useFriendOperations = () => {
     try {
       const friendRequestRef = collection(db, 'friendRequests');
       
-      // Check if there's already a pending request
       const existingQuery = query(
         friendRequestRef,
         where('senderId', '==', user.uid),
@@ -92,7 +85,6 @@ export const useFriendOperations = () => {
         throw new Error('Friend request already sent');
       }
       
-      // Create a new friend request
       await addDoc(friendRequestRef, {
         senderId: user.uid,
         senderName: user.displayName || 'User',
@@ -113,7 +105,6 @@ export const useFriendOperations = () => {
     if (!user) throw new Error('User not authenticated');
     
     try {
-      // Get the request
       const requestRef = doc(db, 'friendRequests', requestId);
       const requestSnap = await getDoc(requestRef);
       
@@ -127,12 +118,10 @@ export const useFriendOperations = () => {
         throw new Error('Unauthorized to accept this request');
       }
       
-      // Update the request status
       await updateDoc(requestRef, {
         status: 'accepted'
       });
       
-      // Add friend to current user's friends
       const myFriendRef = doc(db, 'users', user.uid, 'friends', requestData.senderId);
       await setDoc(myFriendRef, {
         userId: requestData.senderId,
@@ -142,7 +131,6 @@ export const useFriendOperations = () => {
         since: Timestamp.now()
       });
       
-      // Add current user to the other user's friends
       const theirFriendRef = doc(db, 'users', requestData.senderId, 'friends', user.uid);
       await setDoc(theirFriendRef, {
         userId: user.uid,
@@ -176,7 +164,6 @@ export const useFriendOperations = () => {
         throw new Error('Unauthorized to reject this request');
       }
       
-      // Update the request status
       await updateDoc(requestRef, {
         status: 'rejected'
       });
@@ -192,11 +179,9 @@ export const useFriendOperations = () => {
     if (!user) throw new Error('User not authenticated');
     
     try {
-      // Delete from current user's friends
       const myFriendRef = doc(db, 'users', user.uid, 'friends', friendId);
       await deleteDoc(myFriendRef);
       
-      // Delete from other user's friends
       const theirFriendRef = doc(db, 'users', friendId, 'friends', user.uid);
       await deleteDoc(theirFriendRef);
       
