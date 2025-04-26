@@ -3,11 +3,11 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Calendar, CheckSquare, Settings, Home, List, Dumbbell, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { motion } from 'framer-motion';
 
 const MobileNavbar = () => {
-  const { isMobile } = useMobile();
+  const isMobile = useIsMobile();
   
   if (!isMobile) return null;
   

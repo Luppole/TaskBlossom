@@ -84,7 +84,7 @@ const TaskList: React.FC<TaskListProps> = ({
             <TaskCard
               task={task}
               onToggleComplete={onToggleComplete}
-              onDeleteTask={onDeleteTask}
+              onDelete={onDeleteTask}
             />
           </motion.div>
         ))}

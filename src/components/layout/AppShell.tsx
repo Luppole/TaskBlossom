@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import MobileNavbar from './MobileNavbar';
 import DesktopSidebar from './DesktopSidebar';
-import { useMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { motion } from 'framer-motion';
 
 interface AppShellProps {
@@ -13,7 +13,7 @@ interface AppShellProps {
 
 const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const { pathname } = useLocation();
-  const { isMobile } = useMobile();
+  const isMobile = useIsMobile();
   const { user } = useFirebase();
 
   // Navigate to top on route change
