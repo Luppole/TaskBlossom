@@ -27,3 +27,26 @@ export const convertFirebaseTimestamp = (value: any): Date | null => {
   
   return null;
 };
+
+/**
+ * Takes a Firebase document data and returns a new object with all Timestamps converted to Dates
+ * @param data - The document data from Firestore
+ * @returns A new object with all Timestamps converted to Dates
+ */
+export const convertFirebaseTimestamps = <T extends Record<string, any>>(data: T): T => {
+  if (!data) return data;
+  
+  const result = { ...data };
+  
+  Object.keys(result).forEach(key => {
+    const value = result[key];
+    
+    if (value instanceof Timestamp) {
+      result[key] = value.toDate() as any;
+    } else if (typeof value === 'object' && value !== null) {
+      result[key] = convertFirebaseTimestamps(value);
+    }
+  });
+  
+  return result;
+};
