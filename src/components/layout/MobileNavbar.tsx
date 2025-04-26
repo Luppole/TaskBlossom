@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 
 const MobileNavbar = () => {
   const { t } = useTranslation();
-  const direction = document.documentElement.dir;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border">

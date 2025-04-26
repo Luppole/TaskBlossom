@@ -11,7 +11,7 @@ firebase.initializeApp({
   apiKey: "AIzaSyDsF-cFll3pF77xzFTgcxBh8r5SRhBesmo",
   authDomain: "taskblossom.firebaseapp.com",
   projectId: "taskblossom",
-  storageBucket: "taskblossom.firebasestorage.app",
+  storageBucket: "taskblossom.appspot.com",
   messagingSenderId: "503245445228",
   appId: "1:503245445228:web:5f3ab41fbda3893a906049",
   measurementId: "G-J5RBPEQT0P"
@@ -23,8 +23,6 @@ const messaging = firebase.messaging();
 
 // Optional background message handler
 messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw.js] Received background message ', payload);
-  
   // Customize notification here
   const notificationTitle = payload.notification.title;
   const notificationOptions = {

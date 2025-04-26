@@ -1,6 +1,7 @@
+
 import { Task } from '@/types/task';
 import { toast } from 'sonner';
-import { messaging, requestNotificationPermission } from './firebase';
+import { requestNotificationPermission } from './firebase';
 
 export const setupTaskNotifications = async (tasks: Task[], settings: { 
   taskReminders: boolean, 
@@ -10,12 +11,17 @@ export const setupTaskNotifications = async (tasks: Task[], settings: {
     return;
   }
   
-  // Check if permissions are granted
-  const hasPermission = await requestNotificationPermission();
-  
-  if (!hasPermission) {
-    console.log('Notification permission not granted');
+  // Skip notification setup if browser doesn't support notifications
+  if (!("Notification" in window)) {
     return;
+  }
+  
+  // Check if permissions are granted
+  let hasPermission = false;
+  try {
+    hasPermission = await requestNotificationPermission();
+  } catch (error) {
+    // Silently fail - don't interrupt the user experience
   }
   
   // Set up task reminders
@@ -110,7 +116,6 @@ const showOverdueAlert = (task: Task) => {
       action: {
         label: 'Complete',
         onClick: () => {
-          // You could add logic here to mark the task as complete
           console.log('Complete task', task.id);
         }
       }
@@ -133,10 +138,8 @@ if (typeof window !== 'undefined' && !window.taskReminderTimers) {
 export const getFirebaseNotificationPermission = async () => {
   try {
     const permission = await Notification.requestPermission();
-    console.log("Browser notification permission status:", permission);
     return permission;
   } catch (error) {
-    console.error("Error checking notification permission:", error);
     return "denied";
   }
 };
