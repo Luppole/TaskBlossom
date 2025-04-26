@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, createUserProfile } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface SupabaseContextType {
   user: User | null;
@@ -45,6 +46,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
@@ -127,7 +129,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }));
     } catch (error) {
       console.error('Error getting tasks:', error);
-      toast.error('Failed to load tasks');
+      toast.error(t('common.error'));
       return [];
     }
   };
