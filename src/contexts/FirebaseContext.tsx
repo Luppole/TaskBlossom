@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { useAuthOperations } from '@/hooks/firebase/useAuthOperations';
 import { useTaskOperations } from '@/hooks/firebase/useTaskOperations';
 import { useCategoryOperations } from '@/hooks/firebase/useCategoryOperations';
@@ -9,6 +9,8 @@ import { useFitnessOperations } from '@/hooks/firebase/useFitnessOperations';
 import { useFriendOperations } from '@/hooks/firebase/useFriendOperations';
 import { useSettingsOperations } from '@/hooks/firebase/useSettingsOperations';
 import { UserSettings } from '@/types/settings';
+import { doc, getDoc } from 'firebase/firestore';
+import { defaultUserSettings } from '@/lib/constants';
 
 export interface FirebaseContextType {
   user: User | null;
@@ -23,7 +25,23 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [loading, setLoading] = useState(true);
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   
-  const { loadUserSettings } = useSettingsOperations();
+  // We need to manually load settings here without using useSettingsOperations
+  // to avoid circular dependency
+  const loadUserSettings = async (userId: string) => {
+    try {
+      const settingsRef = doc(db, 'userSettings', userId);
+      const settingsDoc = await getDoc(settingsRef);
+      
+      if (settingsDoc.exists()) {
+        return settingsDoc.data() as UserSettings;
+      }
+      
+      return defaultUserSettings;
+    } catch (error) {
+      console.error('Error loading user settings:', error);
+      return defaultUserSettings;
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -45,7 +63,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
     
     return () => unsubscribe();
-  }, [loadUserSettings]);
+  }, []);
 
   const value = {
     user,
