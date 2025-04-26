@@ -43,6 +43,8 @@ export { messaging, messagingSupported };
 // Track permission state to prevent repeated requests
 let notificationPermissionChecked = false;
 let notificationPermissionGranted = false;
+let lastTokenRequestTime = 0;
+const TOKEN_REQUEST_COOLDOWN = 60000; // 1 minute cooldown between token requests
 
 // Function to request notification permission
 export const requestNotificationPermission = async () => {
@@ -59,13 +61,26 @@ export const requestNotificationPermission = async () => {
     notificationPermissionChecked = true;
     
     if (permission === 'granted') {
+      // Check if we're within the cooldown period
+      const now = Date.now();
+      if (now - lastTokenRequestTime < TOKEN_REQUEST_COOLDOWN) {
+        console.log('Skipping token request due to cooldown period');
+        return notificationPermissionGranted;
+      }
+      
+      lastTokenRequestTime = now;
+      
       try {
         const token = await getToken(messaging, {
           vapidKey: 'BMkP2IlsKCXZJKLCKfmJSjnhKqQqB4x3QnOr54KtgXeYHx_FIlIkB2g_SyRXJD8otzB5ffY7r_9w4s8iWd7G8Xk'
         }).catch(error => {
-          // Handle the 401 Unauthorized error specifically
+          // Handle quota exceeded error (429)
           if (error.code === 'messaging/token-subscribe-failed') {
-            console.log('Firebase messaging token acquisition failed, likely due to missing credentials. This is expected in development environments.');
+            if (error.message && error.message.includes('Quota exceeded')) {
+              console.log('Firebase messaging token quota exceeded. Will retry later.');
+            } else {
+              console.log('Firebase messaging token acquisition failed, likely due to missing credentials. This is expected in development environments.');
+            }
           } else {
             console.error("Error getting messaging token:", error);
           }

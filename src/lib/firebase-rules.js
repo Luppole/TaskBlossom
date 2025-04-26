@@ -19,44 +19,15 @@ service cloud.firestore {
         get(/databases/$(database)/documents/userSettings/$(userId)).data.publicProfile == true;
     }
     
-    function isUserFriend(userId) {
-      return isAuthenticated() && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)/friends/$(userId));
-    }
-    
-    function canViewProfileData(userId) {
-      return isUser(userId) || hasPublicProfile(userId) || isUserFriend(userId);
-    }
-    
-    function canViewProgressData(userId) {
-      return isUser(userId) || 
-        (
-          exists(/databases/$(database)/documents/userSettings/$(userId)) &&
-          get(/databases/$(database)/documents/userSettings/$(userId)).data.shareProgress == true && 
-          (hasPublicProfile(userId) || isUserFriend(userId))
-        );
-    }
-    
-    function canViewFitnessData(userId) {
-      return isUser(userId) || 
-        (
-          exists(/databases/$(database)/documents/userSettings/$(userId)) &&
-          get(/databases/$(database)/documents/userSettings/$(userId)).data.shareFitness == true && 
-          (hasPublicProfile(userId) || isUserFriend(userId))
-        );
-    }
-    
     // Basic user data
     match /users/{userId} {
-      allow read: if canViewProfileData(userId);
+      allow read: if isUser(userId);
       allow write: if isUser(userId);
     }
     
     // User settings
     match /userSettings/{userId} {
       allow read, write: if isUser(userId);
-      // Allow other users to read public profile settings if profile is public
-      allow read: if hasPublicProfile(userId);
     }
     
     // Tasks
@@ -72,54 +43,36 @@ service cloud.firestore {
     // Workouts
     match /users/{userId}/workouts/{workoutId} {
       allow read, write: if isUser(userId);
-      // Allow friends to read workouts if sharing is enabled
-      allow read: if canViewFitnessData(userId);
     }
     
     // Meals
     match /users/{userId}/meals/{mealId} {
       allow read, write: if isUser(userId);
-      // Allow friends to read meals if sharing is enabled
-      allow read: if canViewFitnessData(userId);
     }
     
     // Progress logs
     match /users/{userId}/progress/{logId} {
       allow read, write: if isUser(userId);
-      // Allow friends to read progress logs if sharing is enabled
-      allow read: if canViewProgressData(userId);
     }
     
     // Fitness goals
     match /users/{userId}/fitness/{document=**} {
       allow read, write: if isUser(userId);
-      // Allow friends to read fitness goals if sharing is enabled
-      allow read: if canViewFitnessData(userId);
     }
     
     // Achievements
     match /users/{userId}/achievements/{achievementId} {
       allow read, write: if isUser(userId);
-      // Allow others to read achievements if profile is public
-      allow read: if hasPublicProfile(userId) || isUserFriend(userId);
     }
     
     // Streaks
     match /users/{userId}/streaks/{streakId} {
       allow read, write: if isUser(userId);
-      // Allow others to read streaks if profile is public
-      allow read: if hasPublicProfile(userId) || isUserFriend(userId);
     }
     
-    // Friend relationships
+    // Friend relationships - adding explicit rules for these collections
     match /users/{userId}/friends/{friendId} {
       allow read, write: if isUser(userId);
-    }
-    
-    // Activities - these are visible to friends only
-    match /users/{userId}/activities/{activityId} {
-      allow read, write: if isUser(userId);
-      allow read: if isAuthenticated() && isUserFriend(userId);
     }
     
     // Friend requests
@@ -130,6 +83,11 @@ service cloud.firestore {
         request.resource.data.senderId == request.auth.uid;
       allow update, delete: if isAuthenticated() && 
         (resource.data.senderId == request.auth.uid || resource.data.recipientId == request.auth.uid);
+    }
+    
+    // Activities
+    match /users/{userId}/activities/{activityId} {
+      allow read, write: if isUser(userId);
     }
     
     // Deny all other access

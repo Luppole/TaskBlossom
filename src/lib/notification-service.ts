@@ -1,9 +1,13 @@
+
 import { Task } from '@/types/task';
 import { toast } from 'sonner';
 import { messaging, requestNotificationPermission, messagingSupported } from './firebase';
 
 // Keep track of whether we've already set up notifications
 let notificationsInitialized = false;
+let notificationRequestInProgress = false;
+let lastNotificationRequestTime = 0;
+const NOTIFICATION_REQUEST_COOLDOWN = 60000; // 1 minute cooldown
 
 export const setupTaskNotifications = async (tasks: Task[], settings: { 
   taskReminders: boolean, 
@@ -14,32 +18,52 @@ export const setupTaskNotifications = async (tasks: Task[], settings: {
     return;
   }
   
-  notificationsInitialized = true;
-  
-  // If messaging is not supported (e.g., in development environment), just use toast notifications
-  if (!messagingSupported) {
-    console.log('Firebase messaging not supported in this environment. Using in-app notifications only.');
-    
-    // Set up task reminders
-    if (settings.taskReminders) {
-      setupTaskReminders(tasks);
-    }
-    
-    // Set up overdue alerts
-    if (settings.overdueAlerts) {
-      checkOverdueTasks(tasks);
-    }
+  // Prevent multiple concurrent requests
+  if (notificationRequestInProgress) {
     return;
   }
   
-  // Check if permissions are granted
-  const hasPermission = await requestNotificationPermission();
-  
-  if (!hasPermission) {
-    console.log('Notification permission not granted');
-    // Still continue with in-app notifications
+  // Check cooldown period
+  const now = Date.now();
+  if (now - lastNotificationRequestTime < NOTIFICATION_REQUEST_COOLDOWN) {
+    // Use in-app notifications only
+    setupLocalNotifications(tasks, settings);
+    return;
   }
   
+  notificationRequestInProgress = true;
+  lastNotificationRequestTime = now;
+  
+  try {
+    notificationsInitialized = true;
+    
+    // If messaging is not supported (e.g., in development environment), just use toast notifications
+    if (!messagingSupported) {
+      console.log('Firebase messaging not supported in this environment. Using in-app notifications only.');
+      setupLocalNotifications(tasks, settings);
+      return;
+    }
+    
+    // Check if permissions are granted
+    const hasPermission = await requestNotificationPermission();
+    
+    if (!hasPermission) {
+      console.log('Notification permission not granted');
+      // Still continue with in-app notifications
+    }
+    
+    // Set up task reminders and overdue alerts
+    setupLocalNotifications(tasks, settings);
+    
+  } catch (error) {
+    console.error('Error setting up notifications:', error);
+    setupLocalNotifications(tasks, settings);
+  } finally {
+    notificationRequestInProgress = false;
+  }
+};
+
+const setupLocalNotifications = (tasks: Task[], settings: { taskReminders: boolean, overdueAlerts: boolean }) => {
   // Set up task reminders
   if (settings.taskReminders) {
     setupTaskReminders(tasks);
