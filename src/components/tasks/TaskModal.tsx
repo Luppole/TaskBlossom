@@ -15,7 +15,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { useFirebase } from '@/contexts/FirebaseContext';
+import { useSupabase } from '@/contexts/SupabaseContext';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -32,7 +32,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
   initialTask,
   initialDate
 }) => {
-  const { user, getCategories } = useFirebase();
+  const { user, getCategories } = useSupabase();
   const [title, setTitle] = useState(initialTask?.title || '');
   const [dueDate, setDueDate] = useState<Date | undefined>(initialTask?.dueDate || initialDate || undefined);
   const [notes, setNotes] = useState(initialTask?.notes || '');
@@ -60,9 +60,17 @@ const TaskModal: React.FC<TaskModalProps> = ({
   const handleSave = () => {
     if (!title.trim()) return;
     
+    // Find the selected category object by ID
     const category = categoryId 
       ? categories.find(cat => cat.id === categoryId) 
       : undefined;
+    
+    // Ensure category is a proper object with UUID id
+    const validCategory = category ? {
+      id: category.id,
+      name: category.name,
+      color: category.color
+    } : undefined;
     
     const newTask: Task = {
       id: initialTask?.id || uuidv4(),
@@ -70,7 +78,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
       completed: initialTask?.completed || false,
       dueDate,
       priority,
-      category,
+      category: validCategory,
       notes: notes.trim() || null,
       createdAt: initialTask?.createdAt || new Date(),
     };

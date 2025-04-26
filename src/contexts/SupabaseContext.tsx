@@ -138,8 +138,17 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!user) throw new Error('User not authenticated');
 
     try {
-      // Extract category_id if category exists
-      const category_id = taskData.category?.id || null;
+      // Extract category_id if category exists and ensure it's a valid UUID
+      let category_id = null;
+      if (taskData.category && taskData.category.id) {
+        // Make sure we're using a string UUID, not a numeric ID
+        if (typeof taskData.category.id === 'string' && 
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(taskData.category.id)) {
+          category_id = taskData.category.id;
+        } else {
+          console.warn('Invalid category ID format, setting to null', taskData.category.id);
+        }
+      }
       
       // Prepare the task data
       const taskToInsert = {

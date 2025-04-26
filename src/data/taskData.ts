@@ -1,51 +1,41 @@
 
+import { TaskCategory } from '@/types/task';
+import { v4 as uuidv4 } from 'uuid';
+
+// Motivational quotes for the Today page
 export const motivationalQuotes = [
   "The only way to do great work is to love what you do.",
-  "Believe you can and you're halfway there.",
-  "The future belongs to those who believe in the beauty of their dreams.",
-  "Strive not to be a success, but rather to be of value.",
-  "The best way to predict the future is to create it.",
-  "Don't watch the clock; do what it does. Keep going.",
-  "It always seems impossible until it's done.",
-  "The mind is everything. What you think you become.",
-  "The only limit to our realization of tomorrow will be our doubts of today.",
   "Success is not final, failure is not fatal: It is the courage to continue that counts.",
+  "The future belongs to those who believe in the beauty of their dreams.",
+  "It does not matter how slowly you go as long as you do not stop.",
+  "Believe you can and you're halfway there.",
   "The secret of getting ahead is getting started.",
-  "Do not wait to strike till the iron is hot, but make it hot by striking.",
-  "Well done is better than well said.",
-  "You miss 100% of the shots you don't take.",
-  "The journey of a thousand miles begins with one step.",
-  "Happiness is not something readymade. It comes from your own actions.",
-  "The only person you are destined to become is the person you decide to be.",
-  "What you get by achieving your goals is not as important as what you become by achieving your goals.",
-  "The difference between ordinary and extraordinary is that little extra.",
-  "The best and most beautiful things in the world cannot be seen or even touched - they must be felt with the heart."
+  "Don't watch the clock; do what it does. Keep going.",
+  "You are never too old to set another goal or to dream a new dream.",
+  "Strive not to be a success, but rather to be of value.",
+  "The best time to plant a tree was 20 years ago. The second best time is now."
 ];
 
-export const defaultCategories = [
+// Default task categories
+export const defaultCategories: TaskCategory[] = [
   {
-    id: '1',
+    id: uuidv4(),
     name: 'Work',
-    color: '#4f46e5'
+    color: '#4285F4'
   },
   {
-    id: '2',
+    id: uuidv4(),
     name: 'Personal',
-    color: '#ec4899'
+    color: '#EA4335'
   },
   {
-    id: '3',
-    name: 'Education',
-    color: '#10b981'
+    id: uuidv4(),
+    name: 'Health',
+    color: '#34A853'
   },
   {
-    id: '4',
-    name: 'Finance',
-    color: '#f97316'
-  },
-  {
-    id: '5',
-    name: 'GYM',
-    color: '#8b5cf6'
+    id: uuidv4(),
+    name: 'Learning',
+    color: '#FBBC05'
   }
 ];
