@@ -13,35 +13,41 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { userSettings } = useFirebase();
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [direction, setDirection] = useState<'ltr' | 'rtl'>('ltr');
-
-  // Initialize theme and direction based on user settings or local storage
-  useEffect(() => {
-    // Check for saved preferences in local storage first
+  // Initialize with default values first
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    // Check local storage first
     const savedTheme = localStorage.getItem('theme');
+    return savedTheme === 'dark' ? 'dark' : 'light';
+  });
+  
+  const [direction, setDirection] = useState<'ltr' | 'rtl'>(() => {
+    // Check local storage first
     const savedDirection = localStorage.getItem('direction');
-    
-    if (savedTheme === 'dark') {
-      setTheme('dark');
+    return savedDirection === 'rtl' ? 'rtl' : 'ltr';
+  });
+  
+  // Apply initial theme and direction from local storage
+  useEffect(() => {
+    if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
-      setTheme('light');
       document.documentElement.classList.remove('dark');
     }
     
-    if (savedDirection === 'rtl') {
-      setDirection('rtl');
+    if (direction === 'rtl') {
       document.documentElement.dir = 'rtl';
       document.documentElement.lang = 'he';
     } else {
-      setDirection('ltr');
       document.documentElement.dir = 'ltr';
       document.documentElement.lang = 'en';
     }
-    
-    // User settings override local storage if they exist
+  }, []);
+  
+  // Get user settings after initial render
+  const { userSettings } = useFirebase();
+  
+  // Update theme and direction when user settings change
+  useEffect(() => {
     if (userSettings) {
       if (userSettings.darkMode) {
         setTheme('dark');

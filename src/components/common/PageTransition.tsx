@@ -1,14 +1,14 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useTheme } from '@/contexts/ThemeContext';
 
 interface PageTransitionProps {
   children: React.ReactNode;
 }
 
 const PageTransition: React.FC<PageTransitionProps> = ({ children }) => {
-  const { direction } = useTheme();
+  // Get direction from document instead of context to avoid dependency cycles
+  const direction = document.documentElement.dir || 'ltr';
   
   const variants = {
     initial: {

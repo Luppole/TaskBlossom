@@ -29,6 +29,7 @@ const queryClient = new QueryClient({
   },
 });
 
+// Separate component to use useLocation hook
 const AnimatedRoutes = () => {
   const location = useLocation();
   
@@ -49,21 +50,28 @@ const AnimatedRoutes = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <FirebaseProvider>
-      <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+// Key component that wraps the app with the correct provider order
+const AppWithProviders = () => {
+  return (
+    <BrowserRouter>
+      <FirebaseProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
             <AppShell>
               <AnimatedRoutes />
             </AppShell>
-          </BrowserRouter>
-        </TooltipProvider>
-      </ThemeProvider>
-    </FirebaseProvider>
+          </TooltipProvider>
+        </ThemeProvider>
+      </FirebaseProvider>
+    </BrowserRouter>
+  );
+};
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AppWithProviders />
   </QueryClientProvider>
 );
 
