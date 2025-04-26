@@ -9,7 +9,7 @@ import { useFitnessOperations } from '@/hooks/firebase/useFitnessOperations';
 import { useFriendOperations } from '@/hooks/firebase/useFriendOperations';
 import { useSettingsOperations } from '@/hooks/firebase/useSettingsOperations';
 import { UserSettings } from '@/types/settings';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { defaultUserSettings } from '@/lib/constants';
 
 export interface FirebaseContextType {
@@ -25,8 +25,8 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [loading, setLoading] = useState(true);
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   
-  // We need to manually load settings here without using useSettingsOperations
-  // to avoid circular dependency
+  // Instead of using useSettingsOperations which would cause circular dependency,
+  // we'll implement the loadUserSettings function directly here
   const loadUserSettings = async (userId: string) => {
     try {
       const settingsRef = doc(db, 'userSettings', userId);
@@ -36,6 +36,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return settingsDoc.data() as UserSettings;
       }
       
+      await setDoc(settingsRef, defaultUserSettings);
       return defaultUserSettings;
     } catch (error) {
       console.error('Error loading user settings:', error);

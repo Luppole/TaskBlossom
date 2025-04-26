@@ -1,13 +1,14 @@
 
 import { doc, getDoc, updateDoc, setDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { UserSettings } from '@/types/settings';
+import { useFirebaseUser } from './useFirebaseUser';
 import { defaultUserSettings } from '@/lib/constants';
 import { convertFirebaseTimestamp, convertFirebaseTimestamps } from '@/utils/firebaseHelpers';
 
 export const useSettingsOperations = () => {
-  // Instead of using useFirebaseUser to get the user, we'll use auth directly
-  const getCurrentUser = () => auth.currentUser;
+  // This will no longer throw an error if called during initialization
+  const { user } = useFirebaseUser();
 
   const loadUserSettings = async (userId: string) => {
     try {
@@ -27,7 +28,6 @@ export const useSettingsOperations = () => {
   };
 
   const updateSettings = async (settings: Partial<UserSettings>) => {
-    const user = getCurrentUser();
     if (!user) throw new Error('User not authenticated');
     
     try {
@@ -40,7 +40,6 @@ export const useSettingsOperations = () => {
   };
 
   const exportUserData = async (dataType: 'meals' | 'workouts' | 'progress', format: 'csv' | 'pdf'): Promise<string> => {
-    const user = getCurrentUser();
     if (!user) throw new Error('User not authenticated');
 
     try {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { motivationalQuotes } from '@/data/taskData';
 import TaskList from '@/components/tasks/TaskList';
@@ -58,9 +58,13 @@ const Today: React.FC = () => {
     }
   }, [getTasks, user]);
   
-  useEffect(() => {
+  const memoizedQuote = useMemo(() => {
     const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
-    setQuote(motivationalQuotes[randomIndex]);
+    return motivationalQuotes[randomIndex];
+  }, []);
+  
+  useEffect(() => {
+    setQuote(memoizedQuote);
     
     const hasVisitedBefore = localStorage.getItem('hasVisitedBefore');
     if (!hasVisitedBefore) {
@@ -71,13 +75,13 @@ const Today: React.FC = () => {
     }
     
     fetchTasks();
-  }, [fetchTasks]);
+  }, [memoizedQuote, fetchTasks]);
   
   useEffect(() => {
     if (user && userSettings && tasks.length > 0) {
       setupTaskNotifications(tasks, {
-        taskReminders: userSettings.taskReminders,
-        overdueAlerts: userSettings.overdueAlerts
+        taskReminders: userSettings?.taskReminders || false,
+        overdueAlerts: userSettings?.overdueAlerts || false
       });
     }
   }, [tasks, userSettings, user]);

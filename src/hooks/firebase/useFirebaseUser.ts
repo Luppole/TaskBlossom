@@ -1,18 +1,18 @@
 
 import { useContext } from 'react';
-import { FirebaseContext, FirebaseContextType } from '@/contexts/FirebaseContext';
-import { auth } from '@/lib/firebase';
+import { FirebaseContext } from '@/contexts/FirebaseContext';
 
 export const useFirebaseUser = () => {
   const context = useContext(FirebaseContext);
   
-  // If the context is not available, provide a fallback
-  // This is a workaround for the circular dependency during initialization
-  if (!context) {
+  // Check if the context exists to avoid errors
+  if (context === null) {
+    // Instead of immediately throwing an error, return a default state
+    // This helps break circular dependencies when components initialize
     return {
-      user: auth.currentUser, // Use the current user directly from auth
-      loading: true,          // Assume loading state is true
-      userSettings: null,     // No settings available without context
+      user: null,
+      loading: true,
+      userSettings: null
     };
   }
   
