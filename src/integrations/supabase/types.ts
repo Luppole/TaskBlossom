@@ -9,7 +9,216 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          color: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      fitness_goals: {
+        Row: {
+          daily_calorie_goal: number | null
+          user_id: string
+          weekly_workout_goal: number | null
+        }
+        Insert: {
+          daily_calorie_goal?: number | null
+          user_id: string
+          weekly_workout_goal?: number | null
+        }
+        Update: {
+          daily_calorie_goal?: number | null
+          user_id?: string
+          weekly_workout_goal?: number | null
+        }
+        Relationships: []
+      }
+      friend_requests: {
+        Row: {
+          created_at: string | null
+          id: string
+          recipient_id: string
+          sender_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          recipient_id: string
+          sender_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          recipient_id?: string
+          sender_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      friends: {
+        Row: {
+          created_at: string | null
+          friend_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          friend_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          friend_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      meals: {
+        Row: {
+          created_at: string | null
+          date: string
+          foods: Json | null
+          id: string
+          meal_type: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          foods?: Json | null
+          id?: string
+          meal_type: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          foods?: Json | null
+          id?: string
+          meal_type?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      progress_logs: {
+        Row: {
+          date: string
+          id: string
+          measurements: Json | null
+          notes: string | null
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          date?: string
+          id?: string
+          measurements?: Json | null
+          notes?: string | null
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          date?: string
+          id?: string
+          measurements?: Json | null
+          notes?: string | null
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          category_id: string | null
+          completed: boolean | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          completed?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category_id?: string | null
+          completed?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workouts: {
+        Row: {
+          created_at: string | null
+          date: string
+          duration: number | null
+          exercises: Json | null
+          id: string
+          notes: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          duration?: number | null
+          exercises?: Json | null
+          id?: string
+          notes?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          duration?: number | null
+          exercises?: Json | null
+          id?: string
+          notes?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
