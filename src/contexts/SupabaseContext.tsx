@@ -754,15 +754,10 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           ...profileData,
           updated_at: new Date().toISOString()
         });
-      
+    
       if (error) throw error;
-      
-      toast.success('Profile updated successfully');
-      return true;
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
-      return false;
     }
   };
 
