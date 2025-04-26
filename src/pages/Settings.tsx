@@ -25,14 +25,16 @@ import { toast } from 'sonner';
 import { getFirebaseNotificationPermission } from '@/lib/notification-service';
 import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
+import { useNavigate } from 'react-router-dom';
 
 const MotionSwitch = motion(Switch);
 const MotionCard = motion(Card);
 
 const Settings = () => {
-  const { user, userSettings, updateSettings, signIn } = useFirebase();
+  const { user, userSettings, updateSettings } = useFirebase();
   const { t } = useTranslation();
   const [notificationPermission, setNotificationPermission] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   // Apply RTL setting on component mount if user has it enabled
   useEffect(() => {
@@ -51,40 +53,40 @@ const Settings = () => {
   }, []);
 
   const handleToggle = async (setting: string, value: boolean) => {
-    if (userSettings) {
-      // Special handling for notification settings
-      if ((setting === 'pushNotifications' || setting === 'taskReminders' || setting === 'overdueAlerts') && value) {
-        // Request permission first if needed
-        const permission = await getFirebaseNotificationPermission();
-        setNotificationPermission(permission);
-        
-        if (permission !== 'granted') {
-          toast.error(t('settings.notificationsBlocked'), {
-            description: t('settings.enableNotificationsInBrowser')
-          });
-          return;
-        }
+    if (!userSettings) return;
+    
+    // Special handling for notification settings
+    if ((setting === 'pushNotifications' || setting === 'taskReminders' || setting === 'overdueAlerts') && value) {
+      // Request permission first if needed
+      const permission = await getFirebaseNotificationPermission();
+      setNotificationPermission(permission);
+      
+      if (permission !== 'granted') {
+        toast.error(t('settings.notificationsBlocked'), {
+          description: t('settings.enableNotificationsInBrowser')
+        });
+        return;
       }
+    }
 
-      try {
-        await updateSettings({ [setting]: value });
-        toast.success(t('common.save'));
-      } catch (error) {
-        console.error('Error updating settings:', error);
-        toast.error(t('common.error'));
-      }
+    try {
+      await updateSettings({ [setting]: value });
+      toast.success(t('common.save'));
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      toast.error(t('common.error'));
     }
   };
 
   const handleSelectChange = async (setting: string, value: string) => {
-    if (userSettings) {
-      try {
-        await updateSettings({ [setting]: value });
-        toast.success(t('common.save'));
-      } catch (error) {
-        console.error('Error updating settings:', error);
-        toast.error(t('common.error'));
-      }
+    if (!userSettings) return;
+    
+    try {
+      await updateSettings({ [setting]: value });
+      toast.success(t('common.save'));
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      toast.error(t('common.error'));
     }
   };
 
@@ -99,6 +101,10 @@ const Settings = () => {
         description: t('settings.enableNotificationsInBrowser')
       });
     }
+  };
+  
+  const handleSignIn = () => {
+    navigate('/auth');
   };
 
   // If no user is signed in, show sign-in prompt
@@ -116,14 +122,14 @@ const Settings = () => {
           </div>
           <h1 className="text-3xl font-bold mb-2">{t('settings.signInNeeded')}</h1>
           <p className="text-muted-foreground mb-8">
-            {t('settings.signInDescription')}
+            Sign in to personalize your TaskBlossom experience and save your settings across devices.
           </p>
           
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Button size="lg" onClick={() => signIn()} className="px-8">
+            <Button size="lg" onClick={handleSignIn} className="px-8">
               Sign In
             </Button>
           </motion.div>

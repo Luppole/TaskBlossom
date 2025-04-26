@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 interface SignupFormProps {
   setLoading: (loading: boolean) => void;
@@ -20,6 +21,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ setLoading, onSuccess }) => {
   const [error, setError] = useState<string | null>(null);
   
   const { createAccount } = useFirebase();
+  const navigate = useNavigate();
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +48,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ setLoading, onSuccess }) => {
       await createAccount(email, password, name);
       toast.success('Account created successfully!');
       onSuccess();
+      navigate('/'); // Redirect to home page after successful signup
     } catch (error: any) {
       let errorMessage = 'Failed to create account';
       
@@ -55,6 +58,8 @@ const SignupForm: React.FC<SignupFormProps> = ({ setLoading, onSuccess }) => {
         errorMessage = 'Invalid email address';
       } else if (error.code === 'auth/weak-password') {
         errorMessage = 'Password is too weak';
+      } else if (error.code === 'auth/missing-email') {
+        errorMessage = 'Email is required';
       }
       
       setError(errorMessage);
@@ -79,6 +84,8 @@ const SignupForm: React.FC<SignupFormProps> = ({ setLoading, onSuccess }) => {
           placeholder="Enter your name"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          autoComplete="name"
+          required
         />
       </div>
       
@@ -90,6 +97,8 @@ const SignupForm: React.FC<SignupFormProps> = ({ setLoading, onSuccess }) => {
           placeholder="Enter your email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
+          required
         />
       </div>
       
@@ -101,6 +110,8 @@ const SignupForm: React.FC<SignupFormProps> = ({ setLoading, onSuccess }) => {
           placeholder="Create a password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          autoComplete="new-password"
+          required
         />
       </div>
       
@@ -112,6 +123,8 @@ const SignupForm: React.FC<SignupFormProps> = ({ setLoading, onSuccess }) => {
           placeholder="Confirm your password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
+          autoComplete="new-password"
+          required
         />
       </div>
       

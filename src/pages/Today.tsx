@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { motivationalQuotes } from '@/data/taskData';
 import TaskList from '@/components/tasks/TaskList';
@@ -24,8 +25,7 @@ const Today: React.FC = () => {
     createTask,
     updateTask,
     deleteTask,
-    userSettings,
-    loading: firebaseLoading 
+    userSettings
   } = useFirebase();
   
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -40,31 +40,10 @@ const Today: React.FC = () => {
     onNewTask: () => setIsAddTaskModalOpen(true)
   });
   
-  const fetchTasks = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      if (user) {
-        const fetchedTasks = await getTasks();
-        setTasks(fetchedTasks);
-      } else {
-        setTasks([]);
-      }
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-      toast.error('Failed to load tasks');
-      setTasks([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [getTasks, user]);
-  
-  const memoizedQuote = useMemo(() => {
-    const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
-    return motivationalQuotes[randomIndex];
-  }, []);
-  
+  // Use a random quote from the list
   useEffect(() => {
-    setQuote(memoizedQuote);
+    const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
+    setQuote(motivationalQuotes[randomIndex]);
     
     const hasVisitedBefore = localStorage.getItem('hasVisitedBefore');
     if (!hasVisitedBefore) {
@@ -73,9 +52,25 @@ const Today: React.FC = () => {
     } else {
       setIsFirstVisit(false);
     }
-    
+  }, []);
+  
+  // Fetch tasks when component mounts
+  const fetchTasks = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const fetchedTasks = await getTasks();
+      setTasks(fetchedTasks);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      toast.error('Failed to load tasks');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getTasks]);
+  
+  useEffect(() => {
     fetchTasks();
-  }, [memoizedQuote, fetchTasks]);
+  }, [fetchTasks]);
   
   useEffect(() => {
     if (user && userSettings && tasks.length > 0) {
@@ -93,6 +88,7 @@ const Today: React.FC = () => {
       
       const now = new Date().toISOString();
       
+      // Optimistically update UI
       setTasks(prev => 
         prev.map(t => t.id === taskId ? { 
           ...t, 
@@ -101,44 +97,33 @@ const Today: React.FC = () => {
         } : t)
       );
       
-      if (user) {
-        await updateTask(taskId, { 
-          completed: !taskToToggle.completed,
-          completedAt: !taskToToggle.completed ? now : null
-        });
-      }
+      // Update in backend
+      await updateTask(taskId, { 
+        completed: !taskToToggle.completed,
+        completedAt: !taskToToggle.completed ? now : null
+      });
     } catch (error) {
       console.error('Error toggling task completion:', error);
       toast.error('Failed to update task');
       
-      const taskToToggle = tasks.find(t => t.id === taskId);
-      if (!taskToToggle) return;
-      
-      setTasks(prev => 
-        prev.map(t => t.id === taskId ? { 
-          ...t, 
-          completed: taskToToggle.completed,
-          completedAt: taskToToggle.completedAt 
-        } : t)
-      );
+      // Revert optimistic update on error
+      fetchTasks();
     }
   };
   
   const handleDeleteTask = async (taskId: string) => {
     try {
-      const taskToDelete = tasks.find(t => t.id === taskId);
-      if (!taskToDelete) return;
-      
+      // Optimistically update UI
       setTasks(prev => prev.filter(t => t.id !== taskId));
       
-      if (user) {
-        await deleteTask(taskId);
-        toast.success('Task deleted');
-      }
+      // Delete in backend
+      await deleteTask(taskId);
+      toast.success('Task deleted');
     } catch (error) {
       console.error('Error deleting task:', error);
       toast.error('Failed to delete task');
       
+      // Revert optimistic update on error
       fetchTasks();
     }
   };
@@ -147,21 +132,10 @@ const Today: React.FC = () => {
     setIsAddTaskModalOpen(true);
   };
   
-  const handleTaskSave = async (newTask: Task) => {
+  const handleTaskSave = async (newTask: Omit<Task, 'id' | 'createdAt'>) => {
     try {
-      if (user) {
-        const savedTask = await createTask({
-          title: newTask.title,
-          completed: newTask.completed,
-          dueDate: newTask.dueDate,
-          priority: newTask.priority,
-          category: newTask.category,
-          notes: newTask.notes,
-        });
-        setTasks(prev => [savedTask, ...prev]);
-      } else {
-        setTasks(prev => [newTask, ...prev]);
-      }
+      const savedTask = await createTask(newTask);
+      setTasks(prev => [savedTask, ...prev]);
       setIsAddTaskModalOpen(false);
       toast.success('Task added');
     } catch (error) {
@@ -176,9 +150,9 @@ const Today: React.FC = () => {
   
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return '🌞 Good Morning';
-    if (hour < 18) return '☀️ Good Afternoon';
-    return '🌙 Good Evening';
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
   };
   
   const todaysTasks = tasks.filter(task => {
@@ -208,18 +182,10 @@ const Today: React.FC = () => {
         return todaysTasks;
     }
   };
-  
-  const sortedTasks = [...todaysTasks].sort((a, b) => {
-    if (a.completed && !b.completed) return 1;
-    if (!a.completed && b.completed) return -1;
-    
-    const priorityValues = { high: 0, medium: 1, low: 2 };
-    return priorityValues[a.priority] - priorityValues[b.priority];
-  });
 
   const filteredTasks = getFilteredTasks();
   const pendingCount = todaysTasks.filter(task => !task.completed).length;
-
+  const completedCount = todaysTasks.filter(task => task.completed).length;
   const streak = calculateStreak(tasks);
 
   return (
@@ -244,7 +210,7 @@ const Today: React.FC = () => {
             animate={{ opacity: 1, height: 'auto' }}
             transition={{ delay: 1 }}
           >
-            <p className="font-medium">Welcome to TaskBlossom! 🌸</p>
+            <p className="font-medium">Welcome to TaskBlossom!</p>
             <p className="text-sm mt-1">Press <kbd className="px-2 py-1 bg-muted rounded text-xs">Alt+N</kbd> anytime to add a new task.</p>
           </motion.div>
         )}
@@ -274,48 +240,56 @@ const Today: React.FC = () => {
           </h2>
           
           {!isLoading && (
-            pendingCount > 0 ? (
-              <motion.div 
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                className="flex items-center text-sm font-medium"
-              >
-                <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
-                <span>{pendingCount} pending</span>
-              </motion.div>
-            ) : (
-              todaysTasks.length > 0 ? (
-                <span className="text-sm text-green-500 font-medium">All done for today! 🎉</span>
-              ) : null
-            )
+            <div className="flex items-center space-x-2">
+              {completedCount > 0 && todaysTasks.length > 0 && (
+                <div className="text-xs bg-muted px-2 py-1 rounded-full">
+                  {completedCount}/{todaysTasks.length} completed
+                </div>
+              )}
+              
+              {pendingCount > 0 ? (
+                <motion.div 
+                  initial={{ scale: 0.9 }}
+                  animate={{ scale: 1 }}
+                  className="flex items-center text-sm font-medium"
+                >
+                  <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+                  <span>{pendingCount} pending</span>
+                </motion.div>
+              ) : (
+                todaysTasks.length > 0 && (
+                  <span className="text-sm text-green-500 font-medium">All done for today!</span>
+                )
+              )}
+            </div>
           )}
         </div>
         
         <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
           <Badge 
             variant={filter === 'all' ? "default" : "outline"} 
-            className="cursor-pointer"
+            className="cursor-pointer hover:bg-accent transition-colors"
             onClick={() => setFilter('all')}
           >
             All
           </Badge>
           <Badge 
             variant={filter === 'pending' ? "default" : "outline"} 
-            className="cursor-pointer"
+            className="cursor-pointer hover:bg-accent transition-colors"
             onClick={() => setFilter('pending')}
           >
             Pending
           </Badge>
           <Badge 
             variant={filter === 'completed' ? "default" : "outline"} 
-            className="cursor-pointer"
+            className="cursor-pointer hover:bg-accent transition-colors"
             onClick={() => setFilter('completed')}
           >
             Completed
           </Badge>
           <Badge 
             variant={filter === 'overdue' ? "default" : "outline"} 
-            className="cursor-pointer"
+            className="cursor-pointer hover:bg-accent transition-colors"
             onClick={() => setFilter('overdue')}
           >
             Overdue
@@ -326,14 +300,19 @@ const Today: React.FC = () => {
           tasks={filteredTasks}
           onToggleComplete={handleToggleComplete}
           onDeleteTask={handleDeleteTask}
-          isLoading={isLoading || firebaseLoading}
+          isLoading={isLoading}
         />
         
         {!isLoading && !user && (
-          <div className="mt-4 p-4 bg-muted rounded-lg text-center">
+          <motion.div
+            className="mt-4 p-4 bg-muted rounded-lg text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
             <p className="mb-2">Sign in to save your tasks and access them from any device.</p>
             <p className="text-sm text-muted-foreground">Your tasks will be stored locally until you sign in.</p>
-          </div>
+          </motion.div>
         )}
       </section>
       

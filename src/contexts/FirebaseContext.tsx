@@ -40,7 +40,16 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       try {
         const savedTasks = localStorage.getItem('guest_tasks');
         if (savedTasks) {
-          setLocalTasks(JSON.parse(savedTasks));
+          const parsedTasks = JSON.parse(savedTasks);
+          
+          // Convert string dates back to Date objects
+          const processedTasks = parsedTasks.map((task: any) => ({
+            ...task,
+            dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+            createdAt: new Date(task.createdAt)
+          }));
+          
+          setLocalTasks(processedTasks);
         }
       } catch (error) {
         console.error('Error loading tasks from localStorage:', error);
@@ -171,9 +180,9 @@ export const useFirebase = () => {
   const settingsOperations = useSettingsOperations();
   const navigate = useNavigate();
   
-  // Add a method to redirect to settings for sign-in
+  // Add a method to redirect to sign-in
   const redirectToSignIn = () => {
-    navigate('/settings');
+    navigate('/auth');
   };
   
   return {

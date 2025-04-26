@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 interface LoginFormProps {
   setLoading: (loading: boolean) => void;
@@ -18,6 +19,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ setLoading, onSuccess }) => {
   const [error, setError] = useState<string | null>(null);
   
   const { signIn } = useFirebase();
+  const navigate = useNavigate();
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +36,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ setLoading, onSuccess }) => {
       await signIn(email, password);
       toast.success('Successfully logged in!');
       onSuccess();
+      navigate('/'); // Redirect to home page after successful login
     } catch (error: any) {
       let errorMessage = 'Failed to log in';
       
@@ -43,6 +46,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ setLoading, onSuccess }) => {
         errorMessage = 'Too many failed login attempts. Please try again later';
       } else if (error.code === 'auth/invalid-credential') {
         errorMessage = 'Invalid credentials';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email format';
+      } else if (error.code === 'auth/missing-password') {
+        errorMessage = 'Password is required';
+      } else if (error.code === 'auth/missing-email') {
+        errorMessage = 'Email is required';
       }
       
       setError(errorMessage);
@@ -68,17 +77,33 @@ const LoginForm: React.FC<LoginFormProps> = ({ setLoading, onSuccess }) => {
           placeholder="Enter your email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
+          required
         />
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password">Password</Label>
+          <a 
+            href="#" 
+            className="text-sm text-primary hover:underline"
+            onClick={(e) => {
+              e.preventDefault();
+              toast.info('Password reset functionality coming soon!');
+            }}
+          >
+            Forgot password?
+          </a>
+        </div>
         <Input
           id="password"
           type="password"
           placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
+          required
         />
       </div>
       

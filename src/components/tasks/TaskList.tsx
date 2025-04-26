@@ -1,133 +1,90 @@
-
 import React from 'react';
-import { Task } from '@/types/task';
 import TaskCard from './TaskCard';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useFirebase } from '@/contexts/FirebaseContext';
-import { toast } from 'sonner';
-import TaskProgressBar from './TaskProgressBar';
+import { Task } from '@/types/task';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Skeleton } from '../ui/skeleton';
 
 interface TaskListProps {
   tasks: Task[];
   onToggleComplete: (taskId: string) => void;
-  onDeleteTask?: (taskId: string) => void;
+  onDeleteTask: (taskId: string) => void;
   isLoading?: boolean;
 }
 
-const TaskList: React.FC<TaskListProps> = ({ 
-  tasks, 
-  onToggleComplete, 
+const TaskList: React.FC<TaskListProps> = ({
+  tasks,
+  onToggleComplete,
   onDeleteTask,
-  isLoading = false 
+  isLoading = false,
 }) => {
-  const { user, updateTask } = useFirebase();
-  
-  // Calculate completed tasks
-  const completedTasks = tasks.filter(task => task.completed).length;
-  const totalTasks = tasks.length;
-  
-  // Handle toggling task completion
-  const handleToggleComplete = async (taskId: string) => {
-    // Call the parent component handler
-    onToggleComplete(taskId);
-    
-    // Find the task
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-    
-    // If user is signed in, persist the change to Firebase
-    if (user) {
-      try {
-        await updateTask(taskId, { completed: !task.completed });
-      } catch (error) {
-        console.error('Error updating task completion status', error);
-        toast.error('Failed to update task. Please try again.');
-        
-        // Revert the toggle in case of an error
-        onToggleComplete(taskId);
-      }
-    }
+  // Function to render skeleton loading state
+  const renderSkeletons = () => {
+    return Array(3)
+      .fill(0)
+      .map((_, index) => (
+        <motion.div
+          key={`skeleton-${index}`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: index * 0.1 }}
+          className="mb-4"
+        >
+          <Skeleton className="h-24 w-full rounded-md" />
+        </motion.div>
+      ));
   };
-  
+
+  // If loading, show skeletons
   if (isLoading) {
     return (
-      <motion.div 
-        className="flex items-center justify-center py-10"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
-        <div className="flex flex-col items-center space-y-4">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-muted-foreground">Loading tasks...</p>
-        </div>
-      </motion.div>
+      <div className="py-4">
+        {renderSkeletons()}
+      </div>
     );
   }
-  
+
+  // If no tasks, show empty state
   if (tasks.length === 0) {
     return (
-      <motion.div 
-        className="flex flex-col items-center justify-center py-10 text-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="py-8 text-center"
       >
-        <motion.div 
-          className="text-4xl mb-4"
-          animate={{ 
-            y: [0, -10, 0],
-          }}
-          transition={{ 
-            repeat: Infinity,
-            duration: 3
-          }}
-        >
-          ✨
-        </motion.div>
-        <h3 className="text-xl font-medium mb-2">No tasks here!</h3>
-        <p className="text-muted-foreground">
-          You're all caught up. Add a new task to get started.
-        </p>
+        <p className="text-muted-foreground">No tasks found.</p>
       </motion.div>
     );
   }
 
+  // Otherwise, show tasks
   return (
     <motion.div
-      className="space-y-6"
+      className="py-2 space-y-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ staggerChildren: 0.1 }}
+      transition={{ duration: 0.3 }}
     >
-      {tasks.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <TaskProgressBar 
-            completed={completedTasks} 
-            total={totalTasks}
-            className="mb-6"
-          />
-        </motion.div>
-      )}
-      
       <AnimatePresence mode="popLayout">
-        {tasks.map((task) => (
+        {tasks.map((task, index) => (
           <motion.div
             key={task.id}
             layout
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20, height: 0, marginBottom: 0 }}
-            transition={{ duration: 0.3 }}
-            whileHover={{ scale: 1.02, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)" }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{
+              type: 'spring',
+              stiffness: 500,
+              damping: 30,
+              delay: index * 0.05,
+            }}
+            whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
           >
             <TaskCard
               task={task}
-              onToggleComplete={handleToggleComplete}
-              onDelete={onDeleteTask}
+              onToggleComplete={onToggleComplete}
+              onDeleteTask={onDeleteTask}
             />
           </motion.div>
         ))}

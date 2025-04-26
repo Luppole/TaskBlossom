@@ -15,6 +15,7 @@ import NotFound from "./pages/NotFound";
 import Fitness from "./pages/Fitness";
 import Social from "./pages/Social";
 import Profile from "./pages/Profile";
+import Auth from "./pages/Auth";
 import AppShell from "./components/layout/AppShell";
 import PageTransition from "./components/common/PageTransition";
 import { FirebaseProvider } from "./contexts/FirebaseContext";
@@ -64,6 +65,10 @@ const AnimatedRoutes = () => {
       title: "TaskBlossom | Social",
       description: "Connect with friends and share your productivity journey."
     },
+    "/auth": { 
+      title: "TaskBlossom | Sign In",
+      description: "Sign in or create an account to use TaskBlossom's full features."
+    },
   };
   
   // Get meta for the current path or use default
@@ -96,6 +101,7 @@ const AnimatedRoutes = () => {
           <Route path="/fitness" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Fitness /></div></PageTransition>} />
           <Route path="/social" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Social /></div></PageTransition>} />
           <Route path="/profile/:userId" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Profile /></div></PageTransition>} />
+          <Route path="/auth" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Auth /></div></PageTransition>} />
           <Route path="*" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><NotFound /></div></PageTransition>} />
         </Routes>
       </AnimatePresence>

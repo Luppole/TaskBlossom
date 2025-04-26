@@ -28,7 +28,8 @@ export const useTaskOperations = () => {
           id: doc.id,
           dueDate: data.dueDate ? data.dueDate.toDate() : undefined,
           createdAt: data.createdAt.toDate(),
-          notes: data.notes || null
+          notes: data.notes || null,
+          completedAt: data.completedAt ? data.completedAt : null
         } as Task;
       });
     } catch (error) {
@@ -60,7 +61,8 @@ export const useTaskOperations = () => {
       const firestoreTask = {
         ...task,
         dueDate: task.dueDate ? Timestamp.fromDate(task.dueDate) : null,
-        createdAt: Timestamp.fromDate(now)
+        createdAt: Timestamp.fromDate(now),
+        completedAt: task.completed ? Timestamp.now() : null
       };
       
       await setDoc(taskRef, firestoreTask);
@@ -86,6 +88,11 @@ export const useTaskOperations = () => {
       const firestoreData: Record<string, any> = { ...data };
       if (firestoreData.dueDate instanceof Date) {
         firestoreData.dueDate = Timestamp.fromDate(firestoreData.dueDate);
+      }
+      
+      // Handle completed/completedAt fields synchronization
+      if (data.completed !== undefined) {
+        firestoreData.completedAt = data.completed ? Timestamp.now() : null;
       }
       
       await updateDoc(taskRef, firestoreData);
