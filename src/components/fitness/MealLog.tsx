@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 import { useTranslation } from 'react-i18next';
 import { useMealLog } from '@/hooks/useMealLog';
+import { MealLog as MealLogType } from '@/types/task';
 
 const MealLog = () => {
   const { user, createMeal, updateMeal } = useSupabase();
@@ -62,30 +64,25 @@ const MealLog = () => {
     }
     
     try {
-      setIsLoading(true);
       const existingMeal = meals.find(meal => meal.mealType === mealType);
       
       if (existingMeal) {
         const updatedFoods = [...existingMeal.foods, food];
         await updateMeal(existingMeal.id, { foods: updatedFoods });
         
-        setMeals(meals.map(meal => 
-          meal.id === existingMeal.id 
-            ? { ...meal, foods: updatedFoods }
-            : meal
-        ));
+        // Instead of directly modifying the meals state, we'll let the useMealLog hook handle
+        // the state management on its next fetch
+        toast.success(t('common.save'));
       } else {
-        const newMeal: Omit<MealLogType, 'id'> = {
+        const newMeal = {
           date: today,
           mealType: mealType,
           foods: [food],
           notes: null,
         };
         
-        const savedMeal = await createMeal(newMeal);
-        if (savedMeal) {
-          setMeals([...meals, savedMeal]);
-        }
+        await createMeal(newMeal);
+        toast.success(t('common.save'));
       }
       
       setNewFoods({
@@ -93,12 +90,9 @@ const MealLog = () => {
         [mealType]: { id: uuidv4(), name: '', calories: 0 }
       });
       
-      toast.success(t('common.save'));
     } catch (error) {
       console.error('Error adding food:', error);
       toast.error(t('common.error'));
-    } finally {
-      setIsLoading(false);
     }
   };
   
@@ -111,12 +105,7 @@ const MealLog = () => {
       
       await updateMeal(meal.id, { foods: updatedFoods });
       
-      setMeals(meals.map(m => 
-        m.id === meal.id 
-          ? { ...m, foods: updatedFoods }
-          : m
-      ));
-      
+      // Again, we'll let the useMealLog hook handle state management
       toast.success(t('common.delete'));
     } catch (error) {
       console.error('Error removing food:', error);
