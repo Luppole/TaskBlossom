@@ -1,13 +1,11 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lexend:wght@300;400;500;600;700&family=Rubik:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
+    --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -16,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 262 58% 55%;
+    --primary: 261.3 73.4% 50.4%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -25,7 +23,7 @@
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 262 58% 96%;
+    --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
@@ -33,18 +31,9 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 262 58% 55%;
+    --ring: 222.2 84% 4.9%;
 
-    --radius: 0.75rem;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 262 58% 55%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 262 58% 55%;
+    --radius: 0.5rem;
   }
 
   .dark {
@@ -57,7 +46,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 262 58% 65%;
+    --primary: 261.3 73.4% 50.4%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -66,7 +55,7 @@
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 262 58% 25%;
+    --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
@@ -74,16 +63,7 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 262 58% 65%;
-    
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 262 58% 65%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 262 58% 65%;
+    --ring: 212.7 26.8% 83.9%;
   }
 }
 
@@ -91,116 +71,32 @@
   * {
     @apply border-border;
   }
-
   body {
-    @apply bg-background text-foreground font-sans;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-heading;
-  }
-  
-  /* Enhance keyboard shortcuts display */
-  kbd {
-    @apply px-1.5 py-0.5 text-xs font-mono bg-secondary rounded border border-border shadow-sm text-secondary-foreground;
-  }
-  
-  /* Hebrew language support */
-  html[lang="he"] body {
-    @apply font-hebrew;
-  }
-  
-  /* Improved RTL support */
-  [dir="rtl"] * {
-    letter-spacing: 0;
-  }
-  
-  [dir="rtl"] .task-card {
-    text-align: right;
-  }
-  
-  [dir="rtl"] .rtl-mirror {
-    transform: scaleX(-1);
-  }
-  
-  /* Proper RTL flex direction override */
-  [dir="rtl"] .reverse-on-rtl {
-    flex-direction: row-reverse;
+    @apply bg-background text-foreground;
   }
 }
 
-@layer components {
-  .task-card {
-    @apply bg-white dark:bg-card rounded-lg shadow-sm border p-4 mb-3 transition-all hover:shadow-md;
-  }
-
-  .category-badge {
-    @apply text-xs px-2 py-1 rounded-full font-medium transition-all;
-  }
-
-  .priority-indicator {
-    @apply w-3 h-3 rounded-full inline-block mr-2 transition-all;
-  }
-
-  .priority-high {
-    @apply bg-red-500 shadow-sm shadow-red-300;
-  }
-
-  .priority-medium {
-    @apply bg-amber-500 shadow-sm shadow-amber-300;
-  }
-
-  .priority-low {
-    @apply bg-green-500 shadow-sm shadow-green-300;
-  }
-  
-  /* Focus mode styles */
-  .focus-mode {
-    @apply bg-gradient-to-br from-indigo-900 to-purple-900 text-white;
-  }
-  
-  /* Card hover/active states */
-  .card-interactive {
-    @apply transition-all hover:shadow-md active:shadow-sm active:translate-y-0.5;
-  }
+/* RTL Support */
+html[dir="rtl"] .ltr-only {
+  display: none;
 }
 
-/* Animations */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+html[dir="ltr"] .rtl-only {
+  display: none;
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
+html[dir="rtl"] .reverse-flex {
+  flex-direction: row-reverse;
 }
 
-/* Responsive optimizations for thumb zone */
-@media (max-width: 640px) {
-  .mobile-bottom-safe {
-    padding-bottom: 5rem;
-  }
+html[dir="rtl"] .reverse-grid {
+  direction: rtl;
 }
 
-/* RTL Support for margins and paddings */
-[dir="rtl"] .ml-1, [dir="rtl"] .ml-2, [dir="rtl"] .ml-3, [dir="rtl"] .ml-4 {
-  margin-left: 0 !important;
+html[dir="rtl"] .text-start {
+  text-align: right;
 }
 
-[dir="rtl"] .mr-1 { margin-right: 0 !important; margin-left: 0.25rem !important; }
-[dir="rtl"] .mr-2 { margin-right: 0 !important; margin-left: 0.5rem !important; }
-[dir="rtl"] .mr-3 { margin-right: 0 !important; margin-left: 0.75rem !important; }
-[dir="rtl"] .mr-4 { margin-right: 0 !important; margin-left: 1rem !important; }
-
-[dir="rtl"] .pl-1, [dir="rtl"] .pl-2, [dir="rtl"] .pl-3, [dir="rtl"] .pl-4 {
-  padding-left: 0 !important;
+html[dir="rtl"] .text-end {
+  text-align: left;
 }
-
-[dir="rtl"] .pr-1 { padding-right: 0 !important; padding-left: 0.25rem !important; }
-[dir="rtl"] .pr-2 { padding-right: 0 !important; padding-left: 0.5rem !important; }
-[dir="rtl"] .pr-3 { padding-right: 0 !important; padding-left: 0.75rem !important; }
-[dir="rtl"] .pr-4 { padding-right: 0 !important; padding-left: 1rem !important; }

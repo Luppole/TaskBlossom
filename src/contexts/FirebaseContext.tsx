@@ -61,6 +61,9 @@ export interface UserSettings {
   taskReminders: boolean;
   overdueAlerts: boolean;
   rtlLayout: boolean;
+  publicProfile: boolean;
+  shareProgress: boolean;
+  shareFitness: boolean;
 }
 
 const defaultUserSettings: UserSettings = {
@@ -69,7 +72,10 @@ const defaultUserSettings: UserSettings = {
   pushNotifications: false,
   taskReminders: false,
   overdueAlerts: false,
-  rtlLayout: false
+  rtlLayout: false,
+  publicProfile: false,
+  shareProgress: false,
+  shareFitness: false
 };
 
 const FirebaseContext = createContext<FirebaseContextType | null>(null);

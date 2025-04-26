@@ -16,6 +16,7 @@ import AppShell from "./components/layout/AppShell";
 import PageTransition from "./components/common/PageTransition";
 import { FirebaseProvider } from "./contexts/FirebaseContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import "./i18n/i18n"; // Import i18n configuration
 
 const queryClient = new QueryClient({
   defaultOptions: {

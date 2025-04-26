@@ -1,297 +1,214 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
+import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFirebase } from '@/contexts/FirebaseContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import { motion } from 'framer-motion';
-import { requestNotificationPermission } from '@/lib/firebase';
-import AuthModal from '@/components/auth/AuthModal';
-import { Moon, Sun, Bell, BellOff, User, LogOut } from 'lucide-react';
+import { Globe, Moon, Bell, Shield } from 'lucide-react';
+import LanguageSwitcher from '@/components/settings/LanguageSwitcher';
+import { toast } from 'sonner';
 
-const Settings: React.FC = () => {
-  const { user, userSettings, updateSettings, logOut } = useFirebase();
-  const { theme, direction, toggleTheme, toggleDirection } = useTheme();
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  
-  // Notification permission state
-  const [notificationPermission, setNotificationPermission] = useState<string | null>(null);
-  
-  // Check notification permission
+const Settings = () => {
+  const { userSettings, updateSettings } = useFirebase();
+  const { t } = useTranslation();
+
+  // Apply RTL setting on component mount if user has it enabled
   useEffect(() => {
-    if (typeof Notification !== 'undefined') {
-      setNotificationPermission(Notification.permission);
-    }
-  }, []);
-  
-  // Handle push notification toggle
-  const handlePushNotificationToggle = async (enabled: boolean) => {
-    if (enabled) {
-      const result = await requestNotificationPermission();
-      if (result) {
-        setNotificationPermission('granted');
-        updateSettings({ pushNotifications: true });
-        toast.success('Push notifications enabled');
-      } else {
-        toast.error('Could not enable notifications. Please check your browser settings.');
-      }
+    if (userSettings?.rtlLayout) {
+      document.documentElement.dir = 'rtl';
     } else {
-      updateSettings({ pushNotifications: false });
+      document.documentElement.dir = 'ltr';
     }
-  };
-  
-  // Handle task reminders toggle
-  const handleTaskRemindersToggle = async (enabled: boolean) => {
-    if (enabled && notificationPermission !== 'granted') {
-      const result = await requestNotificationPermission();
-      if (!result) {
-        toast.error('Please allow notifications to enable task reminders');
-        return;
+  }, [userSettings?.rtlLayout]);
+
+  const handleToggle = async (setting: string, value: boolean) => {
+    if (userSettings) {
+      try {
+        await updateSettings({ [setting]: value });
+        toast.success(t('common.save'));
+      } catch (error) {
+        console.error('Error updating settings:', error);
+        toast.error(t('common.error'));
       }
     }
-    
-    updateSettings({ taskReminders: enabled });
-    toast.success(`Task reminders ${enabled ? 'enabled' : 'disabled'}`);
   };
-  
-  // Handle overdue alerts toggle
-  const handleOverdueAlertsToggle = async (enabled: boolean) => {
-    if (enabled && notificationPermission !== 'granted') {
-      const result = await requestNotificationPermission();
-      if (!result) {
-        toast.error('Please allow notifications to enable overdue alerts');
-        return;
+
+  const handleSelectChange = async (setting: string, value: string) => {
+    if (userSettings) {
+      try {
+        await updateSettings({ [setting]: value });
+        toast.success(t('common.save'));
+      } catch (error) {
+        console.error('Error updating settings:', error);
+        toast.error(t('common.error'));
       }
     }
-    
-    updateSettings({ overdueAlerts: enabled });
-    toast.success(`Overdue alerts ${enabled ? 'enabled' : 'disabled'}`);
   };
-  
-  // Handle default view change
-  const handleDefaultViewChange = (view: 'today' | 'calendar' | 'tasks') => {
-    updateSettings({ defaultView: view });
-    toast.success(`Default view set to ${view}`);
-  };
-  
-  // Handle sign out
-  const handleSignOut = async () => {
-    try {
-      await logOut();
-      toast.success('Signed out successfully');
-    } catch (error) {
-      toast.error('Failed to sign out');
-    }
-  };
-  
+
   return (
-    <motion.div 
-      className="max-w-2xl mx-auto"
-      initial={{ opacity: 0, y: 10 }}
+    <motion.div
+      className="max-w-4xl mx-auto py-8 space-y-6"
+      initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <header className="mb-6">
-        <h1 className="font-heading text-2xl font-bold mb-2">Settings</h1>
-        <p className="text-muted-foreground">
-          Customize TaskBlossom to match your workflow
-        </p>
-      </header>
-      
-      <div className="space-y-6">
-        {/* Appearance */}
-        <motion.section 
-          className="bg-card rounded-lg border p-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-        >
-          <h2 className="text-xl font-heading font-semibold mb-4">Appearance</h2>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                {theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-                <Label htmlFor="theme-mode">Dark Mode</Label>
-              </div>
-              <Switch 
-                id="theme-mode" 
-                checked={theme === 'dark'}
-                onCheckedChange={toggleTheme}
-              />
-            </div>
-            
-            <div>
-              <Label className="block mb-2">Default View</Label>
-              <RadioGroup 
-                defaultValue={userSettings?.defaultView || 'today'}
-                onValueChange={(value) => handleDefaultViewChange(value as 'today' | 'calendar' | 'tasks')}
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="today" id="today" />
-                  <Label htmlFor="today">Today</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="calendar" id="calendar" />
-                  <Label htmlFor="calendar">Calendar</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="tasks" id="tasks" />
-                  <Label htmlFor="tasks">All Tasks</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            
-            <div className="flex items-center justify-between mt-4">
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="rtl-mode">RTL Layout</Label>
-                {direction === 'rtl' && <Badge variant="outline">RTL</Badge>}
-              </div>
-              <Switch 
-                id="rtl-mode" 
-                checked={direction === 'rtl'}
-                onCheckedChange={toggleDirection}
-              />
-            </div>
-          </div>
-        </motion.section>
-        
-        {/* Notifications */}
-        <motion.section 
-          className="bg-card rounded-lg border p-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-        >
-          <h2 className="text-xl font-heading font-semibold mb-4">Notifications</h2>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                {userSettings?.pushNotifications ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
-                <Label htmlFor="push-notifications">Push Notifications</Label>
-              </div>
-              <Switch 
-                id="push-notifications" 
-                checked={userSettings?.pushNotifications || false}
-                onCheckedChange={handlePushNotificationToggle}
-                disabled={!user}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <Label htmlFor="reminder-notifications">Task Reminders</Label>
-              <Switch 
-                id="reminder-notifications" 
-                checked={userSettings?.taskReminders || false}
-                onCheckedChange={handleTaskRemindersToggle}
-                disabled={!user}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <Label htmlFor="overdue-notifications">Overdue Alerts</Label>
-              <Switch 
-                id="overdue-notifications" 
-                checked={userSettings?.overdueAlerts || false}
-                onCheckedChange={handleOverdueAlertsToggle}
-                disabled={!user}
-              />
-            </div>
-            
-            {!user && (
-              <p className="text-sm text-muted-foreground mt-2">
-                Sign in to enable notifications
-              </p>
-            )}
-          </div>
-        </motion.section>
-        
-        {/* Account */}
-        <motion.section 
-          className="bg-card rounded-lg border p-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.3 }}
-        >
-          <h2 className="text-xl font-heading font-semibold mb-4">Account</h2>
-          
-          <div className="space-y-4">
-            {user ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="bg-primary/10 text-primary p-3 rounded-full">
-                    <User className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <p className="font-medium">{user.displayName || 'User'}</p>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
-                  </div>
-                </div>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full mt-4"
-                  onClick={handleSignOut}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </Button>
-              </div>
-            ) : (
-              <>
-                <p className="text-muted-foreground">
-                  You're currently using TaskBlossom as a guest. Sign in to sync your tasks across devices.
-                </p>
-                
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button 
-                    variant="default"
-                    onClick={() => setIsAuthModalOpen(true)}
-                  >
-                    Sign In
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      setIsAuthModalOpen(true);
-                    }}
-                  >
-                    Create Account
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-        </motion.section>
-        
-        {/* About */}
-        <motion.section 
-          className="bg-card rounded-lg border p-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.4 }}
-        >
-          <h2 className="text-xl font-heading font-semibold mb-4">About TaskBlossom</h2>
-          
-          <div className="space-y-2">
-            <p className="text-muted-foreground">Version 1.0.0</p>
-            <p className="text-muted-foreground">
-              TaskBlossom is a beautiful and intuitive task management application
-              designed to help you stay organized and productive.
-            </p>
-          </div>
-        </motion.section>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">{t('settings.title')}</h1>
       </div>
-      
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
-      />
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Moon className="h-5 w-5 text-primary" />
+            <CardTitle>{t('settings.appearance')}</CardTitle>
+          </div>
+          <CardDescription>
+            {t('settings.appearance')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="dark-mode" className="flex items-center space-x-2">
+              <span>{t('settings.darkMode')}</span>
+            </Label>
+            <Switch
+              id="dark-mode"
+              checked={userSettings?.darkMode || false}
+              onCheckedChange={(checked) => handleToggle('darkMode', checked)}
+            />
+          </div>
+
+          <Separator />
+
+          <div className="space-y-2">
+            <Label htmlFor="language-select">{t('settings.language')}</Label>
+            <LanguageSwitcher />
+          </div>
+
+          <Separator />
+
+          <div className="space-y-2">
+            <Label htmlFor="default-view">{t('settings.defaultView')}</Label>
+            <Select
+              value={userSettings?.defaultView || 'today'}
+              onValueChange={(value) => handleSelectChange('defaultView', value as 'today' | 'calendar' | 'tasks')}
+            >
+              <SelectTrigger id="default-view">
+                <SelectValue placeholder={t('settings.defaultView')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">{t('navigation.today')}</SelectItem>
+                <SelectItem value="calendar">{t('navigation.calendar')}</SelectItem>
+                <SelectItem value="tasks">{t('navigation.tasks')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Bell className="h-5 w-5 text-primary" />
+            <CardTitle>{t('settings.notifications')}</CardTitle>
+          </div>
+          <CardDescription>
+            {t('settings.notifications')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="push-notifications" className="flex items-center space-x-2">
+              <span>{t('settings.pushNotifications')}</span>
+            </Label>
+            <Switch
+              id="push-notifications"
+              checked={userSettings?.pushNotifications || false}
+              onCheckedChange={(checked) => handleToggle('pushNotifications', checked)}
+            />
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <Label htmlFor="task-reminders" className="flex items-center space-x-2">
+              <span>{t('settings.taskReminders')}</span>
+            </Label>
+            <Switch
+              id="task-reminders"
+              checked={userSettings?.taskReminders || false}
+              onCheckedChange={(checked) => handleToggle('taskReminders', checked)}
+            />
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <Label htmlFor="overdue-alerts" className="flex items-center space-x-2">
+              <span>{t('settings.overdueAlerts')}</span>
+            </Label>
+            <Switch
+              id="overdue-alerts"
+              checked={userSettings?.overdueAlerts || false}
+              onCheckedChange={(checked) => handleToggle('overdueAlerts', checked)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Shield className="h-5 w-5 text-primary" />
+            <CardTitle>{t('settings.privacySettings')}</CardTitle>
+          </div>
+          <CardDescription>
+            {t('settings.privacySettings')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="public-profile" className="flex items-center space-x-2">
+              <span>{t('settings.publicProfile')}</span>
+            </Label>
+            <Switch
+              id="public-profile"
+              checked={userSettings?.publicProfile || false}
+              onCheckedChange={(checked) => handleToggle('publicProfile', checked)}
+            />
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <Label htmlFor="share-progress" className="flex items-center space-x-2">
+              <span>{t('settings.shareProgress')}</span>
+            </Label>
+            <Switch
+              id="share-progress"
+              checked={userSettings?.shareProgress || false}
+              onCheckedChange={(checked) => handleToggle('shareProgress', checked)}
+            />
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center justify-between">
+            <Label htmlFor="share-fitness" className="flex items-center space-x-2">
+              <span>{t('settings.shareFitness')}</span>
+            </Label>
+            <Switch
+              id="share-fitness"
+              checked={userSettings?.shareFitness || false}
+              onCheckedChange={(checked) => handleToggle('shareFitness', checked)}
+            />
+          </div>
+        </CardContent>
+      </Card>
     </motion.div>
   );
 };
