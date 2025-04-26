@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,14 +44,12 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
       console.log('Supabase auth event:', event);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
     });
 
-    // Then check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       console.log('Retrieved session:', currentSession ? 'Yes' : 'No');
       setSession(currentSession);
@@ -65,7 +62,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }, []);
 
-  // Authentication methods
   const signIn = async (email: string, password: string) => {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -104,7 +100,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Tasks methods
   const getTasks = async () => {
     if (!user) return [];
 
@@ -138,10 +133,8 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!user) throw new Error('User not authenticated');
 
     try {
-      // Extract category_id if category exists and ensure it's a valid UUID
       let category_id = null;
       if (taskData.category && taskData.category.id) {
-        // Make sure we're using a string UUID, not a numeric ID
         if (typeof taskData.category.id === 'string' && 
             /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(taskData.category.id)) {
           category_id = taskData.category.id;
@@ -150,7 +143,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       }
       
-      // Prepare the task data
       const taskToInsert = {
         title: taskData.title,
         description: taskData.notes,
@@ -168,7 +160,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (error) throw error;
 
-      // Return the task formatted for our app
       return {
         ...data,
         id: data.id,
@@ -188,7 +179,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!user) throw new Error('User not authenticated');
 
     try {
-      // Prepare the update data
       const updateData: any = {};
       
       if (taskData.title !== undefined) updateData.title = taskData.title;
@@ -232,7 +222,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Categories methods
   const getCategories = async () => {
     if (!user) return [];
     
@@ -244,7 +233,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       if (error) throw error;
       
-      // Transform Supabase data to match app's TaskCategory type
       return data.map(category => ({
         id: category.id,
         name: category.name,
@@ -261,7 +249,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!user) throw new Error('User not authenticated');
     
     try {
-      // For each category, upsert to Supabase
       for (const category of categories) {
         const { error } = await supabase
           .from('categories')
@@ -281,7 +268,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Fitness methods - Workouts
   const getWorkouts = async () => {
     if (!user) return [];
 
@@ -372,7 +358,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Meals methods
   const getMeals = async (date?: Date) => {
     if (!user) return [];
 
@@ -401,7 +386,8 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return data.map(meal => ({
         ...meal,
         date: new Date(meal.date),
-        foods: meal.foods || []
+        foods: meal.foods || [],
+        mealType: meal.meal_type
       }));
     } catch (error) {
       console.error('Error getting meals:', error);
@@ -416,8 +402,13 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const mealToInsert = {
         ...mealData,
+        meal_type: mealData.mealType,
         user_id: user.id
       };
+
+      if (mealToInsert.mealType) {
+        delete mealToInsert.mealType;
+      }
 
       const { data, error } = await supabase
         .from('meals')
@@ -429,7 +420,8 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       return {
         ...data,
-        date: new Date(data.date)
+        date: new Date(data.date),
+        mealType: data.meal_type
       };
     } catch (error) {
       console.error('Error creating meal:', error);
@@ -442,15 +434,25 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!user) throw new Error('User not authenticated');
 
     try {
+      const dataToUpdate: any = { ...mealData };
+      
+      if (dataToUpdate.mealType !== undefined) {
+        dataToUpdate.meal_type = dataToUpdate.mealType;
+        delete dataToUpdate.mealType;
+      }
+
       const { error } = await supabase
         .from('meals')
-        .update(mealData)
+        .update(dataToUpdate)
         .eq('id', mealId)
         .eq('user_id', user.id);
 
       if (error) throw error;
 
-      return { id: mealId, ...mealData };
+      return { 
+        id: mealId,
+        ...mealData
+      };
     } catch (error) {
       console.error('Error updating meal:', error);
       toast.error('Failed to update meal');
@@ -476,7 +478,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Progress logs methods
   const getProgressLogs = async () => {
     if (!user) return [];
 
@@ -528,7 +529,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Fitness goals methods
   const getFitnessGoals = async () => {
     if (!user) return null;
 
@@ -570,12 +570,10 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Friends methods
   const getFriends = async () => {
     if (!user) return [];
 
     try {
-      // Get friends where current user is the user_id
       const { data: friendsData, error: friendsError } = await supabase
         .from('friends')
         .select(`
@@ -587,15 +585,12 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (friendsError) throw friendsError;
 
-      // For each friend, get their user info
       const friends = [];
       for (const friend of friendsData) {
-        // Get user details from auth.users via a function or profile table
-        // For now, we'll return the basic info we have
         friends.push({
           id: friend.id,
           userId: friend.friend_id,
-          displayName: 'Friend', // This would need to be fetched from profiles
+          displayName: 'Friend',
           addedAt: new Date(friend.created_at)
         });
       }
@@ -623,7 +618,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return data.map(request => ({
         id: request.id,
         senderId: request.sender_id,
-        senderName: 'User', // This would need to be fetched from profiles
+        senderName: 'User',
         createdAt: new Date(request.created_at)
       }));
     } catch (error) {
@@ -657,7 +652,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!user) throw new Error('User not authenticated');
 
     try {
-      // Get the friend request
       const { data: requestData, error: requestError } = await supabase
         .from('friend_requests')
         .select('*')
@@ -667,7 +661,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (requestError) throw requestError;
 
-      // Create friendship entries (bidirectional)
       const { error: friendError } = await supabase.from('friends').insert([
         { user_id: user.id, friend_id: requestData.sender_id },
         { user_id: requestData.sender_id, friend_id: user.id }
@@ -675,7 +668,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (friendError) throw friendError;
 
-      // Update friend request status
       const { error: updateError } = await supabase
         .from('friend_requests')
         .update({ status: 'accepted' })
@@ -711,7 +703,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!user) throw new Error('User not authenticated');
 
     try {
-      // Remove both friendship entries
       const { error } = await supabase
         .from('friends')
         .delete()

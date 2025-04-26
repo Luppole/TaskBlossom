@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import {
   Clock, AlertCircle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useFirebase } from '@/contexts/FirebaseContext';
+import { useSupabase } from '@/contexts/SupabaseContext';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { useTranslation } from 'react-i18next';
 
 const MealLog = () => {
-  const { user, getMeals, createMeal, updateMeal } = useFirebase();
+  const { user, getMeals, createMeal, updateMeal } = useSupabase();
   const [meals, setMeals] = useState<MealLogType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +34,7 @@ const MealLog = () => {
     snack: { id: uuidv4(), name: '', calories: 0 },
   });
   
-  // Load meals from Firebase
+  // Load meals from Supabase
   useEffect(() => {
     const loadMeals = async () => {
       if (user) {
@@ -109,7 +108,7 @@ const MealLog = () => {
         // Create new meal
         const newMeal: Omit<MealLogType, 'id'> = {
           date: today,
-          mealType,
+          mealType: mealType,
           foods: [food],
           notes: null,
         };

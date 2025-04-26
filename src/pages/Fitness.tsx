@@ -7,14 +7,14 @@ import MealLog from '@/components/fitness/MealLog';
 import CalorieTracker from '@/components/fitness/CalorieTracker';
 import FitnessHeader from '@/components/fitness/FitnessHeader';
 import { motion } from 'framer-motion';
-import { useFirebase } from '@/contexts/FirebaseContext';
+import { useSupabase } from '@/contexts/SupabaseContext';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 const Fitness = () => {
   const [activeTab, setActiveTab] = useState("workout-log");
-  const { user } = useFirebase();
+  const { user } = useSupabase();
   const navigate = useNavigate();
   const { t } = useTranslation();
   
