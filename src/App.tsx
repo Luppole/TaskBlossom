@@ -20,7 +20,7 @@ import AppShell from "./components/layout/AppShell";
 import PageTransition from "./components/common/PageTransition";
 import { SupabaseProvider, useSupabase } from "./contexts/SupabaseContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { FirebaseProvider } from "./contexts/FirebaseContext";
+import { FirebaseProvider } from "./contexts/FirebaseContext"; // We keep this for now for backward compatibility
 import "./i18n/i18n";
 
 const queryClient = new QueryClient({

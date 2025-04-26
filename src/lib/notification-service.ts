@@ -1,7 +1,5 @@
-
 import { Task } from '@/types/task';
 import { toast } from 'sonner';
-import { messaging, requestNotificationPermission, messagingSupported } from './firebase';
 
 // Keep track of whether we've already set up notifications
 let notificationsInitialized = false;
@@ -37,15 +35,8 @@ export const setupTaskNotifications = async (tasks: Task[], settings: {
   try {
     notificationsInitialized = true;
     
-    // If messaging is not supported (e.g., in development environment), just use toast notifications
-    if (!messagingSupported) {
-      console.log('Firebase messaging not supported in this environment. Using in-app notifications only.');
-      setupLocalNotifications(tasks, settings);
-      return;
-    }
-    
     // Check if permissions are granted
-    const hasPermission = await requestNotificationPermission();
+    const hasPermission = await getNotificationPermission();
     
     if (!hasPermission) {
       console.log('Notification permission not granted');
@@ -61,6 +52,23 @@ export const setupTaskNotifications = async (tasks: Task[], settings: {
   } finally {
     notificationRequestInProgress = false;
   }
+};
+
+const getNotificationPermission = async (): Promise<boolean> => {
+  if (!('Notification' in window)) {
+    return false;
+  }
+  
+  if (Notification.permission === 'granted') {
+    return true;
+  }
+  
+  if (Notification.permission !== 'denied') {
+    const permission = await Notification.requestPermission();
+    return permission === 'granted';
+  }
+  
+  return false;
 };
 
 const setupLocalNotifications = (tasks: Task[], settings: { taskReminders: boolean, overdueAlerts: boolean }) => {

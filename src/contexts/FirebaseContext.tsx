@@ -1,6 +1,7 @@
 
 import { createContext, useContext, ReactNode } from 'react';
 import { useSupabase } from './SupabaseContext';
+import { ActivityItem } from '@/types/friend';
 
 // Create a context to wrap Firebase functions with Supabase equivalents
 export interface FirebaseContextType {
@@ -30,6 +31,7 @@ export interface FirebaseContextType {
   updateFitnessGoals: (goals: any) => Promise<void>;
   getFriends: () => Promise<any[]>;
   getFriendRequests: () => Promise<any[]>;
+  getFriendActivities: () => Promise<ActivityItem[]>; // Added missing function
   sendFriendRequest: (userId: string) => Promise<void>;
   acceptFriendRequest: (requestId: string) => Promise<void>;
   rejectFriendRequest: (requestId: string) => Promise<void>;
@@ -75,6 +77,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
     updateFitnessGoals: supabaseContext.updateFitnessGoals,
     getFriends: supabaseContext.getFriends,
     getFriendRequests: supabaseContext.getFriendRequests,
+    getFriendActivities: async () => [], // Placeholder implementation for friend activities
     sendFriendRequest: supabaseContext.sendFriendRequest,
     acceptFriendRequest: supabaseContext.acceptFriendRequest,
     rejectFriendRequest: supabaseContext.rejectFriendRequest,
@@ -88,7 +91,10 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
     }), // Placeholder
     updateSettings: async () => {}, // Placeholder
     exportUserData: async () => "", // Placeholder
-    searchUsers: async () => [] // Placeholder
+    searchUsers: async (query) => {
+      console.log('Searching users with query:', query);
+      return []; // Return empty array as a placeholder
+    } 
   };
 
   return <FirebaseContext.Provider value={value}>{children}</FirebaseContext.Provider>;

@@ -7,8 +7,6 @@ import { Input } from '@/components/ui/input';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { Search, UserPlus, Check, User } from 'lucide-react';
 import { toast } from 'sonner';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 interface UserSearchResult {
   id: string;
@@ -22,7 +20,7 @@ const UserSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const { user, sendFriendRequest, getFriends } = useFirebase();
+  const { user, sendFriendRequest, getFriends, searchUsers } = useFirebase();
   const { t } = useTranslation();
 
   const handleSearch = async () => {
@@ -35,29 +33,18 @@ const UserSearch = () => {
       const friends = await getFriends();
       const friendIds = friends.map(friend => friend.userId);
       
-      // Search for users by email or display name
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('email', '==', searchQuery));
-      const querySnapshot = await getDocs(q);
+      // Search for users by email or display name using the passed function
+      const results = await searchUsers(searchQuery);
       
-      const results: UserSearchResult[] = [];
+      const formattedResults: UserSearchResult[] = results.map(userData => ({
+        id: userData.id,
+        displayName: userData.displayName || 'User',
+        email: userData.email,
+        isRequestSent: false,
+        isFriend: friendIds.includes(userData.id)
+      }));
       
-      querySnapshot.forEach(doc => {
-        const userData = doc.data();
-        
-        // Don't include current user in results
-        if (doc.id === user?.uid) return;
-        
-        results.push({
-          id: doc.id,
-          displayName: userData.displayName || 'User',
-          email: userData.email,
-          isRequestSent: false, // We'll fetch this later
-          isFriend: friendIds.includes(doc.id)
-        });
-      });
-      
-      setSearchResults(results);
+      setSearchResults(formattedResults);
     } catch (error) {
       console.error('Error searching users:', error);
       toast.error(t('common.error'));
