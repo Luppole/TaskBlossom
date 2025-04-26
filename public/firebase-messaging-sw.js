@@ -11,7 +11,7 @@ firebase.initializeApp({
   apiKey: "AIzaSyDsF-cFll3pF77xzFTgcxBh8r5SRhBesmo",
   authDomain: "taskblossom.firebaseapp.com",
   projectId: "taskblossom",
-  storageBucket: "taskblossom.appspot.com",
+  storageBucket: "taskblossom.firebasestorage.app",
   messagingSenderId: "503245445228",
   appId: "1:503245445228:web:5f3ab41fbda3893a906049",
   measurementId: "G-J5RBPEQT0P"
@@ -21,14 +21,28 @@ firebase.initializeApp({
 // messages.
 const messaging = firebase.messaging();
 
-// Optional background message handler
+// Optional background message handler with error handling
 messaging.onBackgroundMessage((payload) => {
-  // Customize notification here
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-    body: payload.notification.body,
-    icon: '/favicon.ico'
-  };
+  try {
+    // Customize notification here
+    const notificationTitle = payload.notification?.title || 'Notification';
+    const notificationOptions = {
+      body: payload.notification?.body || 'You have a new notification',
+      icon: '/favicon.ico'
+    };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
+    self.registration.showNotification(notificationTitle, notificationOptions);
+  } catch (error) {
+    console.error('Error showing background notification:', error);
+  }
+});
+
+// Add event listener for install
+self.addEventListener('install', (event) => {
+  console.log('Service worker installed');
+});
+
+// Add event listener for activate
+self.addEventListener('activate', (event) => {
+  console.log('Service worker activated');
 });

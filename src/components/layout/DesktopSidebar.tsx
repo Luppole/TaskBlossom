@@ -65,7 +65,9 @@ const DesktopSidebar: React.FC = () => {
     <Sidebar>
       <SidebarHeader className="p-4">
         <Link to="/" className="flex items-center gap-2">
-          <span className="text-2xl">🌸</span>
+          <div className="bg-primary/10 p-2 rounded-md">
+            <CheckCircle className="h-5 w-5 text-primary" />
+          </div>
           <span className="font-heading font-semibold text-lg">TaskBlossom</span>
         </Link>
       </SidebarHeader>

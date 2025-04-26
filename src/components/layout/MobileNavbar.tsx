@@ -3,6 +3,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, Calendar, CheckSquare, Settings, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { cn } from '@/lib/utils';
 
 const MobileNavbar = () => {
   const { t } = useTranslation();
