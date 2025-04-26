@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import { CalendarDays, FolderKanban, CheckCircle, Settings, LayoutDashboard, Dumbbell, Users } from 'lucide-react';
+import { Calendar, Tag, CheckCircle, Settings, LayoutDashboard, Dumbbell, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFirebase } from '@/contexts/FirebaseContext';
 
@@ -27,7 +27,7 @@ const DesktopSidebar: React.FC = () => {
     {
       title: 'Calendar',
       path: '/calendar',
-      icon: CalendarDays,
+      icon: Calendar,
     },
     {
       title: 'Tasks',
@@ -37,7 +37,7 @@ const DesktopSidebar: React.FC = () => {
     {
       title: 'Categories',
       path: '/categories',
-      icon: FolderKanban,
+      icon: Tag,
     },
     {
       title: 'Fitness',

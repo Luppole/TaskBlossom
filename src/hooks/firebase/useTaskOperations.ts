@@ -11,7 +11,7 @@ export const useTaskOperations = () => {
     if (!user) return [];
     
     try {
-      // Use the correct path to ensure we're accessing tasks properly
+      // Fixed path to ensure we're accessing tasks properly with the correct collection name
       const tasksRef = collection(db, 'users', user.uid, 'tasks');
       const q = query(tasksRef, orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
@@ -22,7 +22,7 @@ export const useTaskOperations = () => {
           ...data,
           id: doc.id,
           dueDate: data.dueDate ? data.dueDate.toDate() : undefined,
-          createdAt: data.createdAt.toDate(),
+          createdAt: data.createdAt ? data.createdAt.toDate() : new Date(),
           notes: data.notes || null
         } as Task;
       });

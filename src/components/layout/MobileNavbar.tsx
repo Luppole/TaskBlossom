@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Calendar, CheckSquare, Settings, Users } from 'lucide-react';
+import { LayoutDashboard, Calendar, CheckSquare, Settings, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const MobileNavbar = () => {
@@ -19,7 +19,7 @@ const MobileNavbar = () => {
           `}
           end
         >
-          <Home className="h-5 w-5" />
+          <LayoutDashboard className="h-5 w-5" />
           <span className="text-xs mt-1">{t('navigation.home')}</span>
         </NavLink>
         

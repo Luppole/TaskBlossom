@@ -9,7 +9,6 @@ import { useFirebase } from '@/contexts/FirebaseContext';
 import { motion } from 'framer-motion';
 import { Moon, Bell, Shield } from 'lucide-react';
 import LanguageSwitcher from '@/components/settings/LanguageSwitcher';
-import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
 const Settings = () => {
@@ -35,10 +34,8 @@ const Settings = () => {
     if (userSettings) {
       try {
         await updateSettings({ [setting]: value });
-        toast.success(t('common.save'));
       } catch (error) {
         console.error('Error updating settings:', error);
-        toast.error(t('common.error'));
       }
     }
   };
@@ -47,10 +44,8 @@ const Settings = () => {
     if (userSettings) {
       try {
         await updateSettings({ [setting]: value });
-        toast.success(t('common.save'));
       } catch (error) {
         console.error('Error updating settings:', error);
-        toast.error(t('common.error'));
       }
     }
   };

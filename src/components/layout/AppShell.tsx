@@ -10,7 +10,7 @@ import { Link, NavLink } from 'react-router-dom';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Settings, User, Dumbbell, Users } from 'lucide-react';
+import { Settings, User, Dumbbell, Users, Calendar, CheckCircle, Tag, LayoutDashboard, Menu } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const AppShell = ({ children }: { children: React.ReactNode }) => {
@@ -20,21 +20,7 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="p-0 mt-4 md:hidden">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
+              <Menu className="h-5 w-5" />
               <span className="sr-only">Open menu</span>
             </Button>
           </SheetTrigger>
@@ -124,7 +110,7 @@ const Sidebar = () => {
         </Popover>
       </div>
 
-      {/* Navigation Menu */}
+      {/* Navigation Menu - Updated with icons instead of emojis */}
       <nav className="flex-1 px-3">
         <div className="space-y-1">
           <NavLink
@@ -135,7 +121,7 @@ const Sidebar = () => {
               }`
             }
           >
-            <span className="text-lg">📅</span>
+            <LayoutDashboard className="h-5 w-5" />
             <span className="text-sm">Today</span>
           </NavLink>
 
@@ -147,7 +133,7 @@ const Sidebar = () => {
               }`
             }
           >
-            <span className="text-lg">🗓️</span>
+            <Calendar className="h-5 w-5" />
             <span className="text-sm">Calendar</span>
           </NavLink>
 
@@ -159,7 +145,7 @@ const Sidebar = () => {
               }`
             }
           >
-            <span className="text-lg">✅</span>
+            <CheckCircle className="h-5 w-5" />
             <span className="text-sm">Tasks</span>
           </NavLink>
 
@@ -171,7 +157,7 @@ const Sidebar = () => {
               }`
             }
           >
-            <span className="text-lg">🏷️</span>
+            <Tag className="h-5 w-5" />
             <span className="text-sm">Categories</span>
           </NavLink>
           

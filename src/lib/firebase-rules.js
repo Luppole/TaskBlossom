@@ -24,8 +24,18 @@ service cloud.firestore {
       allow read: if isUser(userId);
       allow write: if isUser(userId);
       
-      // Critical fix: Tasks subcollection permissions
+      // Tasks subcollection - explicitly allow access to nested collections
       match /tasks/{taskId} {
+        allow read, write: if isUser(userId);
+      }
+      
+      // Categories subcollection
+      match /categories/{categoryId} {
+        allow read, write: if isUser(userId);
+      }
+      
+      // All other subcollections
+      match /{collection}/{docId} {
         allow read, write: if isUser(userId);
       }
     }
@@ -35,52 +45,7 @@ service cloud.firestore {
       allow read, write: if isUser(userId);
     }
     
-    // Tasks - Ensure this is separate from the nested rule above
-    match /users/{userId}/tasks/{taskId} {
-      allow read, write: if isUser(userId);
-    }
-
-    // Categories
-    match /users/{userId}/categories/{categoryId} {
-      allow read, write: if isUser(userId);
-    }
-    
-    // Workouts
-    match /users/{userId}/workouts/{workoutId} {
-      allow read, write: if isUser(userId);
-    }
-    
-    // Meals
-    match /users/{userId}/meals/{mealId} {
-      allow read, write: if isUser(userId);
-    }
-    
-    // Progress logs
-    match /users/{userId}/progress/{logId} {
-      allow read, write: if isUser(userId);
-    }
-    
-    // Fitness goals
-    match /users/{userId}/fitness/{document=**} {
-      allow read, write: if isUser(userId);
-    }
-    
-    // Achievements
-    match /users/{userId}/achievements/{achievementId} {
-      allow read, write: if isUser(userId);
-    }
-    
-    // Streaks
-    match /users/{userId}/streaks/{streakId} {
-      allow read, write: if isUser(userId);
-    }
-    
-    // Friend relationships
-    match /users/{userId}/friends/{friendId} {
-      allow read, write: if isUser(userId);
-    }
-    
-    // Friend requests - improved rules to fix permissions issue
+    // Friend requests
     match /friendRequests/{requestId} {
       allow read: if isAuthenticated() && 
         (resource.data.senderId == request.auth.uid || resource.data.recipientId == request.auth.uid);
@@ -88,11 +53,6 @@ service cloud.firestore {
         request.resource.data.senderId == request.auth.uid;
       allow update, delete: if isAuthenticated() && 
         (resource.data.senderId == request.auth.uid || resource.data.recipientId == request.auth.uid);
-    }
-    
-    // Activities
-    match /users/{userId}/activities/{activityId} {
-      allow read, write: if isUser(userId);
     }
   }
 }
