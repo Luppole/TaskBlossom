@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
 
 const MotionSwitch = motion(Switch);
+const MotionCard = motion(Card);
 
 const Settings = () => {
   const { user, userSettings, updateSettings, signIn } = useFirebase();
@@ -142,7 +143,10 @@ const Settings = () => {
         <h1 className="text-3xl font-bold">{t('settings.title')}</h1>
       </div>
 
-      <Card as={motion.div} whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
+      <MotionCard 
+        whileHover={{ y: -4 }} 
+        transition={{ duration: 0.2 }}
+      >
         <CardHeader>
           <div className="flex items-center space-x-2">
             <Palette className="h-5 w-5 text-primary" />
@@ -198,9 +202,12 @@ const Settings = () => {
             </Select>
           </div>
         </CardContent>
-      </Card>
+      </MotionCard>
 
-      <Card as={motion.div} whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
+      <MotionCard 
+        whileHover={{ y: -4 }} 
+        transition={{ duration: 0.2 }}
+      >
         <CardHeader>
           <div className="flex items-center space-x-2">
             <Bell className="h-5 w-5 text-primary" />
@@ -283,9 +290,12 @@ const Settings = () => {
             />
           </div>
         </CardContent>
-      </Card>
+      </MotionCard>
 
-      <Card as={motion.div} whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
+      <MotionCard 
+        whileHover={{ y: -4 }} 
+        transition={{ duration: 0.2 }}
+      >
         <CardHeader>
           <div className="flex items-center space-x-2">
             <Shield className="h-5 w-5 text-primary" />
@@ -339,7 +349,7 @@ const Settings = () => {
             />
           </div>
         </CardContent>
-      </Card>
+      </MotionCard>
     </motion.div>
   );
 };

@@ -13,7 +13,7 @@ export const useTaskOperations = () => {
   const getTasks = async () => {
     if (!user) {
       // Return local tasks if no user is authenticated
-      return context?.localTasks || [];
+      return context?.getLocalTasks() || [];
     }
     
     try {

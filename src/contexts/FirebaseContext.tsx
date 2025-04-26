@@ -19,6 +19,11 @@ export interface FirebaseContextType {
   user: User | null;
   loading: boolean;
   userSettings: UserSettings | null;
+  localTasks: Task[];
+  createLocalTask: (taskData: Omit<Task, 'id' | 'createdAt'>) => Task;
+  updateLocalTask: (taskId: string, data: Partial<Task>) => void;
+  deleteLocalTask: (taskId: string) => void;
+  getLocalTasks: () => Task[];
 }
 
 export const FirebaseContext = createContext<FirebaseContextType | null>(null);
@@ -139,7 +144,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   return (
-    <FirebaseContext.Provider value={value as any}>
+    <FirebaseContext.Provider value={value}>
       {children}
     </FirebaseContext.Provider>
   );
@@ -149,10 +154,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 export interface FirebaseHookReturnType extends FirebaseContextType {
   // Add methods from other hooks as needed
   [key: string]: any;
-  createLocalTask: (taskData: Omit<Task, 'id' | 'createdAt'>) => Task;
-  updateLocalTask: (taskId: string, data: Partial<Task>) => void;
-  deleteLocalTask: (taskId: string) => void;
-  getLocalTasks: () => Task[];
 }
 
 export const useFirebase = () => {
