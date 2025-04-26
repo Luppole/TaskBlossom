@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { motion } from 'framer-motion';
-import { Globe, Moon, Bell, Shield } from 'lucide-react';
+import { Moon, Bell, Shield } from 'lucide-react';
 import LanguageSwitcher from '@/components/settings/LanguageSwitcher';
 import { toast } from 'sonner';
 
