@@ -10,13 +10,13 @@ import { useFriendOperations } from '@/hooks/firebase/useFriendOperations';
 import { useSettingsOperations } from '@/hooks/firebase/useSettingsOperations';
 import { UserSettings } from '@/types/settings';
 
-interface FirebaseContextType {
+export interface FirebaseContextType {
   user: User | null;
   loading: boolean;
   userSettings: UserSettings | null;
 }
 
-const FirebaseContext = createContext<FirebaseContextType | null>(null);
+export const FirebaseContext = createContext<FirebaseContextType | null>(null);
 
 export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -55,6 +55,12 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 };
 
+// Create an interface for the combined hook return type
+export interface FirebaseHookReturnType extends FirebaseContextType {
+  // Add methods from other hooks as needed
+  [key: string]: any;
+}
+
 export const useFirebase = () => {
   const context = useContext(FirebaseContext);
   if (!context) {
@@ -68,5 +74,5 @@ export const useFirebase = () => {
     ...useFitnessOperations(),
     ...useFriendOperations(),
     ...useSettingsOperations(),
-  };
+  } as FirebaseHookReturnType;
 };

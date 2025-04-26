@@ -1,4 +1,4 @@
-import { collection, doc, addDoc, updateDoc, deleteDoc, getDocs, getDoc, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { collection, doc, addDoc, updateDoc, deleteDoc, getDocs, getDoc, query, where, orderBy, limit, Timestamp, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { FriendRequest, FriendData, ActivityItem } from '@/types/friend';
 import { UserSettings } from '@/types/settings';
@@ -62,14 +62,14 @@ export const useFriendOperations = () => {
         type: 'friend_added',
         userId: requestData.senderId,
         userName: requestData.senderName,
-        timestamp: Timestamp.now()
+        timestamp: convertFirebaseTimestamp(Timestamp.now()) || new Date()
       });
       
       await addActivity(requestData.senderId, {
         type: 'friend_added',
         userId: user.uid,
         userName: user.displayName || 'User',
-        timestamp: Timestamp.now()
+        timestamp: convertFirebaseTimestamp(Timestamp.now()) || new Date()
       });
     } catch (error) {
       console.error('Error accepting friend request:', error);
