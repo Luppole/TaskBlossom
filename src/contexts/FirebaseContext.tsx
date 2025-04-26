@@ -27,6 +27,7 @@ import {
 import { auth, db } from '@/lib/firebase';
 import { Task, TaskCategory, WorkoutSession, MealLog, FoodItem, Exercise, ProgressLog, FitnessGoals } from '@/types/task';
 import { FriendRequest, FriendData, ActivityItem } from '@/types/friend';
+import { convertFirebaseTimestamp } from '@/utils/firebaseHelpers';
 
 interface FirebaseContextType {
   user: User | null;
@@ -738,7 +739,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             return {
               id: doc.id,
               ...data,
-              timestamp: convertTimestampToDate(data.timestamp) || new Date(),
+              timestamp: convertFirebaseTimestamp(data.timestamp) || new Date(),
               friendId: friend.userId,
               friendName: friend.displayName
             } as ActivityItem;
@@ -784,7 +785,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           return {
             id: doc.id,
             ...data,
-            date: convertTimestampToDate(data.date) || new Date()
+            date: convertFirebaseTimestamp(data.date) || new Date()
           };
         });
         
@@ -802,7 +803,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           return {
             id: doc.id,
             ...data,
-            date: convertTimestampToDate(data.date) || new Date()
+            date: convertFirebaseTimestamp(data.date) || new Date()
           };
         });
         
@@ -902,14 +903,8 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return csvContent;
   };
 
-  const convertTimestampToDate = (timestamp: Timestamp | Date | null | undefined): Date | null => {
-    if (timestamp instanceof Timestamp) {
-      return timestamp.toDate();
-    }
-    if (timestamp instanceof Date) {
-      return timestamp;
-    }
-    return null;
+  const convertTimestampToDate = (timestamp: any): Date | null => {
+    return convertFirebaseTimestamp(timestamp);
   };
 
   const value = {

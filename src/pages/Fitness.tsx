@@ -10,11 +10,13 @@ import { motion } from 'framer-motion';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const Fitness = () => {
   const [activeTab, setActiveTab] = useState("workout-log");
   const { user } = useFirebase();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   // Redirect unauthenticated users
   useEffect(() => {
@@ -38,12 +40,11 @@ const Fitness = () => {
           </div>
           
           <h1 className="text-2xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
-            Fitness Tracker Requires Login
+            {t('fitness.requiresLogin')}
           </h1>
           
           <p className="text-muted-foreground mb-8 max-w-sm mx-auto">
-            Please sign in or create an account to access the fitness tracking features.
-            This allows us to save your progress and provide personalized insights.
+            {t('fitness.loginDescription')}
           </p>
           
           <div className="flex gap-4 justify-center">
@@ -53,27 +54,27 @@ const Fitness = () => {
               onClick={() => navigate('/')}
             >
               <Dumbbell className="h-4 w-4" />
-              Return to Dashboard
+              {t('common.returnToDashboard')}
             </Button>
             <Button 
               className="bg-primary hover:bg-primary/90 gap-2" 
               onClick={() => navigate('/settings')}
             >
               <LogIn className="h-4 w-4" />
-              Sign In / Register
+              {t('auth.signIn')}
             </Button>
           </div>
           
           <div className="mt-10 p-5 bg-muted/30 rounded-lg">
             <h3 className="font-medium mb-2 flex items-center">
               <UserPlus className="h-4 w-4 mr-2" />
-              Why create an account?
+              {t('auth.createAccount')}
             </h3>
             <ul className="text-sm text-muted-foreground text-left list-disc pl-5 space-y-1">
-              <li>Track your daily meals and workouts</li>
-              <li>Monitor your calorie intake and progress</li>
-              <li>Set personal fitness goals</li>
-              <li>All your data is private and secure</li>
+              <li>{t('fitness.workoutLog')}</li>
+              <li>{t('fitness.mealLog')}</li>
+              <li>{t('fitness.progress')}</li>
+              <li>{t('social.privateDescription')}</li>
             </ul>
           </div>
         </motion.div>
@@ -94,17 +95,17 @@ const Fitness = () => {
           <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto">
             <TabsTrigger value="workout-log" className="flex items-center gap-2">
               <Dumbbell className="h-4 w-4" />
-              <span className="hidden sm:inline">Workout Log</span>
+              <span className="hidden sm:inline">{t('fitness.workoutLog')}</span>
             </TabsTrigger>
             
             <TabsTrigger value="meal-log" className="flex items-center gap-2">
               <Utensils className="h-4 w-4" />
-              <span className="hidden sm:inline">Meal Log</span>
+              <span className="hidden sm:inline">{t('fitness.mealLog')}</span>
             </TabsTrigger>
             
             <TabsTrigger value="calories" className="flex items-center gap-2">
               <BarChart className="h-4 w-4" />
-              <span className="hidden sm:inline">Progress</span>
+              <span className="hidden sm:inline">{t('fitness.progress')}</span>
             </TabsTrigger>
           </TabsList>
           
