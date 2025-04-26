@@ -21,28 +21,16 @@ firebase.initializeApp({
 // messages.
 const messaging = firebase.messaging();
 
-// Optional background message handler with error handling
+// Optional background message handler
 messaging.onBackgroundMessage((payload) => {
-  try {
-    // Customize notification here
-    const notificationTitle = payload.notification?.title || 'Notification';
-    const notificationOptions = {
-      body: payload.notification?.body || 'You have a new notification',
-      icon: '/favicon.ico'
-    };
+  console.log('[firebase-messaging-sw.js] Received background message ', payload);
+  
+  // Customize notification here
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body,
+    icon: '/favicon.ico'
+  };
 
-    self.registration.showNotification(notificationTitle, notificationOptions);
-  } catch (error) {
-    console.error('Error showing background notification:', error);
-  }
-});
-
-// Add event listener for install
-self.addEventListener('install', (event) => {
-  console.log('Service worker installed');
-});
-
-// Add event listener for activate
-self.addEventListener('activate', (event) => {
-  console.log('Service worker activated');
+  self.registration.showNotification(notificationTitle, notificationOptions);
 });

@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import { CalendarDays, FolderKanban, CheckCircle, Settings, LayoutDashboard, Dumbbell, Users } from 'lucide-react';
+import { CalendarDays, FolderKanban, CheckCircle, Settings, LayoutDashboard, Dumbbell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFirebase } from '@/contexts/FirebaseContext';
 
@@ -46,12 +46,6 @@ const DesktopSidebar: React.FC = () => {
       requiresAuth: true,
     },
     {
-      title: 'Social',
-      path: '/social',
-      icon: Users,
-      requiresAuth: true,
-    },
-    {
       title: 'Settings',
       path: '/settings',
       icon: Settings,
@@ -65,9 +59,7 @@ const DesktopSidebar: React.FC = () => {
     <Sidebar>
       <SidebarHeader className="p-4">
         <Link to="/" className="flex items-center gap-2">
-          <div className="bg-primary/10 p-2 rounded-md">
-            <CheckCircle className="h-5 w-5 text-primary" />
-          </div>
+          <span className="text-2xl">🌸</span>
           <span className="font-heading font-semibold text-lg">TaskBlossom</span>
         </Link>
       </SidebarHeader>

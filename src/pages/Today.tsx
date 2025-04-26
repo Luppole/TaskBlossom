@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { motivationalQuotes } from '@/data/taskData';
@@ -25,7 +24,8 @@ const Today: React.FC = () => {
     createTask,
     updateTask,
     deleteTask,
-    userSettings
+    userSettings,
+    loading: firebaseLoading 
   } = useFirebase();
   
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -40,7 +40,24 @@ const Today: React.FC = () => {
     onNewTask: () => setIsAddTaskModalOpen(true)
   });
   
-  // Use a random quote from the list
+  const fetchTasks = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      if (user) {
+        const fetchedTasks = await getTasks();
+        setTasks(fetchedTasks);
+      } else {
+        setTasks([]);
+      }
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      toast.error('Failed to load tasks');
+      setTasks([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getTasks, user]);
+  
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
     setQuote(motivationalQuotes[randomIndex]);
@@ -52,31 +69,15 @@ const Today: React.FC = () => {
     } else {
       setIsFirstVisit(false);
     }
-  }, []);
-  
-  // Fetch tasks when component mounts
-  const fetchTasks = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const fetchedTasks = await getTasks();
-      setTasks(fetchedTasks);
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-      toast.error('Failed to load tasks');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [getTasks]);
-  
-  useEffect(() => {
+    
     fetchTasks();
   }, [fetchTasks]);
   
   useEffect(() => {
     if (user && userSettings && tasks.length > 0) {
       setupTaskNotifications(tasks, {
-        taskReminders: userSettings?.taskReminders || false,
-        overdueAlerts: userSettings?.overdueAlerts || false
+        taskReminders: userSettings.taskReminders,
+        overdueAlerts: userSettings.overdueAlerts
       });
     }
   }, [tasks, userSettings, user]);
@@ -88,7 +89,6 @@ const Today: React.FC = () => {
       
       const now = new Date().toISOString();
       
-      // Optimistically update UI
       setTasks(prev => 
         prev.map(t => t.id === taskId ? { 
           ...t, 
@@ -97,33 +97,44 @@ const Today: React.FC = () => {
         } : t)
       );
       
-      // Update in backend
-      await updateTask(taskId, { 
-        completed: !taskToToggle.completed,
-        completedAt: !taskToToggle.completed ? now : null
-      });
+      if (user) {
+        await updateTask(taskId, { 
+          completed: !taskToToggle.completed,
+          completedAt: !taskToToggle.completed ? now : null
+        });
+      }
     } catch (error) {
       console.error('Error toggling task completion:', error);
       toast.error('Failed to update task');
       
-      // Revert optimistic update on error
-      fetchTasks();
+      const taskToToggle = tasks.find(t => t.id === taskId);
+      if (!taskToToggle) return;
+      
+      setTasks(prev => 
+        prev.map(t => t.id === taskId ? { 
+          ...t, 
+          completed: taskToToggle.completed,
+          completedAt: taskToToggle.completedAt 
+        } : t)
+      );
     }
   };
   
   const handleDeleteTask = async (taskId: string) => {
     try {
-      // Optimistically update UI
+      const taskToDelete = tasks.find(t => t.id === taskId);
+      if (!taskToDelete) return;
+      
       setTasks(prev => prev.filter(t => t.id !== taskId));
       
-      // Delete in backend
-      await deleteTask(taskId);
-      toast.success('Task deleted');
+      if (user) {
+        await deleteTask(taskId);
+        toast.success('Task deleted');
+      }
     } catch (error) {
       console.error('Error deleting task:', error);
       toast.error('Failed to delete task');
       
-      // Revert optimistic update on error
       fetchTasks();
     }
   };
@@ -132,10 +143,21 @@ const Today: React.FC = () => {
     setIsAddTaskModalOpen(true);
   };
   
-  const handleTaskSave = async (newTask: Omit<Task, 'id' | 'createdAt'>) => {
+  const handleTaskSave = async (newTask: Task) => {
     try {
-      const savedTask = await createTask(newTask);
-      setTasks(prev => [savedTask, ...prev]);
+      if (user) {
+        const savedTask = await createTask({
+          title: newTask.title,
+          completed: newTask.completed,
+          dueDate: newTask.dueDate,
+          priority: newTask.priority,
+          category: newTask.category,
+          notes: newTask.notes,
+        });
+        setTasks(prev => [savedTask, ...prev]);
+      } else {
+        setTasks(prev => [newTask, ...prev]);
+      }
       setIsAddTaskModalOpen(false);
       toast.success('Task added');
     } catch (error) {
@@ -150,9 +172,9 @@ const Today: React.FC = () => {
   
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
-    if (hour < 18) return 'Good Afternoon';
-    return 'Good Evening';
+    if (hour < 12) return '🌞 Good Morning';
+    if (hour < 18) return '☀️ Good Afternoon';
+    return '🌙 Good Evening';
   };
   
   const todaysTasks = tasks.filter(task => {
@@ -182,10 +204,18 @@ const Today: React.FC = () => {
         return todaysTasks;
     }
   };
+  
+  const sortedTasks = [...todaysTasks].sort((a, b) => {
+    if (a.completed && !b.completed) return 1;
+    if (!a.completed && b.completed) return -1;
+    
+    const priorityValues = { high: 0, medium: 1, low: 2 };
+    return priorityValues[a.priority] - priorityValues[b.priority];
+  });
 
   const filteredTasks = getFilteredTasks();
   const pendingCount = todaysTasks.filter(task => !task.completed).length;
-  const completedCount = todaysTasks.filter(task => task.completed).length;
+
   const streak = calculateStreak(tasks);
 
   return (
@@ -210,7 +240,7 @@ const Today: React.FC = () => {
             animate={{ opacity: 1, height: 'auto' }}
             transition={{ delay: 1 }}
           >
-            <p className="font-medium">Welcome to TaskBlossom!</p>
+            <p className="font-medium">Welcome to TaskBlossom! 🌸</p>
             <p className="text-sm mt-1">Press <kbd className="px-2 py-1 bg-muted rounded text-xs">Alt+N</kbd> anytime to add a new task.</p>
           </motion.div>
         )}
@@ -240,56 +270,48 @@ const Today: React.FC = () => {
           </h2>
           
           {!isLoading && (
-            <div className="flex items-center space-x-2">
-              {completedCount > 0 && todaysTasks.length > 0 && (
-                <div className="text-xs bg-muted px-2 py-1 rounded-full">
-                  {completedCount}/{todaysTasks.length} completed
-                </div>
-              )}
-              
-              {pendingCount > 0 ? (
-                <motion.div 
-                  initial={{ scale: 0.9 }}
-                  animate={{ scale: 1 }}
-                  className="flex items-center text-sm font-medium"
-                >
-                  <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
-                  <span>{pendingCount} pending</span>
-                </motion.div>
-              ) : (
-                todaysTasks.length > 0 && (
-                  <span className="text-sm text-green-500 font-medium">All done for today!</span>
-                )
-              )}
-            </div>
+            pendingCount > 0 ? (
+              <motion.div 
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                className="flex items-center text-sm font-medium"
+              >
+                <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+                <span>{pendingCount} pending</span>
+              </motion.div>
+            ) : (
+              todaysTasks.length > 0 ? (
+                <span className="text-sm text-green-500 font-medium">All done for today! 🎉</span>
+              ) : null
+            )
           )}
         </div>
         
         <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
           <Badge 
             variant={filter === 'all' ? "default" : "outline"} 
-            className="cursor-pointer hover:bg-accent transition-colors"
+            className="cursor-pointer"
             onClick={() => setFilter('all')}
           >
             All
           </Badge>
           <Badge 
             variant={filter === 'pending' ? "default" : "outline"} 
-            className="cursor-pointer hover:bg-accent transition-colors"
+            className="cursor-pointer"
             onClick={() => setFilter('pending')}
           >
             Pending
           </Badge>
           <Badge 
             variant={filter === 'completed' ? "default" : "outline"} 
-            className="cursor-pointer hover:bg-accent transition-colors"
+            className="cursor-pointer"
             onClick={() => setFilter('completed')}
           >
             Completed
           </Badge>
           <Badge 
             variant={filter === 'overdue' ? "default" : "outline"} 
-            className="cursor-pointer hover:bg-accent transition-colors"
+            className="cursor-pointer"
             onClick={() => setFilter('overdue')}
           >
             Overdue
@@ -300,19 +322,14 @@ const Today: React.FC = () => {
           tasks={filteredTasks}
           onToggleComplete={handleToggleComplete}
           onDeleteTask={handleDeleteTask}
-          isLoading={isLoading}
+          isLoading={isLoading || firebaseLoading}
         />
         
         {!isLoading && !user && (
-          <motion.div
-            className="mt-4 p-4 bg-muted rounded-lg text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
+          <div className="mt-4 p-4 bg-muted rounded-lg text-center">
             <p className="mb-2">Sign in to save your tasks and access them from any device.</p>
             <p className="text-sm text-muted-foreground">Your tasks will be stored locally until you sign in.</p>
-          </motion.div>
+          </div>
         )}
       </section>
       

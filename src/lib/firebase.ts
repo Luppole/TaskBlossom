@@ -10,7 +10,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDsF-cFll3pF77xzFTgcxBh8r5SRhBesmo",
   authDomain: "taskblossom.firebaseapp.com",
   projectId: "taskblossom",
-  storageBucket: "taskblossom.firebasestorage.app",
+  storageBucket: "taskblossom.appspot.com",
   messagingSenderId: "503245445228",
   appId: "1:503245445228:web:5f3ab41fbda3893a906049",
   measurementId: "G-J5RBPEQT0P"
@@ -29,69 +29,56 @@ let messaging: any = null;
 if (typeof window !== 'undefined' && window.self === window.top) {
   try {
     messaging = getMessaging(app);
+    console.log("Firebase messaging initialized successfully");
   } catch (error) {
-    console.error("Firebase messaging initialization failed silently");
+    console.error("Firebase messaging failed to initialize:", error);
   }
 }
 
 export { messaging };
 
-// Function to request notification permission - with better error handling
+// Function to request notification permission
 export const requestNotificationPermission = async () => {
-  // Early return if messaging not available
   if (!messaging) {
+    console.log("Messaging is not available");
     return false;
   }
   
   try {
+    console.log("Requesting notification permission...");
     const permission = await Notification.requestPermission();
+    console.log("Permission status:", permission);
     
     if (permission === 'granted') {
       try {
-        // Don't repeatedly try to get a token if there was an auth error
-        const tokenKey = 'fcm_token_last_attempt';
-        const lastAttempt = localStorage.getItem(tokenKey);
-        
-        // Only attempt once every hour to avoid constant auth errors
-        if (lastAttempt && (Date.now() - parseInt(lastAttempt, 10)) < 3600000) {
-          return false;
-        }
-        
-        localStorage.setItem(tokenKey, Date.now().toString());
-        
         const token = await getToken(messaging, {
           vapidKey: 'BMkP2IlsKCXZJKLCKfmJSjnhKqQqB4x3QnOr54KtgXeYHx_FIlIkB2g_SyRXJD8otzB5ffY7r_9w4s8iWd7G8Xk'
         });
+        console.log("Notification token received:", token ? "Success" : "Failed");
         return !!token;
       } catch (tokenError) {
-        // Don't log auth errors to avoid console spam
-        if ((tokenError as Error).message.includes('missing required authentication credential')) {
-          return false;
-        }
-        console.error("Failed to get FCM token:", tokenError);
+        console.error("Error getting token:", tokenError);
         return false;
       }
     }
     return false;
   } catch (error) {
-    console.error("Permission request error:", error);
+    console.error("Error requesting notification permission:", error);
     return false;
   }
 };
 
-// Listen for incoming messages with error handling
+// Listen for incoming messages
 export const onMessageListener = () => {
   if (!messaging) return () => {};
   
   return onMessage(messaging, (payload) => {
+    console.log('Received message:', payload);
+    
+    // Display notification even when app is in foreground
     if (Notification.permission === 'granted') {
       const { title, body } = payload.notification || { title: 'New notification', body: 'You have a new notification' };
-      // Only show notification if we have permission to do so
-      try {
-        new Notification(title as string, { body: body as string });
-      } catch (error) {
-        console.error("Failed to display notification:", error);
-      }
+      new Notification(title as string, { body: body as string });
     }
   });
 };

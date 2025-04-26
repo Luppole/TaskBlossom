@@ -7,7 +7,8 @@ export const useFirebaseUser = () => {
   
   // Check if the context exists to avoid errors
   if (context === null) {
-    // Return a default state
+    // Instead of immediately throwing an error, return a default state
+    // This helps break circular dependencies when components initialize
     return {
       user: null,
       loading: true,

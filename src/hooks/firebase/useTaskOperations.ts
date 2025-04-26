@@ -3,18 +3,12 @@ import { collection, doc, setDoc, updateDoc, deleteDoc, getDocs, query, orderBy,
 import { db } from '@/lib/firebase';
 import { Task } from '@/types/task';
 import { useFirebaseUser } from './useFirebaseUser';
-import { useContext } from 'react';
-import { FirebaseContext } from '@/contexts/FirebaseContext';
 
 export const useTaskOperations = () => {
   const { user } = useFirebaseUser();
-  const context = useContext(FirebaseContext);
-  
+
   const getTasks = async () => {
-    if (!user) {
-      // Return local tasks if no user is authenticated
-      return context?.getLocalTasks() || [];
-    }
+    if (!user) return [];
     
     try {
       const tasksRef = collection(db, 'users', user.uid, 'tasks');
@@ -28,8 +22,7 @@ export const useTaskOperations = () => {
           id: doc.id,
           dueDate: data.dueDate ? data.dueDate.toDate() : undefined,
           createdAt: data.createdAt.toDate(),
-          notes: data.notes || null,
-          completedAt: data.completedAt ? data.completedAt : null
+          notes: data.notes || null
         } as Task;
       });
     } catch (error) {
@@ -39,13 +32,7 @@ export const useTaskOperations = () => {
   };
 
   const createTask = async (taskData: Omit<Task, 'id' | 'createdAt'>) => {
-    if (!user) {
-      // Use local task creation for guests
-      if (context?.createLocalTask) {
-        return context.createLocalTask(taskData);
-      }
-      throw new Error('No context available for local task creation');
-    }
+    if (!user) throw new Error('User not authenticated');
     
     try {
       const taskRef = doc(collection(db, 'users', user.uid, 'tasks'));
@@ -61,8 +48,7 @@ export const useTaskOperations = () => {
       const firestoreTask = {
         ...task,
         dueDate: task.dueDate ? Timestamp.fromDate(task.dueDate) : null,
-        createdAt: Timestamp.fromDate(now),
-        completedAt: task.completed ? Timestamp.now() : null
+        createdAt: Timestamp.fromDate(now)
       };
       
       await setDoc(taskRef, firestoreTask);
@@ -74,13 +60,7 @@ export const useTaskOperations = () => {
   };
 
   const updateTask = async (taskId: string, data: Partial<Task>) => {
-    if (!user) {
-      // Use local task update for guests
-      if (context?.updateLocalTask) {
-        return context.updateLocalTask(taskId, data);
-      }
-      throw new Error('No context available for local task update');
-    }
+    if (!user) throw new Error('User not authenticated');
     
     try {
       const taskRef = doc(db, 'users', user.uid, 'tasks', taskId);
@@ -88,11 +68,6 @@ export const useTaskOperations = () => {
       const firestoreData: Record<string, any> = { ...data };
       if (firestoreData.dueDate instanceof Date) {
         firestoreData.dueDate = Timestamp.fromDate(firestoreData.dueDate);
-      }
-      
-      // Handle completed/completedAt fields synchronization
-      if (data.completed !== undefined) {
-        firestoreData.completedAt = data.completed ? Timestamp.now() : null;
       }
       
       await updateDoc(taskRef, firestoreData);
@@ -103,13 +78,7 @@ export const useTaskOperations = () => {
   };
 
   const deleteTask = async (taskId: string) => {
-    if (!user) {
-      // Use local task deletion for guests
-      if (context?.deleteLocalTask) {
-        return context.deleteLocalTask(taskId);
-      }
-      throw new Error('No context available for local task deletion');
-    }
+    if (!user) throw new Error('User not authenticated');
     
     try {
       const taskRef = doc(db, 'users', user.uid, 'tasks', taskId);
