@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,7 +22,7 @@ const MealLog = () => {
   const isRTL = i18n.dir() === 'rtl';
   const today = new Date();
   
-  const { meals, isLoading, error } = useMealLog(today);
+  const { meals, isLoading, error, refreshMeals } = useMealLog(today);
   
   const [newFoods, setNewFoods] = useState<Record<string, {id: string, name: string, calories: number}>>({
     breakfast: { id: uuidv4(), name: '', calories: 0 },
@@ -69,9 +68,6 @@ const MealLog = () => {
       if (existingMeal) {
         const updatedFoods = [...existingMeal.foods, food];
         await updateMeal(existingMeal.id, { foods: updatedFoods });
-        
-        // Instead of directly modifying the meals state, we'll let the useMealLog hook handle
-        // the state management on its next fetch
         toast.success(t('common.save'));
       } else {
         const newMeal = {
@@ -90,6 +86,8 @@ const MealLog = () => {
         [mealType]: { id: uuidv4(), name: '', calories: 0 }
       });
       
+      refreshMeals();
+      
     } catch (error) {
       console.error('Error adding food:', error);
       toast.error(t('common.error'));
@@ -104,9 +102,10 @@ const MealLog = () => {
       const updatedFoods = meal.foods.filter(food => food.id !== foodId);
       
       await updateMeal(meal.id, { foods: updatedFoods });
-      
-      // Again, we'll let the useMealLog hook handle state management
       toast.success(t('common.delete'));
+      
+      refreshMeals();
+      
     } catch (error) {
       console.error('Error removing food:', error);
       toast.error(t('common.error'));
@@ -161,6 +160,12 @@ const MealLog = () => {
               </Badge>
             )}
           </CardTitle>
+          <div className="text-sm text-muted-foreground mt-1">
+            {type === 'breakfast' && t('fitness.breakfastDesc', "Morning meal to start your day")}
+            {type === 'lunch' && t('fitness.lunchDesc', "Midday meal to keep you going")}
+            {type === 'dinner' && t('fitness.dinnerDesc', "Evening meal to finish your day")}
+            {type === 'snack' && t('fitness.snackDesc', "Small bites between meals")}
+          </div>
         </CardHeader>
         <CardContent className="pt-2">
           {isLoading ? (
