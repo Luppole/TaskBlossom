@@ -31,17 +31,17 @@ const ActivityMessage = ({ activity }: { activity: ActivityItem }) => {
   
   switch (activity.type) {
     case 'meal_logged':
-      return <>{activity.userName} {t('social.activity.mealLogged')}</>;
+      return <>{activity.userName} {t('social.activityTypes.mealLogged')}</>;
     case 'workout_completed':
-      return <>{activity.userName} {t('social.activity.workoutCompleted')}</>;
+      return <>{activity.userName} {t('social.activityTypes.workoutCompleted')}</>;
     case 'weight_updated':
-      return <>{activity.userName} {t('social.activity.weightUpdated')}</>;
+      return <>{activity.userName} {t('social.activityTypes.weightUpdated')}</>;
     case 'friend_added':
-      return <>{activity.userName} {t('social.activity.friendAdded', { name: activity.data?.friendName || t('social.aUser') })}</>;
+      return <>{activity.userName} {t('social.activityTypes.friendAdded', { name: activity.data?.friendName || t('social.aUser') })}</>;
     case 'goal_achieved':
-      return <>{activity.userName} {t('social.activity.goalAchieved')}</>;
+      return <>{activity.userName} {t('social.activityTypes.goalAchieved')}</>;
     default:
-      return <>{activity.userName} {t('social.activity.didSomething')}</>;
+      return <>{activity.userName} {t('social.activityTypes.didSomething')}</>;
   }
 };
 

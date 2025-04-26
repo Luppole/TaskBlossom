@@ -135,7 +135,7 @@ export default {
     requiresLogin: 'Social Features Require Login',
     loginDescription: 'Please sign in or create an account to connect with friends and view their progress',
     aUser: 'a user',
-    activity: {
+    activityTypes: {
       mealLogged: 'logged a meal',
       workoutCompleted: 'completed a workout',
       weightUpdated: 'updated their weight',

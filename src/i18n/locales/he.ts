@@ -135,7 +135,7 @@ export default {
     requiresLogin: 'תכונות חברתיות דורשות התחברות',
     loginDescription: 'אנא התחבר או צור חשבון כדי להתחבר לחברים ולצפות בהתקדמות שלהם',
     aUser: 'משתמש',
-    activity: {
+    activityTypes: {
       mealLogged: 'רשם ארוחה',
       workoutCompleted: 'השלים אימון',
       weightUpdated: 'עדכן את המשקל שלו',

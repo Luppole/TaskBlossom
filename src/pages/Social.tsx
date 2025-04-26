@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from 'framer-motion';
-import { UserSearch, Users, Activity, UserCircle, Lock, LogIn } from 'lucide-react';
+import { UserSearch as UserSearchIcon, Users, Activity, UserCircle, Lock, LogIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { useFirebase } from '@/contexts/FirebaseContext';
 import FriendRequests from '@/components/social/FriendRequests';
 import FriendsList from '@/components/social/FriendsList';
 import ActivityFeed from '@/components/social/ActivityFeed';
-import UserSearch from '@/components/social/UserSearch';
+import UserSearchComponent from '@/components/social/UserSearch';
 
 const Social = () => {
   const [activeTab, setActiveTab] = useState("friends");
@@ -94,7 +94,7 @@ const Social = () => {
             </TabsTrigger>
             
             <TabsTrigger value="discover" className="flex items-center gap-2">
-              <UserSearch className="h-4 w-4" />
+              <UserSearchIcon className="h-4 w-4" />
               <span className="hidden sm:inline">{t('social.discover')}</span>
             </TabsTrigger>
           </TabsList>
@@ -119,7 +119,7 @@ const Social = () => {
             </TabsContent>
             
             <TabsContent value="discover" className="mt-0">
-              <UserSearch />
+              <UserSearchComponent />
             </TabsContent>
           </motion.div>
         </Tabs>
