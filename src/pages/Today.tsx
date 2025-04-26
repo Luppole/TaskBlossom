@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { motivationalQuotes } from '@/data/taskData';
@@ -47,6 +48,7 @@ const Today: React.FC = () => {
         const fetchedTasks = await getTasks();
         setTasks(fetchedTasks);
       } else {
+        // If not authenticated, we'll use empty array
         setTasks([]);
       }
     } catch (error) {
@@ -73,9 +75,15 @@ const Today: React.FC = () => {
     } else {
       setIsFirstVisit(false);
     }
-    
-    fetchTasks();
-  }, [memoizedQuote, fetchTasks]);
+  }, [memoizedQuote]);
+  
+  // Separate effect to fetch tasks to avoid race conditions
+  useEffect(() => {
+    if (!firebaseLoading) {
+      console.log("Firebase loading complete, fetching tasks now");
+      fetchTasks();
+    }
+  }, [fetchTasks, firebaseLoading]);
   
   useEffect(() => {
     if (user && userSettings && tasks.length > 0) {
@@ -114,6 +122,7 @@ const Today: React.FC = () => {
       const taskToToggle = tasks.find(t => t.id === taskId);
       if (!taskToToggle) return;
       
+      // Revert the optimistic update
       setTasks(prev => 
         prev.map(t => t.id === taskId ? { 
           ...t, 
