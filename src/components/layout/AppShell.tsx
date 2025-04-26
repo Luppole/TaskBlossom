@@ -22,7 +22,7 @@ const AppShell: React.FC<AppShellProps> = ({ children }) => {
   }, [pathname]);
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex w-full">
       <DesktopSidebar />
       
       <main className="flex-1">
