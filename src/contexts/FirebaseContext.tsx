@@ -82,19 +82,23 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
     acceptFriendRequest: supabaseContext.acceptFriendRequest,
     rejectFriendRequest: supabaseContext.rejectFriendRequest,
     removeFriend: supabaseContext.removeFriend,
-    getUserProfile: async (userId) => ({ 
+    getUserProfile: supabaseContext.getUserProfile || (async (userId) => ({ 
       id: userId, 
       displayName: 'User',
       settings: { publicProfile: false, shareProgress: false, shareFitness: false },
       progressData: { progress: [] },
       fitnessData: { workouts: [] }
-    }), // Placeholder
+    })), // Use the new function if available
     updateSettings: async () => {}, // Placeholder
     exportUserData: async () => "", // Placeholder
     searchUsers: async (query) => {
       console.log('Searching users with query:', query);
-      return []; // Return empty array as a placeholder
-    } 
+      // Use the new searchUsersByName function if available
+      if (supabaseContext.searchUsersByName) {
+        return supabaseContext.searchUsersByName(query);
+      }
+      return []; // Fallback
+    }
   };
 
   return <FirebaseContext.Provider value={value}>{children}</FirebaseContext.Provider>;

@@ -34,6 +34,9 @@ interface SupabaseContextType {
   acceptFriendRequest: (requestId: string) => Promise<void>;
   rejectFriendRequest: (requestId: string) => Promise<void>;
   removeFriend: (friendId: string) => Promise<void>;
+  searchUsersByName: (query: string) => Promise<any[]>;
+  updateUserProfile: (profileData: any) => Promise<void>;
+  getUserProfile: (userId?: string) => Promise<any>;
 }
 
 export const SupabaseContext = createContext<SupabaseContextType | undefined>(undefined);
@@ -184,8 +187,12 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (taskData.title !== undefined) updateData.title = taskData.title;
       if (taskData.notes !== undefined) updateData.description = taskData.notes;
       if (taskData.dueDate !== undefined) updateData.due_date = taskData.dueDate;
-      if (taskData.completed !== undefined) updateData.completed = taskData.completed;
+      if (taskData.completed !== undefined) {
+        updateData.completed = taskData.completed;
+        updateData.completed_at = taskData.completed ? new Date().toISOString() : null;
+      }
       if (taskData.category !== undefined) updateData.category_id = taskData.category?.id || null;
+      
       if (taskData.completedAt !== undefined) updateData.completed_at = taskData.completedAt;
 
       const { error } = await supabase
@@ -401,14 +408,12 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     try {
       const mealToInsert = {
-        ...mealData,
+        date: mealData.date,
+        foods: mealData.foods,
+        notes: mealData.notes,
         meal_type: mealData.mealType,
         user_id: user.id
       };
-
-      if (mealToInsert.mealType) {
-        delete mealToInsert.mealType;
-      }
 
       const { data, error } = await supabase
         .from('meals')
@@ -717,6 +722,69 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  const searchUsersByName = async (query: string) => {
+    if (!user) return [];
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .or(`username.ilike.%${query}%,full_name.ilike.%${query}%`)
+        .not('id', 'eq', user.id)
+        .limit(10);
+      
+      if (error) throw error;
+      
+      return data || [];
+    } catch (error) {
+      console.error('Error searching users:', error);
+      toast.error('Failed to search users');
+      return [];
+    }
+  };
+
+  const updateUserProfile = async (profileData: any) => {
+    if (!user) throw new Error('User not authenticated');
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          ...profileData,
+          updated_at: new Date().toISOString()
+        });
+      
+      if (error) throw error;
+      
+      toast.success('Profile updated successfully');
+      return true;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile');
+      return false;
+    }
+  };
+
+  const getUserProfile = async (userId: string = user?.id) => {
+    if (!userId) return null;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) throw error;
+      
+      return data;
+    } catch (error) {
+      console.error('Error getting user profile:', error);
+      return null;
+    }
+  };
+
   return (
     <SupabaseContext.Provider
       value={{
@@ -749,7 +817,10 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         sendFriendRequest,
         acceptFriendRequest,
         rejectFriendRequest,
-        removeFriend
+        removeFriend,
+        searchUsersByName,
+        updateUserProfile,
+        getUserProfile
       }}
     >
       {children}

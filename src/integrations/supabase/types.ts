@@ -123,6 +123,33 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
       progress_logs: {
         Row: {
           date: string
@@ -154,6 +181,7 @@ export type Database = {
         Row: {
           category_id: string | null
           completed: boolean | null
+          completed_at: string | null
           created_at: string | null
           description: string | null
           due_date: string | null
@@ -165,6 +193,7 @@ export type Database = {
         Insert: {
           category_id?: string | null
           completed?: boolean | null
+          completed_at?: string | null
           created_at?: string | null
           description?: string | null
           due_date?: string | null
@@ -176,6 +205,7 @@ export type Database = {
         Update: {
           category_id?: string | null
           completed?: boolean | null
+          completed_at?: string | null
           created_at?: string | null
           description?: string | null
           due_date?: string | null

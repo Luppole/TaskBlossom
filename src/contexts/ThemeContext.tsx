@@ -1,6 +1,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useSupabase } from './SupabaseContext';
+import { toast } from 'sonner';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -16,51 +17,101 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useSupabase();
-  const [theme, setTheme] = useState<Theme>('system');
-  const [direction, setDirection] = useState<'ltr' | 'rtl'>('ltr');
+  const { user, updateUserProfile, getUserProfile } = useSupabase();
+  const [theme, setThemeState] = useState<Theme>('system');
+  const [direction, setDirectionState] = useState<'ltr' | 'rtl'>('ltr');
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  // Load theme and direction from user profile or localStorage
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.setAttribute('data-theme', savedTheme);
-    }
+    const initializeTheme = async () => {
+      let savedTheme = localStorage.getItem('theme') as Theme;
+      let savedDirection = localStorage.getItem('direction') as 'ltr' | 'rtl';
 
-    const savedDirection = localStorage.getItem('direction') as 'ltr' | 'rtl';
-    if (savedDirection) {
-      setDirection(savedDirection);
-      document.documentElement.dir = savedDirection;
+      // If user is logged in, try to get theme from user profile
+      if (user && getUserProfile) {
+        try {
+          const profile = await getUserProfile();
+          if (profile) {
+            savedTheme = profile.theme || savedTheme || 'system';
+            savedDirection = profile.direction || savedDirection || 'ltr';
+          }
+        } catch (error) {
+          console.error('Error loading user theme preferences:', error);
+        }
+      }
+
+      if (savedTheme) {
+        setThemeState(savedTheme);
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      }
+
+      if (savedDirection) {
+        setDirectionState(savedDirection);
+        document.documentElement.dir = savedDirection;
+        document.documentElement.lang = savedDirection === 'rtl' ? 'he' : 'en';
+      }
+      
+      setIsInitialized(true);
+    };
+
+    initializeTheme();
+  }, [user, getUserProfile]);
+
+  const setTheme = async (newTheme: Theme) => {
+    setThemeState(newTheme);
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    
+    // Persist to user profile if logged in
+    if (user && updateUserProfile && isInitialized) {
+      try {
+        await updateUserProfile({ theme: newTheme });
+      } catch (error) {
+        console.error('Error saving theme to user profile:', error);
+      }
     }
-  }, []);
+  };
+  
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+  };
+  
+  const setDirection = async (newDirection: 'ltr' | 'rtl') => {
+    setDirectionState(newDirection);
+    localStorage.setItem('direction', newDirection);
+    document.documentElement.dir = newDirection;
+    document.documentElement.lang = newDirection === 'rtl' ? 'he' : 'en';
+    
+    // Persist to user profile if logged in
+    if (user && updateUserProfile && isInitialized) {
+      try {
+        await updateUserProfile({ direction: newDirection });
+      } catch (error) {
+        console.error('Error saving direction to user profile:', error);
+      }
+    }
+  };
+  
+  const toggleDirection = () => {
+    const newDirection = direction === 'ltr' ? 'rtl' : 'ltr';
+    setDirection(newDirection);
+    toast.success(
+      direction === 'ltr' 
+        ? 'Switched to right-to-left' 
+        : 'Switched to left-to-right', 
+      { duration: 1500 }
+    );
+  };
 
   const value = {
     theme,
     direction,
-    setTheme: (newTheme: Theme) => {
-      setTheme(newTheme);
-      localStorage.setItem('theme', newTheme);
-      document.documentElement.setAttribute('data-theme', newTheme);
-    },
-    toggleTheme: () => {
-      const newTheme = theme === 'light' ? 'dark' : 'light';
-      setTheme(newTheme);
-      localStorage.setItem('theme', newTheme);
-      document.documentElement.setAttribute('data-theme', newTheme);
-    },
-    toggleDirection: () => {
-      const newDirection = direction === 'ltr' ? 'rtl' : 'ltr';
-      setDirection(newDirection);
-      localStorage.setItem('direction', newDirection);
-      document.documentElement.dir = newDirection;
-      document.documentElement.lang = newDirection === 'rtl' ? 'he' : 'en';
-    },
-    setDirection: (newDirection: 'ltr' | 'rtl') => {
-      setDirection(newDirection);
-      localStorage.setItem('direction', newDirection);
-      document.documentElement.dir = newDirection;
-      document.documentElement.lang = newDirection === 'rtl' ? 'he' : 'en';
-    }
+    setTheme,
+    toggleTheme,
+    toggleDirection,
+    setDirection
   };
 
   return (
