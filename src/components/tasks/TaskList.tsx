@@ -5,19 +5,23 @@ import TaskCard from './TaskCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { toast } from 'sonner';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 interface TaskListProps {
   tasks: Task[];
   onToggleComplete: (taskId: string) => void;
   onDeleteTask?: (taskId: string) => void;
   isLoading?: boolean;
+  error?: Error | null;
 }
 
 const TaskList: React.FC<TaskListProps> = ({ 
   tasks, 
   onToggleComplete, 
   onDeleteTask,
-  isLoading = false 
+  isLoading = false,
+  error = null
 }) => {
   const { user, updateTask } = useFirebase();
   
@@ -56,6 +60,19 @@ const TaskList: React.FC<TaskListProps> = ({
           <p className="text-muted-foreground">Loading tasks...</p>
         </div>
       </motion.div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-6">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error loading tasks</AlertTitle>
+        <AlertDescription className="mt-2">
+          <p>There was a problem loading your tasks. This might be due to a permission issue or connectivity problem.</p>
+          <p className="mt-2 text-sm font-mono">Error details: {error.message}</p>
+        </AlertDescription>
+      </Alert>
     );
   }
   

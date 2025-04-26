@@ -1,291 +1,217 @@
-import { collection, doc, addDoc, updateDoc, deleteDoc, getDocs, getDoc, query, where, orderBy, limit, Timestamp, setDoc } from 'firebase/firestore';
+
+import { collection, doc, setDoc, getDoc, getDocs, query, where, addDoc, updateDoc, deleteDoc, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { FriendRequest, FriendData, ActivityItem } from '@/types/friend';
-import { UserSettings } from '@/types/settings';
 import { useFirebaseUser } from './useFirebaseUser';
-import { convertFirebaseTimestamp } from '@/utils/firebaseHelpers';
+import { Friend, FriendRequest } from '@/types/friend';
+import { toast } from 'sonner';
+import { convertFirebaseTimestamps } from '@/utils/firebaseHelpers';
 
 export const useFriendOperations = () => {
   const { user } = useFirebaseUser();
 
-  const sendFriendRequest = async (recipientId: string) => {
-    if (!user) throw new Error('User not authenticated');
-    
-    try {
-      const requestRef = collection(db, 'friendRequests');
-      
-      await addDoc(requestRef, {
-        senderId: user.uid,
-        senderName: user.displayName,
-        recipientId,
-        status: 'pending',
-        createdAt: Timestamp.now()
-      });
-    } catch (error) {
-      console.error('Error sending friend request:', error);
-      throw error;
-    }
-  };
-  
-  const acceptFriendRequest = async (requestId: string) => {
-    if (!user) throw new Error('User not authenticated');
-    
-    try {
-      const requestRef = doc(db, 'friendRequests', requestId);
-      const requestDoc = await getDoc(requestRef);
-      
-      if (!requestDoc.exists()) throw new Error('Friend request not found');
-      
-      const requestData = requestDoc.data() as FriendRequest;
-      
-      await updateDoc(requestRef, { status: 'accepted' });
-      
-      const currentUserFriendRef = doc(db, 'users', user.uid, 'friends', requestData.senderId);
-      const senderFriendRef = doc(db, 'users', requestData.senderId, 'friends', user.uid);
-      
-      const senderUserDoc = await getDoc(doc(db, 'userSettings', requestData.senderId));
-      const senderUser = await getDoc(doc(db, 'users', requestData.senderId));
-      
-      await setDoc(currentUserFriendRef, {
-        userId: requestData.senderId,
-        displayName: requestData.senderName,
-        addedAt: Timestamp.now()
-      });
-      
-      await setDoc(senderFriendRef, {
-        userId: user.uid,
-        displayName: user.displayName,
-        addedAt: Timestamp.now()
-      });
-      
-      await addActivity(user.uid, {
-        type: 'friend_added',
-        userId: requestData.senderId,
-        userName: requestData.senderName,
-        timestamp: convertFirebaseTimestamp(Timestamp.now()) || new Date()
-      });
-      
-      await addActivity(requestData.senderId, {
-        type: 'friend_added',
-        userId: user.uid,
-        userName: user.displayName || 'User',
-        timestamp: convertFirebaseTimestamp(Timestamp.now()) || new Date()
-      });
-    } catch (error) {
-      console.error('Error accepting friend request:', error);
-      throw error;
-    }
-  };
-  
-  const rejectFriendRequest = async (requestId: string) => {
-    if (!user) throw new Error('User not authenticated');
-    
-    try {
-      const requestRef = doc(db, 'friendRequests', requestId);
-      await updateDoc(requestRef, { status: 'rejected' });
-    } catch (error) {
-      console.error('Error rejecting friend request:', error);
-      throw error;
-    }
-  };
-  
-  const getFriendRequests = async () => {
-    if (!user) return [];
-    
-    try {
-      const requestsRef = collection(db, 'friendRequests');
-      const q = query(
-        requestsRef,
-        where('recipientId', '==', user.uid),
-        where('status', '==', 'pending'),
-        orderBy('createdAt', 'desc')
-      );
-      
-      const querySnapshot = await getDocs(q);
-      
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: (doc.data().createdAt as Timestamp).toDate()
-      } as FriendRequest));
-    } catch (error) {
-      console.error('Error getting friend requests:', error);
-      return [];
-    }
-  };
-  
-  const getFriends = async () => {
+  // Get friends
+  const getFriends = async (): Promise<Friend[]> => {
     if (!user) return [];
     
     try {
       const friendsRef = collection(db, 'users', user.uid, 'friends');
       const querySnapshot = await getDocs(friendsRef);
       
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        addedAt: (doc.data().addedAt as Timestamp).toDate()
-      } as FriendData));
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          userId: data.userId,
+          username: data.username,
+          displayName: data.displayName,
+          photoURL: data.photoURL,
+          since: data.since ? data.since.toDate() : new Date(),
+        };
+      });
     } catch (error) {
       console.error('Error getting friends:', error);
       return [];
     }
   };
-  
-  const removeFriend = async (friendId: string) => {
+
+  // Get friend requests
+  const getFriendRequests = async (): Promise<FriendRequest[]> => {
+    if (!user) return [];
+    
+    try {
+      // Change the query to work without the complex index
+      // Just get all friend requests for the current user without sorting
+      const friendRequestsRef = collection(db, 'friendRequests');
+      const q = query(
+        friendRequestsRef,
+        where('recipientId', '==', user.uid),
+        where('status', '==', 'pending')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      
+      return querySnapshot.docs.map(doc => {
+        const data = convertFirebaseTimestamps(doc.data());
+        return {
+          id: doc.id,
+          senderId: data.senderId,
+          senderName: data.senderName,
+          recipientId: data.recipientId,
+          status: data.status,
+          createdAt: data.createdAt,
+        };
+      });
+    } catch (error) {
+      console.error('Error getting friend requests:', error);
+      // If there's a missing index error, provide information to the user
+      if (error.toString().includes('requires an index')) {
+        toast.error('Friend requests need database indexing. Please check the admin console.');
+      }
+      return [];
+    }
+  };
+
+  // Send a friend request
+  const sendFriendRequest = async (recipientId: string, recipientName?: string): Promise<void> => {
     if (!user) throw new Error('User not authenticated');
     
     try {
-      const currentUserFriendRef = doc(db, 'users', user.uid, 'friends', friendId);
-      const friendUserRef = doc(db, 'users', friendId, 'friends', user.uid);
+      const friendRequestRef = collection(db, 'friendRequests');
       
-      await deleteDoc(currentUserFriendRef);
-      await deleteDoc(friendUserRef);
+      // Check if there's already a pending request
+      const existingQuery = query(
+        friendRequestRef,
+        where('senderId', '==', user.uid),
+        where('recipientId', '==', recipientId),
+        where('status', '==', 'pending')
+      );
+      
+      const existingSnapshot = await getDocs(existingQuery);
+      
+      if (!existingSnapshot.empty) {
+        throw new Error('Friend request already sent');
+      }
+      
+      // Create a new friend request
+      await addDoc(friendRequestRef, {
+        senderId: user.uid,
+        senderName: user.displayName || 'User',
+        recipientId,
+        recipientName: recipientName || 'User',
+        status: 'pending',
+        createdAt: Timestamp.now()
+      });
+      
+    } catch (error) {
+      console.error('Error sending friend request:', error);
+      throw error;
+    }
+  };
+
+  // Accept a friend request
+  const acceptFriendRequest = async (requestId: string): Promise<void> => {
+    if (!user) throw new Error('User not authenticated');
+    
+    try {
+      // Get the request
+      const requestRef = doc(db, 'friendRequests', requestId);
+      const requestSnap = await getDoc(requestRef);
+      
+      if (!requestSnap.exists()) {
+        throw new Error('Friend request not found');
+      }
+      
+      const requestData = requestSnap.data();
+      
+      if (requestData.recipientId !== user.uid) {
+        throw new Error('Unauthorized to accept this request');
+      }
+      
+      // Update the request status
+      await updateDoc(requestRef, {
+        status: 'accepted'
+      });
+      
+      // Add friend to current user's friends
+      const myFriendRef = doc(db, 'users', user.uid, 'friends', requestData.senderId);
+      await setDoc(myFriendRef, {
+        userId: requestData.senderId,
+        username: requestData.senderName,
+        displayName: requestData.senderName,
+        photoURL: null, 
+        since: Timestamp.now()
+      });
+      
+      // Add current user to the other user's friends
+      const theirFriendRef = doc(db, 'users', requestData.senderId, 'friends', user.uid);
+      await setDoc(theirFriendRef, {
+        userId: user.uid,
+        username: user.displayName || 'User',
+        displayName: user.displayName || 'User',
+        photoURL: user.photoURL,
+        since: Timestamp.now()
+      });
+      
+    } catch (error) {
+      console.error('Error accepting friend request:', error);
+      throw error;
+    }
+  };
+
+  // Reject a friend request
+  const rejectFriendRequest = async (requestId: string): Promise<void> => {
+    if (!user) throw new Error('User not authenticated');
+    
+    try {
+      const requestRef = doc(db, 'friendRequests', requestId);
+      const requestSnap = await getDoc(requestRef);
+      
+      if (!requestSnap.exists()) {
+        throw new Error('Friend request not found');
+      }
+      
+      const requestData = requestSnap.data();
+      
+      if (requestData.recipientId !== user.uid) {
+        throw new Error('Unauthorized to reject this request');
+      }
+      
+      // Update the request status
+      await updateDoc(requestRef, {
+        status: 'rejected'
+      });
+      
+    } catch (error) {
+      console.error('Error rejecting friend request:', error);
+      throw error;
+    }
+  };
+
+  // Remove a friend
+  const removeFriend = async (friendId: string): Promise<void> => {
+    if (!user) throw new Error('User not authenticated');
+    
+    try {
+      // Delete from current user's friends
+      const myFriendRef = doc(db, 'users', user.uid, 'friends', friendId);
+      await deleteDoc(myFriendRef);
+      
+      // Delete from other user's friends
+      const theirFriendRef = doc(db, 'users', friendId, 'friends', user.uid);
+      await deleteDoc(theirFriendRef);
+      
     } catch (error) {
       console.error('Error removing friend:', error);
       throw error;
     }
   };
-  
-  const addActivity = async (userId: string, activity: Omit<ActivityItem, 'id'>) => {
-    try {
-      const activitiesRef = collection(db, 'users', userId, 'activities');
-      await addDoc(activitiesRef, activity);
-    } catch (error) {
-      console.error('Error adding activity:', error);
-    }
-  };
-
-  const getFriendActivities = async () => {
-    if (!user) return [];
-    
-    try {
-      const friends = await getFriends();
-      
-      if (friends.length === 0) return [];
-      
-      const activities: ActivityItem[] = [];
-      
-      for (const friend of friends) {
-        const settingsRef = doc(db, 'userSettings', friend.userId);
-        const settingsDoc = await getDoc(settingsRef);
-        
-        if (!settingsDoc.exists()) continue;
-        
-        const settings = settingsDoc.data() as UserSettings;
-        
-        if (settings.publicProfile) {
-          const activitiesRef = collection(db, 'users', friend.userId, 'activities');
-          const q = query(
-            activitiesRef,
-            orderBy('timestamp', 'desc'),
-            limit(10)
-          );
-          
-          const querySnapshot = await getDocs(q);
-          
-          const friendActivities = querySnapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              ...data,
-              timestamp: convertFirebaseTimestamp(data.timestamp) || new Date(),
-              friendId: friend.userId,
-              friendName: friend.displayName
-            } as ActivityItem;
-          });
-          
-          activities.push(...friendActivities);
-        }
-      }
-      
-      return activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-    } catch (error) {
-      console.error('Error getting friend activities:', error);
-      return [];
-    }
-  };
-  
-  const getUserProfile = async (userId: string) => {
-    try {
-      const settingsRef = doc(db, 'userSettings', userId);
-      const settingsDoc = await getDoc(settingsRef);
-      
-      if (!settingsDoc.exists()) return null;
-      
-      const settings = settingsDoc.data() as UserSettings;
-      
-      if (!settings.publicProfile && (!user || user.uid !== userId)) return null;
-      
-      const userDoc = await getDoc(doc(db, 'users', userId));
-      let userData = {};
-      
-      if (userDoc.exists()) {
-        userData = userDoc.data();
-      }
-      
-      let fitnessData = null;
-      if (settings.shareFitness || (user && user.uid === userId)) {
-        const workoutsRef = collection(db, 'users', userId, 'workouts');
-        const workoutsQuery = query(workoutsRef, orderBy('date', 'desc'), limit(5));
-        const workoutsSnapshot = await getDocs(workoutsQuery);
-        
-        const workouts = workoutsSnapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            ...data,
-            date: convertFirebaseTimestamp(data.date) || new Date()
-          };
-        });
-        
-        fitnessData = { workouts };
-      }
-      
-      let progressData = null;
-      if (settings.shareProgress || (user && user.uid === userId)) {
-        const progressRef = collection(db, 'users', userId, 'progress');
-        const progressQuery = query(progressRef, orderBy('date', 'desc'), limit(10));
-        const progressSnapshot = await getDocs(progressQuery);
-        
-        const progress = progressSnapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            ...data,
-            date: convertFirebaseTimestamp(data.date) || new Date()
-          };
-        });
-        
-        progressData = { progress };
-      }
-      
-      return {
-        userId,
-        displayName: userDoc.exists() ? userDoc.data().displayName : 'User',
-        settings: {
-          publicProfile: settings.publicProfile,
-          shareProgress: settings.shareProgress,
-          shareFitness: settings.shareFitness
-        },
-        userData,
-        fitnessData,
-        progressData
-      };
-    } catch (error) {
-      console.error('Error getting user profile:', error);
-      return null;
-    }
-  };
 
   return {
+    getFriends,
+    getFriendRequests,
     sendFriendRequest,
     acceptFriendRequest,
     rejectFriendRequest,
-    getFriendRequests,
-    getFriends,
     removeFriend,
-    getFriendActivities,
-    getUserProfile,
   };
 };

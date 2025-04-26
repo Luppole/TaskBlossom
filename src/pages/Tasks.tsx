@@ -5,10 +5,12 @@ import AddTaskButton from '@/components/common/AddTaskButton';
 import TaskModal from '@/components/tasks/TaskModal';
 import { Input } from '@/components/ui/input';
 import { Task } from '@/types/task';
-import { Search } from 'lucide-react';
+import { Search, AlertCircle } from 'lucide-react';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 const Tasks: React.FC = () => {
   const {
@@ -24,10 +26,12 @@ const Tasks: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   // Load tasks from Firestore
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     try {
       if (user) {
         const fetchedTasks = await getTasks();
@@ -36,8 +40,9 @@ const Tasks: React.FC = () => {
         setTasks([]);
       }
     } catch (error) {
+      console.error('Failed to load tasks:', error);
+      setError(error instanceof Error ? error : new Error('Unknown error occurred'));
       toast.error('Failed to load tasks.');
-      setTasks([]);
     } finally {
       setIsLoading(false);
     }
@@ -162,6 +167,24 @@ const Tasks: React.FC = () => {
         </p>
       </header>
 
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error loading tasks</AlertTitle>
+          <AlertDescription className="flex flex-col gap-2">
+            <p>There was a problem loading your tasks. Please try again.</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={fetchTasks} 
+              className="self-start"
+            >
+              Try again
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
@@ -173,7 +196,7 @@ const Tasks: React.FC = () => {
       </div>
 
       <div className="mb-2 text-sm text-muted-foreground">
-        {!isLoading && (
+        {!isLoading && !error && (
           <span>Showing {sortedTasks.length} {sortedTasks.length === 1 ? 'task' : 'tasks'}</span>
         )}
       </div>
@@ -185,9 +208,10 @@ const Tasks: React.FC = () => {
           onToggleComplete={handleToggleComplete}
           onDeleteTask={handleDeleteTask}
           isLoading={firebaseLoading || isLoading}
+          error={error}
         />
         
-        {!isLoading && !user && (
+        {!isLoading && !error && !user && (
           <div className="mt-4 p-4 bg-muted rounded-lg text-center">
             <p className="mb-2">Sign in to save your tasks and access them from any device.</p>
             <p className="text-sm text-muted-foreground">Your tasks will be stored locally until you sign in.</p>

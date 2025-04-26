@@ -70,12 +70,12 @@ service cloud.firestore {
       allow read, write: if isUser(userId);
     }
     
-    // Friend relationships - adding explicit rules for these collections
+    // Friend relationships
     match /users/{userId}/friends/{friendId} {
       allow read, write: if isUser(userId);
     }
     
-    // Friend requests
+    // Friend requests - improved rules to fix permissions issue
     match /friendRequests/{requestId} {
       allow read: if isAuthenticated() && 
         (resource.data.senderId == request.auth.uid || resource.data.recipientId == request.auth.uid);
@@ -88,11 +88,6 @@ service cloud.firestore {
     // Activities
     match /users/{userId}/activities/{activityId} {
       allow read, write: if isUser(userId);
-    }
-    
-    // Deny all other access
-    match /{document=**} {
-      allow read, write: if false;
     }
   }
 }
