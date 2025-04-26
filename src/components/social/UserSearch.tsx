@@ -8,7 +8,7 @@ import { useFirebase } from '@/contexts/FirebaseContext';
 import { Search, UserPlus, Check, User, Loader2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tab, Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 
 interface UserSearchResult {
