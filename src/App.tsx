@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import Index from "./pages/Index";
 import Calendar from "./pages/Calendar";
@@ -14,11 +14,13 @@ import NotFound from "./pages/NotFound";
 import Fitness from "./pages/Fitness";
 import Social from "./pages/Social";
 import Profile from "./pages/Profile";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import AppShell from "./components/layout/AppShell";
 import PageTransition from "./components/common/PageTransition";
-import { FirebaseProvider } from "./contexts/FirebaseContext";
+import { FirebaseProvider, useFirebase } from "./contexts/FirebaseContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import "./i18n/i18n"; // Import i18n configuration
+import "./i18n/i18n";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,28 +31,45 @@ const queryClient = new QueryClient({
   },
 });
 
-// Separate component to use useLocation hook
+const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useFirebase();
+  
+  if (loading) {
+    return null;
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return children;
+};
+
 const AnimatedRoutes = () => {
   const location = useLocation();
   
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Index /></div></PageTransition>} />
-        <Route path="/calendar" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Calendar /></div></PageTransition>} />
-        <Route path="/tasks" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Tasks /></div></PageTransition>} />
-        <Route path="/categories" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Categories /></div></PageTransition>} />
-        <Route path="/settings" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Settings /></div></PageTransition>} />
-        <Route path="/fitness" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Fitness /></div></PageTransition>} />
-        <Route path="/social" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Social /></div></PageTransition>} />
-        <Route path="/profile/:userId" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><Profile /></div></PageTransition>} />
-        <Route path="*" element={<PageTransition><div className="px-4 sm:px-6 md:px-8"><NotFound /></div></PageTransition>} />
+        {/* Public routes */}
+        <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
+        <Route path="/signup" element={<PageTransition><Signup /></PageTransition>} />
+        
+        {/* Protected routes */}
+        <Route path="/" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Index /></div></AppShell></PrivateRoute>} />
+        <Route path="/calendar" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Calendar /></div></AppShell></PrivateRoute>} />
+        <Route path="/tasks" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Tasks /></div></AppShell></PrivateRoute>} />
+        <Route path="/categories" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Categories /></div></AppShell></PrivateRoute>} />
+        <Route path="/settings" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Settings /></div></AppShell></PrivateRoute>} />
+        <Route path="/fitness" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Fitness /></div></AppShell></PrivateRoute>} />
+        <Route path="/social" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Social /></div></AppShell></PrivateRoute>} />
+        <Route path="/profile/:userId" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Profile /></div></AppShell></PrivateRoute>} />
+        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
   );
 };
 
-// New App component that properly orders the providers
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
@@ -60,9 +79,7 @@ const App = () => {
             <TooltipProvider>
               <Toaster />
               <Sonner />
-              <AppShell>
-                <AnimatedRoutes />
-              </AppShell>
+              <AnimatedRoutes />
             </TooltipProvider>
           </ThemeProvider>
         </FirebaseProvider>

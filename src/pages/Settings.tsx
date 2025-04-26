@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,12 +10,19 @@ import { motion } from 'framer-motion';
 import { Moon, Bell, Shield } from 'lucide-react';
 import LanguageSwitcher from '@/components/settings/LanguageSwitcher';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 const Settings = () => {
-  const { userSettings, updateSettings } = useFirebase();
+  const { userSettings, updateSettings, user } = useFirebase();
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
-  // Apply RTL setting on component mount if user has it enabled
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
+
   useEffect(() => {
     if (userSettings?.rtlLayout) {
       document.documentElement.dir = 'rtl';
@@ -48,6 +54,10 @@ const Settings = () => {
       }
     }
   };
+
+  if (!user || !userSettings) {
+    return null;
+  }
 
   return (
     <motion.div
