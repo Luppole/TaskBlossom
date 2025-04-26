@@ -14,6 +14,8 @@ import { calculateStreak } from '@/utils/streak-calculator';
 import TodayHeader from '@/components/today/TodayHeader';
 import TaskSection from '@/components/today/TaskSection';
 
+let notificationsSetupComplete = false;
+
 const Today: React.FC = () => {
   const { 
     user,
@@ -38,22 +40,23 @@ const Today: React.FC = () => {
   });
   
   const fetchTasks = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      if (user) {
-        const fetchedTasks = await getTasks();
-        setTasks(fetchedTasks);
-      } else {
+    if (isLoading && !firebaseLoading) {
+      try {
+        if (user) {
+          const fetchedTasks = await getTasks();
+          setTasks(fetchedTasks);
+        } else {
+          setTasks([]);
+        }
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+        toast.error('Failed to load tasks');
         setTasks([]);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-      toast.error('Failed to load tasks');
-      setTasks([]);
-    } finally {
-      setIsLoading(false);
     }
-  }, [getTasks, user]);
+  }, [getTasks, user, isLoading, firebaseLoading]);
   
   const memoizedQuote = useMemo(() => {
     const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
@@ -80,7 +83,8 @@ const Today: React.FC = () => {
   }, [fetchTasks, firebaseLoading]);
   
   useEffect(() => {
-    if (user && userSettings && tasks.length > 0) {
+    if (!notificationsSetupComplete && user && userSettings && tasks.length > 0) {
+      notificationsSetupComplete = true;
       setupTaskNotifications(tasks, {
         taskReminders: userSettings?.taskReminders || false,
         overdueAlerts: userSettings?.overdueAlerts || false
@@ -229,7 +233,7 @@ const Today: React.FC = () => {
         filter={filter}
         onFilterChange={setFilter}
         onToggleComplete={handleToggleComplete}
-        onDeleteTask={handleDeleteTask}
+        onDeleteTask={deleteTask}
         isLoading={isLoading || firebaseLoading}
         user={user}
         pendingCount={pendingCount}

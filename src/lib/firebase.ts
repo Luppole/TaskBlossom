@@ -24,24 +24,31 @@ export const db = getFirestore(app);
 
 // Messaging setup (for notifications)
 let messaging: any = null;
+let messagingSupported = false;
 
 // Initialize messaging only in browser environment and when not in an iframe (like Lovable preview)
 if (typeof window !== 'undefined' && window.self === window.top) {
   try {
     messaging = getMessaging(app);
+    messagingSupported = true;
     console.log("Firebase messaging initialized successfully");
   } catch (error) {
     console.error("Firebase messaging failed to initialize:", error);
+    messagingSupported = false;
   }
 }
 
-export { messaging };
+export { messaging, messagingSupported };
+
+// Track permission state to prevent repeated requests
+let notificationPermissionChecked = false;
+let notificationPermissionGranted = false;
 
 // Function to request notification permission
 export const requestNotificationPermission = async () => {
-  if (!messaging) {
-    console.log("Messaging is not available");
-    return false;
+  // If messaging is not available or we've already checked permission, don't proceed
+  if (!messaging || notificationPermissionChecked) {
+    return notificationPermissionGranted;
   }
   
   try {
@@ -49,13 +56,24 @@ export const requestNotificationPermission = async () => {
     const permission = await Notification.requestPermission();
     console.log("Permission status:", permission);
     
+    notificationPermissionChecked = true;
+    
     if (permission === 'granted') {
       try {
         const token = await getToken(messaging, {
           vapidKey: 'BMkP2IlsKCXZJKLCKfmJSjnhKqQqB4x3QnOr54KtgXeYHx_FIlIkB2g_SyRXJD8otzB5ffY7r_9w4s8iWd7G8Xk'
+        }).catch(error => {
+          // Handle the 401 Unauthorized error specifically
+          if (error.code === 'messaging/token-subscribe-failed') {
+            console.log('Firebase messaging token acquisition failed, likely due to missing credentials. This is expected in development environments.');
+          } else {
+            console.error("Error getting messaging token:", error);
+          }
+          return null;
         });
-        console.log("Notification token received:", token ? "Success" : "Failed");
-        return !!token;
+        
+        notificationPermissionGranted = !!token;
+        return notificationPermissionGranted;
       } catch (tokenError) {
         console.error("Error getting token:", tokenError);
         return false;
