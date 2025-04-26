@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -46,17 +45,38 @@ const Profile = () => {
       }
       
       try {
+        setLoading(true);
         const userProfile = await getUserProfile(userId);
-        setProfile(userProfile);
+        
+        if (!userProfile) {
+          // Handle missing profile
+          console.log(`No profile found for user ID: ${userId}`);
+          // If this is the current user, try to create one
+          if (user && user.uid === userId) {
+            // Try to create profile
+            console.log('Creating missing profile for current user');
+            // Reload after a short delay to allow profile creation to complete
+            setTimeout(async () => {
+              const createdProfile = await getUserProfile(userId);
+              setProfile(createdProfile);
+              setLoading(false);
+            }, 1000);
+          } else {
+            setProfile(null);
+            setLoading(false);
+          }
+        } else {
+          setProfile(userProfile);
+          setLoading(false);
+        }
       } catch (error) {
         console.error('Error loading profile:', error);
-      } finally {
         setLoading(false);
       }
     };
 
     loadProfile();
-  }, [userId, getUserProfile, navigate]);
+  }, [userId, getUserProfile, navigate, user]);
 
   const handleExportData = async (dataType: 'meals' | 'workouts' | 'progress', format: 'csv' | 'pdf') => {
     if (!user || user.uid !== userId) return;

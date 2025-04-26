@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,7 +41,9 @@ const MealLog = () => {
         setIsLoading(true);
         setError(null);
         try {
+          console.log(`Loading meals for date: ${today.toISOString()}`);
           const todayMeals = await getMeals(today);
+          console.log(`Loaded ${todayMeals.length} meals for today`);
           setMeals(todayMeals);
         } catch (error) {
           console.error('Error loading meals:', error);
@@ -87,11 +88,12 @@ const MealLog = () => {
     };
     
     if (!food.name.trim() || food.calories <= 0) {
-      toast.error(t('common.error'));
+      toast.error(t('common.validationError'));
       return;
     }
     
     try {
+      setIsLoading(true);
       const existingMeal = meals.find(meal => meal.mealType === mealType);
       
       if (existingMeal) {
@@ -115,7 +117,9 @@ const MealLog = () => {
         };
         
         const savedMeal = await createMeal(newMeal);
-        setMeals([...meals, savedMeal]);
+        if (savedMeal) {
+          setMeals([...meals, savedMeal]);
+        }
       }
       
       // Reset input
@@ -128,6 +132,8 @@ const MealLog = () => {
     } catch (error) {
       console.error('Error adding food:', error);
       toast.error(t('common.error'));
+    } finally {
+      setIsLoading(false);
     }
   };
   

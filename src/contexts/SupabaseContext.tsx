@@ -375,20 +375,38 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         .eq('user_id', user.id);
 
       if (date) {
-        const startOfDay = new Date(date);
-        startOfDay.setHours(0, 0, 0, 0);
-        
-        const endOfDay = new Date(date);
-        endOfDay.setHours(23, 59, 59, 999);
-        
-        query = query
-          .gte('date', startOfDay.toISOString())
-          .lte('date', endOfDay.toISOString());
+        try {
+          const startOfDay = new Date(date);
+          startOfDay.setHours(0, 0, 0, 0);
+          
+          const endOfDay = new Date(date);
+          endOfDay.setHours(23, 59, 59, 999);
+          
+          const startISO = startOfDay.toISOString();
+          const endISO = endOfDay.toISOString();
+          
+          console.log(`Fetching meals between ${startISO} and ${endISO}`);
+          
+          query = query
+            .gte('date', startISO)
+            .lte('date', endISO);
+        } catch (dateError) {
+          console.error('Error formatting date for meal query:', dateError);
+        }
       }
 
-      const { data, error } = await query.order('date', { ascending: false });
+      const { data, error } = await Promise.race([
+        query.order('date', { ascending: false }),
+        new Promise<{data: null, error: any}>((resolve) => 
+          setTimeout(() => resolve({
+            data: null, 
+            error: {message: 'Request timed out after 10 seconds'}
+          }), 10000)
+        )
+      ]);
 
       if (error) throw error;
+      if (!data) throw new Error('Failed to fetch meals data');
 
       return data.map(meal => ({
         ...meal,
@@ -398,7 +416,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }));
     } catch (error) {
       console.error('Error getting meals:', error);
-      toast.error('Failed to load meals');
+      toast.error(t('common.error'));
       return [];
     }
   };
@@ -765,13 +783,28 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!userId) return null;
     
     try {
+      console.log(`Fetching profile for user ID: ${userId}`);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        if (userId === user?.id) {
+          console.log('Creating missing profile for current user');
+          await createUserProfile(userId, user?.user_metadata || {});
+          
+          const { data: retryData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .maybeSingle();
+            
+          return retryData;
+        }
+        throw error;
+      }
       
       return data;
     } catch (error) {
