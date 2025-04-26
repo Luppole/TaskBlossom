@@ -1,10 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MealLog as MealLogType, FoodItem } from '@/types/task';
 import { format } from 'date-fns';
-import { Plus, Coffee, Apple, Pizza, Utensils, Trash2, PlusCircle, AlertCircle } from 'lucide-react';
+import { 
+  Plus, Coffee, Apple, Pizza, Utensils, Trash2, 
+  PlusCircle, AlertCircle, Sandwich, Egg, Salad, 
+  Clock, ChevronRight
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { toast } from 'sonner';
@@ -13,6 +17,11 @@ import { Label } from '@/components/ui/label';
 import { v4 as uuidv4 } from 'uuid';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, 
+  Tooltip as RechartsTooltip, ResponsiveContainer 
+} from 'recharts';
 
 const MealLog = () => {
   const { user, getMeals, createMeal, updateMeal } = useFirebase();
@@ -37,6 +46,7 @@ const MealLog = () => {
         try {
           const todayMeals = await getMeals(today);
           setMeals(todayMeals);
+          console.log("Loaded meals:", todayMeals);
         } catch (error) {
           console.error('Error loading meals:', error);
           setError('Failed to load meals. Please check your Firebase permissions.');
@@ -72,6 +82,20 @@ const MealLog = () => {
     lunch: 'bg-amber-100 text-amber-600 border-amber-200',
     dinner: 'bg-purple-100 text-purple-600 border-purple-200',
     snack: 'bg-green-100 text-green-600 border-green-200',
+  };
+
+  const mealBgColors = {
+    breakfast: 'from-blue-50 to-blue-100',
+    lunch: 'from-amber-50 to-amber-100',
+    dinner: 'from-purple-50 to-purple-100',
+    snack: 'from-green-50 to-green-100',
+  };
+
+  const mealBorderColors = {
+    breakfast: 'border-blue-200',
+    lunch: 'border-amber-200',
+    dinner: 'border-purple-200',
+    snack: 'border-green-200',
   };
   
   const getMealByType = (type: 'breakfast' | 'lunch' | 'dinner' | 'snack') => {
@@ -125,7 +149,7 @@ const MealLog = () => {
         [mealType]: { id: uuidv4(), name: '', quantity: 1, unit: 'serving', calories: 0 }
       });
       
-      toast.success('Food added');
+      toast.success('Food added successfully!');
     } catch (error) {
       console.error('Error adding food:', error);
       toast.error('Failed to add food');
@@ -196,26 +220,41 @@ const MealLog = () => {
       return total + mealCalories;
     }, 0);
   };
+
+  // Prepare data for the calorie breakdown chart
+  const getCalorieBreakdownData = () => {
+    return [
+      { name: 'Breakfast', calories: getTotalMealCalories('breakfast') },
+      { name: 'Lunch', calories: getTotalMealCalories('lunch') },
+      { name: 'Dinner', calories: getTotalMealCalories('dinner') },
+      { name: 'Snacks', calories: getTotalMealCalories('snack') }
+    ];
+  };
   
   const renderMealCard = (type: 'breakfast' | 'lunch' | 'dinner' | 'snack') => {
     const meal = getMealByType(type);
     const totalCalories = getTotalMealCalories(type);
     const colorClass = mealTypeColors[type];
+    const bgColorClass = mealBgColors[type];
+    const borderColorClass = mealBorderColors[type];
     
     return (
-      <Card className={`border-l-4 ${colorClass.split(' ').pop()} shadow-md hover:shadow-lg transition-shadow`}>
-        <CardHeader className={`pb-2 ${colorClass}`}>
+      <Card className={`border-l-4 ${borderColorClass} shadow-md hover:shadow-lg transition-all overflow-hidden`}>
+        <div className={`absolute top-0 left-0 w-full h-full bg-gradient-to-br ${bgColorClass} opacity-40 z-0`}></div>
+        <CardHeader className={`pb-2 relative z-10 flex flex-row justify-between items-center`}>
           <CardTitle className="text-lg flex items-center">
-            {mealTypeIcons[type]}
+            <div className={`p-2 rounded-full ${colorClass.split(' ')[0]} ${colorClass.split(' ')[1]}`}>
+              {mealTypeIcons[type]}
+            </div>
             <span className="ml-2 font-semibold">{mealTypeNames[type]}</span>
-            {totalCalories > 0 && (
-              <span className="ml-auto text-sm font-medium px-2 py-1 bg-white bg-opacity-50 rounded-full">
-                {totalCalories} kcal
-              </span>
-            )}
           </CardTitle>
+          {totalCalories > 0 && (
+            <Badge variant="secondary" className="px-3 py-1 bg-white bg-opacity-80 shadow-sm">
+              {totalCalories} kcal
+            </Badge>
+          )}
         </CardHeader>
-        <CardContent className="pt-4">
+        <CardContent className="pt-4 relative z-10">
           {isLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-5 w-full" />
@@ -228,20 +267,32 @@ const MealLog = () => {
                 {meal.foods.map(food => (
                   <motion.div 
                     key={food.id} 
-                    className="flex justify-between items-center text-sm p-2 border-b last:border-b-0"
+                    className="flex justify-between items-center text-sm p-3 bg-white bg-opacity-60 backdrop-blur-sm rounded-lg border border-gray-100 shadow-sm"
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <div>
-                      <span className="font-medium">{food.name}</span>
-                      <span className="text-muted-foreground ml-2">
-                        ({food.quantity} {food.unit})
-                      </span>
+                    <div className="flex items-center">
+                      {type === 'breakfast' ? <Egg className="h-4 w-4 mr-2 text-blue-500" /> :
+                       type === 'lunch' ? <Sandwich className="h-4 w-4 mr-2 text-amber-500" /> :
+                       type === 'dinner' ? <Utensils className="h-4 w-4 mr-2 text-purple-500" /> :
+                       <Salad className="h-4 w-4 mr-2 text-green-500" />}
+                      <div>
+                        <span className="font-medium">{food.name}</span>
+                        <div className="text-xs text-muted-foreground flex items-center mt-1">
+                          <Clock className="h-3 w-3 mr-1" />
+                          {format(new Date(), 'h:mm a')}
+                        </div>
+                      </div>
                     </div>
                     <div className="flex items-center">
-                      <span className="mr-2 text-muted-foreground">{food.calories} kcal</span>
+                      <span className="mr-2 font-semibold text-right">
+                        {food.calories} kcal
+                        <div className="text-xs text-muted-foreground">
+                          {food.quantity} {food.unit}
+                        </div>
+                      </span>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -256,13 +307,14 @@ const MealLog = () => {
               </AnimatePresence>
             </div>
           ) : (
-            <div className="text-muted-foreground text-sm text-center py-4 border border-dashed rounded-lg">
+            <div className="text-muted-foreground text-sm text-center py-6 border border-dashed rounded-lg bg-white bg-opacity-40">
               <p className="mb-1">No foods logged for {mealTypeNames[type].toLowerCase()}</p>
               <PlusCircle className="h-4 w-4 mx-auto text-muted-foreground/50" />
             </div>
           )}
           
-          <div className="mt-4 space-y-3">
+          <div className="mt-4 space-y-3 bg-white bg-opacity-70 p-3 rounded-lg border border-gray-100">
+            <h4 className="text-sm font-medium mb-2">Add food to {mealTypeNames[type].toLowerCase()}</h4>
             <div className="flex items-end space-x-2">
               <div className="flex-1">
                 <Label htmlFor={`${type}-food`} className="text-xs font-medium">Food Name</Label>
@@ -300,12 +352,63 @@ const MealLog = () => {
               <Button
                 size="sm"
                 onClick={() => handleAddFood(type)}
-                className="mb-[2px]"
+                className="mb-[2px] bg-white border border-gray-200 text-gray-800 hover:bg-gray-100"
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Add
               </Button>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Render calorie breakdown chart
+  const renderCalorieChart = () => {
+    const data = getCalorieBreakdownData();
+    
+    return (
+      <Card className="shadow-md hover:shadow-lg transition-all mt-6 overflow-hidden">
+        <CardHeader className="pb-2 bg-gradient-to-r from-gray-50 to-gray-100">
+          <CardTitle className="text-lg flex items-center">
+            <BarChart className="h-5 w-5 text-primary mr-2" />
+            <span className="font-semibold">Daily Calorie Breakdown</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={data}
+                margin={{
+                  top: 10,
+                  right: 30,
+                  left: 0,
+                  bottom: 10,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" tick={{fontSize: 12}} />
+                <YAxis tick={{fontSize: 12}} />
+                <RechartsTooltip 
+                  formatter={(value) => [`${value} kcal`, 'Calories']}
+                  contentStyle={{ 
+                    backgroundColor: 'white',
+                    border: '1px solid #f0f0f0',
+                    borderRadius: '4px',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                  }}
+                />
+                <Bar 
+                  dataKey="calories" 
+                  fill="#8884d8" 
+                  radius={[4, 4, 0, 0]}
+                  barSize={40}
+                >
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
@@ -335,14 +438,17 @@ const MealLog = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Today's Food Log</h2>
+        <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+          Today's Food Log
+        </h2>
         <div className="flex items-center gap-2">
+          <Clock className="h-4 w-4 text-muted-foreground" />
           <p className="text-muted-foreground">
             {format(today, 'PPP')}
           </p>
-          <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-sm font-medium">
+          <Badge variant="outline" className="bg-gradient-to-r from-primary/10 to-purple-500/10 border-primary/20 text-primary font-medium">
             {getTotalCalories()} kcal today
-          </span>
+          </Badge>
         </div>
       </div>
       
@@ -394,9 +500,20 @@ const MealLog = () => {
         </motion.div>
       </motion.div>
       
+      {/* Calorie Breakdown Chart */}
+      {getTotalCalories() > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.4 }}
+        >
+          {renderCalorieChart()}
+        </motion.div>
+      )}
+      
       {user && (
         <div className="text-xs text-center text-muted-foreground mt-8">
-          <p>To enable browser notifications for meal reminders, please allow notifications when prompted.</p>
+          <p>Your meal data is automatically saved to your profile. Keep logging for better insights!</p>
         </div>
       )}
     </div>

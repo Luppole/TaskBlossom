@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dumbbell, Utensils, BarChart, Lock } from "lucide-react";
+import { Dumbbell, Utensils, BarChart, Lock, LogIn, UserPlus } from "lucide-react";
 import WorkoutLog from '@/components/fitness/WorkoutLog';
 import MealLog from '@/components/fitness/MealLog';
 import CalorieTracker from '@/components/fitness/CalorieTracker';
@@ -19,8 +19,7 @@ const Fitness = () => {
   // Redirect unauthenticated users
   useEffect(() => {
     if (!user) {
-      // We could redirect, but we'll show a login prompt instead
-      // to be more user-friendly
+      // We'll show a login prompt instead of redirecting
     }
   }, [user]);
   
@@ -34,20 +33,48 @@ const Fitness = () => {
           transition={{ duration: 0.5 }}
           className="mb-6"
         >
-          <Lock className="h-16 w-16 mx-auto text-primary mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Fitness Tracker Requires Login</h1>
-          <p className="text-muted-foreground mb-8">
+          <div className="bg-primary/10 p-6 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+            <Lock className="h-10 w-10 text-primary" />
+          </div>
+          
+          <h1 className="text-2xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+            Fitness Tracker Requires Login
+          </h1>
+          
+          <p className="text-muted-foreground mb-8 max-w-sm mx-auto">
             Please sign in or create an account to access the fitness tracking features.
             This allows us to save your progress and provide personalized insights.
           </p>
           
           <div className="flex gap-4 justify-center">
-            <Button onClick={() => navigate('/')}>
+            <Button 
+              variant="outline"
+              className="gap-2"
+              onClick={() => navigate('/')}
+            >
+              <Dumbbell className="h-4 w-4" />
               Return to Dashboard
             </Button>
-            <Button variant="outline" onClick={() => navigate('/settings')}>
+            <Button 
+              className="bg-primary hover:bg-primary/90 gap-2" 
+              onClick={() => navigate('/settings')}
+            >
+              <LogIn className="h-4 w-4" />
               Sign In / Register
             </Button>
+          </div>
+          
+          <div className="mt-10 p-5 bg-muted/30 rounded-lg">
+            <h3 className="font-medium mb-2 flex items-center">
+              <UserPlus className="h-4 w-4 mr-2" />
+              Why create an account?
+            </h3>
+            <ul className="text-sm text-muted-foreground text-left list-disc pl-5 space-y-1">
+              <li>Track your daily meals and workouts</li>
+              <li>Monitor your calorie intake and progress</li>
+              <li>Set personal fitness goals</li>
+              <li>All your data is private and secure</li>
+            </ul>
           </div>
         </motion.div>
       </div>

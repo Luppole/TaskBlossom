@@ -10,7 +10,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDsF-cFll3pF77xzFTgcxBh8r5SRhBesmo",
   authDomain: "taskblossom.firebaseapp.com",
   projectId: "taskblossom",
-  storageBucket: "taskblossom.firebasestorage.app",
+  storageBucket: "taskblossom.appspot.com",
   messagingSenderId: "503245445228",
   appId: "1:503245445228:web:5f3ab41fbda3893a906049",
   measurementId: "G-J5RBPEQT0P"
@@ -25,8 +25,8 @@ export const db = getFirestore(app);
 // Messaging setup (for notifications)
 let messaging: any = null;
 
-// Initialize messaging only in browser environment
-if (typeof window !== 'undefined') {
+// Initialize messaging only in browser environment and when not in an iframe (like Lovable preview)
+if (typeof window !== 'undefined' && window.self === window.top) {
   try {
     messaging = getMessaging(app);
     console.log("Firebase messaging initialized successfully");
@@ -52,7 +52,7 @@ export const requestNotificationPermission = async () => {
     if (permission === 'granted') {
       try {
         const token = await getToken(messaging, {
-          vapidKey: 'BMkP2IlsKCXZJKLCKfmJSjnhKqQqB4x3QnOr54KtgXeYHx_FIlIkB2g_SyRXJD8otzB5ffY7r_9w4s8iWd7G8Xk' // This is a placeholder - you need to generate your own VAPID key
+          vapidKey: 'BMkP2IlsKCXZJKLCKfmJSjnhKqQqB4x3QnOr54KtgXeYHx_FIlIkB2g_SyRXJD8otzB5ffY7r_9w4s8iWd7G8Xk'
         });
         console.log("Notification token received:", token ? "Success" : "Failed");
         return !!token;
@@ -81,4 +81,9 @@ export const onMessageListener = () => {
       new Notification(title as string, { body: body as string });
     }
   });
+};
+
+// Check if service worker is supported
+export const isServiceWorkerSupported = () => {
+  return 'serviceWorker' in navigator;
 };
