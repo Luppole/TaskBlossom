@@ -377,38 +377,20 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         .eq('user_id', user.id);
 
       if (date) {
-        try {
-          const startOfDay = new Date(date);
-          startOfDay.setHours(0, 0, 0, 0);
-          
-          const endOfDay = new Date(date);
-          endOfDay.setHours(23, 59, 59, 999);
-          
-          const startISO = startOfDay.toISOString();
-          const endISO = endOfDay.toISOString();
-          
-          console.log(`Fetching meals between ${startISO} and ${endISO}`);
-          
-          query = query
-            .gte('date', startISO)
-            .lte('date', endISO);
-        } catch (dateError) {
-          console.error('Error formatting date for meal query:', dateError);
-        }
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+        
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+        
+        query = query
+          .gte('date', startOfDay.toISOString())
+          .lte('date', endOfDay.toISOString());
       }
 
-      const { data, error } = await Promise.race([
-        query.order('date', { ascending: false }),
-        new Promise<{data: null, error: any}>((resolve) => 
-          setTimeout(() => resolve({
-            data: null, 
-            error: {message: 'Request timed out after 10 seconds'}
-          }), 10000)
-        )
-      ]);
+      const { data, error } = await query.order('date', { ascending: true });
 
       if (error) throw error;
-      if (!data) throw new Error('Failed to fetch meals data');
 
       return data.map(meal => ({
         ...meal,
@@ -428,9 +410,9 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     try {
       const mealToInsert = {
-        date: mealData.date,
-        foods: mealData.foods,
-        notes: mealData.notes,
+        date: mealData.date.toISOString(),
+        foods: mealData.foods || [],
+        notes: mealData.notes || null,
         meal_type: mealData.mealType,
         user_id: user.id
       };
@@ -446,11 +428,12 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return {
         ...data,
         date: new Date(data.date),
-        mealType: data.meal_type
+        mealType: data.meal_type,
+        foods: data.foods || []
       };
     } catch (error) {
       console.error('Error creating meal:', error);
-      toast.error('Failed to create meal');
+      toast.error(t('common.error'));
       throw error;
     }
   };
@@ -816,43 +799,41 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   return (
-    <SupabaseContext.Provider
-      value={{
-        user,
-        session,
-        loading,
-        signIn,
-        signUp,
-        signOut,
-        getTasks,
-        createTask,
-        updateTask,
-        deleteTask,
-        getCategories,
-        saveCategories,
-        getWorkouts,
-        createWorkout,
-        updateWorkout,
-        deleteWorkout,
-        getMeals,
-        createMeal,
-        updateMeal,
-        deleteMeal,
-        getProgressLogs,
-        createProgressLog,
-        getFitnessGoals,
-        updateFitnessGoals,
-        getFriends,
-        getFriendRequests,
-        sendFriendRequest,
-        acceptFriendRequest,
-        rejectFriendRequest,
-        removeFriend,
-        searchUsersByName,
-        updateUserProfile,
-        getUserProfile
-      }}
-    >
+    <SupabaseContext.Provider value={{
+      user,
+      session,
+      loading,
+      signIn,
+      signUp,
+      signOut,
+      getTasks,
+      createTask,
+      updateTask,
+      deleteTask,
+      getCategories,
+      saveCategories,
+      getWorkouts,
+      createWorkout,
+      updateWorkout,
+      deleteWorkout,
+      getMeals,
+      createMeal,
+      updateMeal,
+      deleteMeal,
+      getProgressLogs,
+      createProgressLog,
+      getFitnessGoals,
+      updateFitnessGoals,
+      getFriends,
+      getFriendRequests,
+      sendFriendRequest,
+      acceptFriendRequest,
+      rejectFriendRequest,
+      removeFriend,
+      searchUsersByName,
+      updateUserProfile,
+      getUserProfile
+    }}>
       {children}
     </SupabaseContext.Provider>
   );

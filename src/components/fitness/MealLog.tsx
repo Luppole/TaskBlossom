@@ -1,31 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MealLog as MealLogType } from '@/types/task';
-import { format } from 'date-fns';
-import { 
-  Plus, Coffee, Apple, Pizza, Utensils, Trash2, 
-  Clock, AlertCircle
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useSupabase } from '@/contexts/SupabaseContext';
-import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { v4 as uuidv4 } from 'uuid';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { format } from 'date-fns';
+import { Plus, Coffee, Apple, Pizza, Utensils, Trash2, Clock, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useSupabase } from '@/contexts/SupabaseContext';
+import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid';
 import { useTranslation } from 'react-i18next';
+import { useMealLog } from '@/hooks/useMealLog';
 
 const MealLog = () => {
-  const { user, getMeals, createMeal, updateMeal } = useSupabase();
-  const [meals, setMeals] = useState<MealLogType[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const today = new Date();
+  const { user, createMeal, updateMeal } = useSupabase();
   const { t, i18n } = useTranslation();
   const isRTL = i18n.dir() === 'rtl';
+  const today = new Date();
+  
+  const { meals, isLoading, error } = useMealLog(today);
   
   const [newFoods, setNewFoods] = useState<Record<string, {id: string, name: string, calories: number}>>({
     breakfast: { id: uuidv4(), name: '', calories: 0 },
@@ -33,33 +29,6 @@ const MealLog = () => {
     dinner: { id: uuidv4(), name: '', calories: 0 },
     snack: { id: uuidv4(), name: '', calories: 0 },
   });
-  
-  // Load meals from Supabase
-  useEffect(() => {
-    const loadMeals = async () => {
-      if (user) {
-        setIsLoading(true);
-        setError(null);
-        try {
-          console.log(`Loading meals for date: ${today.toISOString()}`);
-          const todayMeals = await getMeals(today);
-          console.log(`Loaded ${todayMeals.length} meals for today`);
-          setMeals(todayMeals);
-        } catch (error) {
-          console.error('Error loading meals:', error);
-          setError('Failed to load meals');
-          toast.error(t('common.error'));
-        } finally {
-          setIsLoading(false);
-        }
-      } else {
-        setIsLoading(false);
-        setError('Please log in to access your meal log');
-      }
-    };
-
-    loadMeals();
-  }, [user, getMeals, today, t]);
   
   const mealTypeIcons = {
     breakfast: <Coffee className="h-5 w-5" />,
@@ -97,18 +66,15 @@ const MealLog = () => {
       const existingMeal = meals.find(meal => meal.mealType === mealType);
       
       if (existingMeal) {
-        // Add to existing meal
         const updatedFoods = [...existingMeal.foods, food];
         await updateMeal(existingMeal.id, { foods: updatedFoods });
         
-        // Update local state
         setMeals(meals.map(meal => 
           meal.id === existingMeal.id 
             ? { ...meal, foods: updatedFoods }
             : meal
         ));
       } else {
-        // Create new meal
         const newMeal: Omit<MealLogType, 'id'> = {
           date: today,
           mealType: mealType,
@@ -122,7 +88,6 @@ const MealLog = () => {
         }
       }
       
-      // Reset input
       setNewFoods({
         ...newFoods,
         [mealType]: { id: uuidv4(), name: '', calories: 0 }
@@ -146,7 +111,6 @@ const MealLog = () => {
       
       await updateMeal(meal.id, { foods: updatedFoods });
       
-      // Update local state
       setMeals(meals.map(m => 
         m.id === meal.id 
           ? { ...m, foods: updatedFoods }
