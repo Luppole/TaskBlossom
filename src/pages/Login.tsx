@@ -8,7 +8,7 @@ import LoginForm from '@/components/auth/LoginForm';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { toast } from 'sonner';
-import { InfoCircle } from 'lucide-react';
+import { Info } from 'lucide-react';  // Changed from InfoCircle to Info
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Login = () => {
@@ -50,8 +50,8 @@ const Login = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {showDomainAlert && (
-            <Alert variant="warning" className="mb-4">
-              <InfoCircle className="h-4 w-4" />
+            <Alert variant="default">  {/* Changed from "warning" to "default" */}
+              <Info className="h-4 w-4" />
               <AlertDescription>
                 This domain is not authorized for Google login. In a development environment, 
                 use email/password login instead or add this domain to Firebase authorized domains.
@@ -109,3 +109,4 @@ const Login = () => {
 };
 
 export default Login;
+
