@@ -3,7 +3,7 @@ import { collection, doc, addDoc, updateDoc, deleteDoc, getDocs, getDoc, setDoc,
 import { db } from '@/lib/firebase';
 import { WorkoutSession, MealLog, ProgressLog, FitnessGoals } from '@/types/task';
 import { useFirebaseUser } from './useFirebaseUser';
-import { convertFirebaseTimestamp } from '@/utils/firebaseHelpers';
+import { convertFirebaseTimestamp, convertFirebaseTimestamps } from '@/utils/firebaseHelpers';
 
 export const useFitnessOperations = () => {
   const { user } = useFirebaseUser();
@@ -119,10 +119,16 @@ export const useFitnessOperations = () => {
         return {
           id: doc.id,
           date: convertFirebaseTimestamp(data.date) || new Date(),
-          mealType: data.mealType as MealLog['mealType'] || 'snack',
-          foods: Array.isArray(data.foods) ? data.foods : [],
+          mealType: (data.mealType as string) || 'snack',
+          foods: Array.isArray(data.foods) ? data.foods.map(food => ({
+            id: food.id || '',
+            name: food.name || '',
+            quantity: food.quantity || 0,
+            unit: food.unit || '',
+            calories: food.calories || 0
+          })) : [],
           notes: data.notes || null,
-          userId: data.userId
+          userId: data.userId || user.uid
         } as MealLog;
       });
     } catch (error) {
