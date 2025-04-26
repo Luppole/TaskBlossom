@@ -3,6 +3,7 @@ import { collection, doc, setDoc, updateDoc, deleteDoc, getDocs, query, orderBy,
 import { db } from '@/lib/firebase';
 import { Task } from '@/types/task';
 import { useFirebaseUser } from './useFirebaseUser';
+import { toast } from 'sonner';
 
 export const useTaskOperations = () => {
   const { user } = useFirebaseUser();
@@ -11,10 +12,12 @@ export const useTaskOperations = () => {
     if (!user) return [];
     
     try {
-      // Fixed path to ensure we're accessing tasks properly with the correct collection name
+      console.log("Fetching tasks for user:", user.uid);
       const tasksRef = collection(db, 'users', user.uid, 'tasks');
       const q = query(tasksRef, orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
+      
+      console.log("Tasks fetch completed, count:", querySnapshot.size);
       
       return querySnapshot.docs.map(doc => {
         const data = doc.data();
@@ -28,7 +31,15 @@ export const useTaskOperations = () => {
       });
     } catch (error) {
       console.error('Error getting tasks:', error);
-      throw error; // Propagate the error so it can be handled in the UI
+      
+      // Check for specific permission errors
+      if (error.toString().includes("Missing or insufficient permissions")) {
+        toast.error("Permission error accessing tasks. Please check Firebase rules.");
+      } else {
+        toast.error("Failed to load tasks");
+      }
+      
+      return [];
     }
   };
 
@@ -56,6 +67,7 @@ export const useTaskOperations = () => {
       return task;
     } catch (error) {
       console.error('Error creating task:', error);
+      toast.error('Failed to create task');
       throw error;
     }
   };
@@ -74,6 +86,7 @@ export const useTaskOperations = () => {
       await updateDoc(taskRef, firestoreData);
     } catch (error) {
       console.error('Error updating task:', error);
+      toast.error('Failed to update task');
       throw error;
     }
   };
@@ -86,6 +99,7 @@ export const useTaskOperations = () => {
       await deleteDoc(taskRef);
     } catch (error) {
       console.error('Error deleting task:', error);
+      toast.error('Failed to delete task');
       throw error;
     }
   };

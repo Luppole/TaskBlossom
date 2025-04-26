@@ -24,13 +24,33 @@ service cloud.firestore {
       allow read: if isUser(userId);
       allow write: if isUser(userId);
       
-      // Tasks subcollection - explicitly allow access to nested collections
+      // Tasks subcollection
       match /tasks/{taskId} {
         allow read, write: if isUser(userId);
       }
       
       // Categories subcollection
       match /categories/{categoryId} {
+        allow read, write: if isUser(userId);
+      }
+      
+      // Workouts subcollection
+      match /workouts/{workoutId} {
+        allow read, write: if isUser(userId);
+      }
+      
+      // Meals subcollection
+      match /meals/{mealId} {
+        allow read, write: if isUser(userId);
+      }
+      
+      // Progress subcollection
+      match /progress/{logId} {
+        allow read, write: if isUser(userId);
+      }
+      
+      // Friends subcollection
+      match /friends/{friendId} {
         allow read, write: if isUser(userId);
       }
       
@@ -42,7 +62,9 @@ service cloud.firestore {
     
     // User settings
     match /userSettings/{userId} {
-      allow read, write: if isUser(userId);
+      allow read: if isUser(userId) || 
+        (isAuthenticated() && hasPublicProfile(userId));
+      allow write: if isUser(userId);
     }
     
     // Friend requests

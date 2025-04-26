@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Calendar, CheckSquare, Settings, Users } from 'lucide-react';
+import { LayoutDashboard, Calendar, CheckSquare, Settings, Users, Dumbbell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const MobileNavbar = () => {
@@ -54,6 +54,17 @@ const MobileNavbar = () => {
         >
           <Users className="h-5 w-5" />
           <span className="text-xs mt-1">{t('navigation.social')}</span>
+        </NavLink>
+        
+        <NavLink 
+          to="/fitness" 
+          className={({ isActive }) => `
+            flex flex-col items-center justify-center w-full h-full
+            ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary'}
+          `}
+        >
+          <Dumbbell className="h-5 w-5" />
+          <span className="text-xs mt-1">{t('navigation.fitness')}</span>
         </NavLink>
         
         <NavLink 

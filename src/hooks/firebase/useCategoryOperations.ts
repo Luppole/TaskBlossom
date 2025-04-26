@@ -1,8 +1,9 @@
 
-import { collection, doc, setDoc, getDocs } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { TaskCategory } from '@/types/task';
 import { useFirebaseUser } from './useFirebaseUser';
+import { toast } from 'sonner';
 
 export const useCategoryOperations = () => {
   const { user } = useFirebaseUser();
@@ -11,8 +12,12 @@ export const useCategoryOperations = () => {
     if (!user) return [];
     
     try {
+      console.log("Fetching categories for user:", user.uid);
       const categoriesRef = collection(db, 'users', user.uid, 'categories');
-      const querySnapshot = await getDocs(categoriesRef);
+      const q = query(categoriesRef);
+      const querySnapshot = await getDocs(q);
+      
+      console.log("Categories fetch completed, count:", querySnapshot.size);
       
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
@@ -20,6 +25,7 @@ export const useCategoryOperations = () => {
       } as TaskCategory));
     } catch (error) {
       console.error('Error getting categories:', error);
+      toast.error('Failed to load categories');
       return [];
     }
   };
@@ -35,8 +41,11 @@ export const useCategoryOperations = () => {
           color: category.color
         });
       }
+      
+      console.log(`Saved ${categories.length} categories successfully`);
     } catch (error) {
       console.error('Error saving categories:', error);
+      toast.error('Failed to save categories');
       throw error;
     }
   };

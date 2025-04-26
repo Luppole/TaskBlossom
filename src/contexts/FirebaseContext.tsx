@@ -29,13 +29,16 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // we'll implement the loadUserSettings function directly here
   const loadUserSettings = async (userId: string) => {
     try {
+      console.log("Loading user settings for:", userId);
       const settingsRef = doc(db, 'userSettings', userId);
       const settingsDoc = await getDoc(settingsRef);
       
       if (settingsDoc.exists()) {
+        console.log("User settings found");
         return settingsDoc.data() as UserSettings;
       }
       
+      console.log("No user settings found, creating default settings");
       await setDoc(settingsRef, defaultUserSettings);
       return defaultUserSettings;
     } catch (error) {
@@ -45,7 +48,9 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   useEffect(() => {
+    console.log("Setting up Firebase auth state listener");
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log("Auth state changed, user:", user?.uid || "not logged in");
       setUser(user);
       
       if (user) {
@@ -90,13 +95,22 @@ export const useFirebase = () => {
   if (!context) {
     throw new Error('useFirebase must be used within a FirebaseProvider');
   }
+  
+  // Combine all the Firebase-related hooks
+  const authOperations = useAuthOperations();
+  const taskOperations = useTaskOperations();
+  const categoryOperations = useCategoryOperations();
+  const fitnessOperations = useFitnessOperations();
+  const friendOperations = useFriendOperations();
+  const settingsOperations = useSettingsOperations();
+  
   return {
     ...context,
-    ...useAuthOperations(),
-    ...useTaskOperations(),
-    ...useCategoryOperations(),
-    ...useFitnessOperations(),
-    ...useFriendOperations(),
-    ...useSettingsOperations(),
+    ...authOperations,
+    ...taskOperations,
+    ...categoryOperations,
+    ...fitnessOperations,
+    ...friendOperations,
+    ...settingsOperations,
   } as FirebaseHookReturnType;
 };

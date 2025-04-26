@@ -7,9 +7,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 const Categories: React.FC = () => {
   const { user, getCategories, saveCategories, getTasks } = useFirebase();
@@ -19,13 +20,17 @@ const Categories: React.FC = () => {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#B4A7D6');
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const navigate = useNavigate();
   
   // Load categories and tasks
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         if (user) {
+          console.log("Loading categories data...");
           // Load categories from Firebase
           const fetchedCategories = await getCategories();
           setCategories(fetchedCategories.length > 0 ? fetchedCategories : defaultCategories);
@@ -33,13 +38,17 @@ const Categories: React.FC = () => {
           // Load tasks for calculating progress
           const fetchedTasks = await getTasks();
           setTasks(fetchedTasks);
+          console.log(`Loaded ${fetchedTasks.length} tasks and ${fetchedCategories.length} categories`);
         } else {
           // Use default categories for non-logged in users
           setCategories(defaultCategories);
           setTasks([]);
+          toast.error("Please login to view your categories");
+          navigate('/login');
         }
       } catch (error) {
         console.error('Error loading data:', error);
+        setError(error instanceof Error ? error : new Error('Unknown error occurred'));
         toast.error('Failed to load categories');
         setCategories(defaultCategories);
       } finally {
@@ -48,7 +57,7 @@ const Categories: React.FC = () => {
     };
     
     loadData();
-  }, [user, getCategories, getTasks]);
+  }, [user, getCategories, getTasks, navigate]);
   
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) return;
@@ -96,6 +105,16 @@ const Categories: React.FC = () => {
     return Math.round((completed / total) * 100);
   };
   
+  if (!user) {
+    return (
+      <div className="max-w-lg mx-auto text-center py-12">
+        <h2 className="text-2xl font-bold mb-4">Please Login</h2>
+        <p className="mb-6">You need to be logged in to view and manage categories</p>
+        <Button onClick={() => navigate('/login')}>Go to Login</Button>
+      </div>
+    );
+  }
+  
   return (
     <div className="max-w-4xl mx-auto">
       <header className="mb-6 flex justify-between items-center">
@@ -111,12 +130,28 @@ const Categories: React.FC = () => {
         </Button>
       </header>
       
+      {error && (
+        <Card className="mb-6 border-red-300">
+          <CardContent className="p-4 text-center">
+            <p className="text-red-500">Error loading categories. Please try again.</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => window.location.reload()} 
+              className="mt-2"
+            >
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+      
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
             <Card key={i} className="opacity-70">
               <CardContent className="p-4 h-24 flex items-center justify-center">
-                <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </CardContent>
             </Card>
           ))}
