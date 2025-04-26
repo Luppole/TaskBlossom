@@ -1,7 +1,7 @@
 
-import { collection, doc, addDoc, updateDoc, deleteDoc, getDocs, getDoc, setDoc, query, orderBy, Timestamp, where } from 'firebase/firestore';
+import { collection, doc, addDoc, updateDoc, deleteDoc, getDocs, getDoc, setDoc, query, orderBy, Timestamp, where, DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { WorkoutSession, MealLog, ProgressLog, FitnessGoals } from '@/types/task';
+import { WorkoutSession, MealLog, ProgressLog, FitnessGoals, FoodItem } from '@/types/task';
 import { useFirebaseUser } from './useFirebaseUser';
 import { convertFirebaseTimestamp, convertFirebaseTimestamps } from '@/utils/firebaseHelpers';
 
@@ -115,12 +115,14 @@ export const useFitnessOperations = () => {
       const querySnapshot = await getDocs(q);
       
       return querySnapshot.docs.map(doc => {
-        const data = doc.data();
+        const data = doc.data() as DocumentData;
+        const foods = data.foods || [];
+        
         return {
           id: doc.id,
           date: convertFirebaseTimestamp(data.date) || new Date(),
-          mealType: (data.mealType as string) || 'snack',
-          foods: Array.isArray(data.foods) ? data.foods.map(food => ({
+          mealType: (data.mealType as "breakfast" | "lunch" | "dinner" | "snack") || "snack",
+          foods: Array.isArray(foods) ? foods.map((food: any) => ({
             id: food.id || '',
             name: food.name || '',
             quantity: food.quantity || 0,
