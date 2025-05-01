@@ -58,16 +58,32 @@ const UserList: React.FC<UserListProps> = ({
   }
 
   return (
-    <motion.div className="space-y-4">
+    <motion.div 
+      className="space-y-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
       <AnimatePresence>
         {users.map((user, index) => (
-          <UserCard 
-            key={user.id}
-            user={user}
-            index={index}
-            onSendFriendRequest={onSendFriendRequest}
-            onRemoveFriend={onRemoveFriend}
-          />
+          <motion.div
+            key={user.id} 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ 
+              opacity: 1, 
+              y: 0,
+              transition: { delay: index * 0.05 } 
+            }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <UserCard 
+              user={user}
+              index={index}
+              onSendFriendRequest={onSendFriendRequest}
+              onRemoveFriend={onRemoveFriend}
+            />
+          </motion.div>
         ))}
       </AnimatePresence>
     </motion.div>

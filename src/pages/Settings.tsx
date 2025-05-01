@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Moon, Bell, Shield, Lock, Info, CheckCircle } from 'lucide-react';
+import { Moon, Bell, Shield, Lock, Info, CheckCircle, Settings as SettingsIcon } from 'lucide-react';
 import LanguageSwitcher from '@/components/settings/LanguageSwitcher';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -15,7 +15,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 
 const Settings = () => {
   const { userSettings, updateSettings, user } = useFirebase();
-  const { theme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,47 +24,76 @@ const Settings = () => {
     }
   }, [user, navigate]);
 
+  // Sync theme state with user settings when userSettings loads
   useEffect(() => {
-    if (userSettings?.rtlLayout) {
-      document.documentElement.dir = 'rtl';
-    } else {
-      document.documentElement.dir = 'ltr';
+    if (userSettings?.darkMode) {
+      setTheme('dark');
+    } else if (userSettings?.darkMode === false) {
+      setTheme('light');
+    }
+  }, [userSettings?.darkMode, setTheme]);
+
+  // Sync RTL setting with document
+  useEffect(() => {
+    if (userSettings?.rtlLayout !== undefined) {
+      document.documentElement.dir = userSettings.rtlLayout ? 'rtl' : 'ltr';
     }
   }, [userSettings?.rtlLayout]);
 
-  const handleToggle = async (setting: string, value: boolean) => {
-    if (userSettings) {
-      try {
-        await updateSettings({ [setting]: value });
-        
-        toast.success(
-          `${setting.charAt(0).toUpperCase() + setting.slice(1)} ${value ? 'enabled' : 'disabled'}`, 
-          {
-            icon: value ? <CheckCircle className="h-4 w-4 text-green-500" /> : <Info className="h-4 w-4" />,
-            duration: 2000
-          }
-        );
-      } catch (error) {
-        console.error('Error updating settings:', error);
-        toast.error('Failed to update setting');
+  const handleToggle = async (setting: keyof typeof userSettings, value: boolean) => {
+    if (!userSettings) return;
+    
+    try {
+      // Special handling for dark mode to sync with ThemeContext
+      if (setting === 'darkMode') {
+        setTheme(value ? 'dark' : 'light');
       }
+      
+      await updateSettings({ [setting]: value });
+      
+      toast.success(
+        `${setting.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} ${value ? 'enabled' : 'disabled'}`, 
+        {
+          icon: value ? <CheckCircle className="h-4 w-4 text-green-500" /> : <Info className="h-4 w-4" />,
+          duration: 2000
+        }
+      );
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      toast.error('Failed to update setting');
     }
   };
 
   const handleSelectChange = async (setting: string, value: string) => {
-    if (userSettings) {
-      try {
-        await updateSettings({ [setting]: value });
-        toast.success(`${setting.charAt(0).toUpperCase() + setting.slice(1)} updated!`);
-      } catch (error) {
-        console.error('Error updating settings:', error);
-        toast.error('Failed to update setting');
-      }
+    if (!userSettings) return;
+    
+    try {
+      await updateSettings({ [setting]: value });
+      toast.success(`Default view updated!`);
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      toast.error('Failed to update setting');
     }
   };
 
   if (!user || !userSettings) {
-    return null;
+    return (
+      <div className="w-full h-64 flex items-center justify-center">
+        <motion.div
+          animate={{ 
+            rotate: [0, 360],
+            opacity: [0.5, 1, 0.5]
+          }}
+          transition={{ 
+            duration: 2,
+            repeat: Infinity,
+            ease: "linear" 
+          }}
+        >
+          <SettingsIcon className="h-10 w-10 text-primary/60" />
+        </motion.div>
+      </div>
+    );
   }
 
   const cardVariants = {
@@ -328,7 +357,7 @@ const Settings = () => {
                 </Label>
                 <Switch
                   id="public-profile"
-                  checked={userSettings?.publicProfile || false}
+                  checked={userSettings?.publicProfile}
                   onCheckedChange={(checked) => handleToggle('publicProfile', checked)}
                   className="transition-all data-[state=checked]:bg-primary"
                 />
