@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Search, User, Users, Loader2 } from 'lucide-react';
@@ -174,6 +173,10 @@ const UserSearch = () => {
     }
   };
 
+  const handleShowAllUsers = () => {
+    setActiveTab('all');
+  };
+
   const tabVariants = {
     hidden: { opacity: 0, y: 10 },
     visible: { opacity: 1, y: 0 }
@@ -198,6 +201,7 @@ const UserSearch = () => {
           onSearchQueryChange={setSearchQuery}
           onSearch={handleSearch}
           loading={loading}
+          onShowAll={handleShowAllUsers}
         />
         
         <Tabs value={activeTab} onValueChange={setActiveTab}>
