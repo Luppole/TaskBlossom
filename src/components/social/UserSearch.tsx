@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +8,7 @@ import { Search, UserPlus, Check, User, Loader2, Users, UserMinus } from 'lucide
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
+import { motion, AnimatePresence } from 'framer-motion';
 import { UserProfile } from '@/types/friend';
 
 interface UserSearchResult {
@@ -38,7 +37,6 @@ const UserSearch = () => {
     searchUsersByName, 
     removeFriend 
   } = useSupabase();
-  const { t } = useTranslation();
 
   // Get all users on component mount
   useEffect(() => {
@@ -74,7 +72,7 @@ const UserSearch = () => {
         setPopularUsers(formattedUsers.slice(0, 5));
       } catch (error) {
         console.error('Error loading users:', error);
-        toast.error(t('common.error'));
+        toast.error('Error loading users');
       } finally {
         setIsLoadingAllUsers(false);
         setIsLoadingPopular(false);
@@ -84,7 +82,7 @@ const UserSearch = () => {
     if (user) {
       loadAllUsers();
     }
-  }, [user, getFriends, searchUsersByName, t]);
+  }, [user, getFriends, searchUsersByName]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -118,7 +116,7 @@ const UserSearch = () => {
       }
     } catch (error) {
       console.error('Error searching users:', error);
-      toast.error(t('common.error'));
+      toast.error('Search failed');
     } finally {
       setLoading(false);
     }
@@ -149,10 +147,10 @@ const UserSearch = () => {
         )  
       );
       
-      toast.success(t('social.friendRequestSent'));
+      toast.success('Friend request sent!');
     } catch (error) {
       console.error('Error sending friend request:', error);
-      toast.error(t('common.error'));
+      toast.error('Something went wrong');
     }
   };
 
@@ -181,10 +179,10 @@ const UserSearch = () => {
         )  
       );
       
-      toast.success(t('social.friendRemoved'));
+      toast.success('Friend removed');
     } catch (error) {
       console.error('Error removing friend:', error);
-      toast.error(t('common.error'));
+      toast.error('Something went wrong');
     }
   };
 
@@ -193,107 +191,140 @@ const UserSearch = () => {
       return (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
-          <span>{t('common.loading')}</span>
+          <span>Loading...</span>
         </div>
       );
     }
     
     if (users.length === 0) {
       return (
-        <div className="text-center py-8 text-muted-foreground">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="text-center py-8 text-muted-foreground"
+        >
           <User className="mx-auto h-8 w-8 mb-2 opacity-50" />
           <p>{emptyMessage}</p>
-        </div>
+        </motion.div>
       );
     }
 
     return (
-      <div className="space-y-4">
-        {users.map(user => (
-          <div key={user.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted/80 transition-colors">
-            <div className="flex items-center space-x-3">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={user.avatar_url || ''} />
-                <AvatarFallback>
-                  {(user.username?.[0] || user.full_name?.[0] || 'U').toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-medium">{user.full_name || user.username}</p>
-                <p className="text-sm text-muted-foreground">@{user.username || user.email?.split('@')[0]}</p>
+      <motion.div className="space-y-4">
+        <AnimatePresence>
+          {users.map((user, index) => (
+            <motion.div 
+              key={user.id} 
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.08 }}
+              whileHover={{ scale: 1.01 }}
+              className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted/80 transition-all"
+            >
+              <div className="flex items-center space-x-3">
+                <Avatar className="h-10 w-10 transition-transform hover:scale-110">
+                  <AvatarImage src={user.avatar_url || ''} />
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    {(user.username?.[0] || user.full_name?.[0] || 'U').toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium">{user.full_name || user.username}</p>
+                  <p className="text-sm text-muted-foreground">@{user.username || user.email?.split('@')[0]}</p>
+                </div>
               </div>
-            </div>
-            <div>
-              {user.isFriend ? (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="gap-2"
-                  onClick={() => handleRemoveFriend(user.id)}
-                >
-                  <UserMinus className="h-4 w-4" />
-                  {t('social.unfollow')}
-                </Button>
-              ) : user.isRequestSent ? (
-                <Button disabled variant="outline" size="sm" className="gap-2">
-                  <Check className="h-4 w-4" />
-                  {t('social.requestSent')}
-                </Button>
-              ) : (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="gap-2"
-                  onClick={() => handleSendFriendRequest(user.id)}
-                >
-                  <UserPlus className="h-4 w-4" />
-                  {t('social.follow')}
-                </Button>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+              <div>
+                {user.isFriend ? (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-2 transition-all hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
+                    onClick={() => handleRemoveFriend(user.id)}
+                  >
+                    <UserMinus className="h-4 w-4" />
+                    Unfollow
+                  </Button>
+                ) : user.isRequestSent ? (
+                  <Button disabled variant="outline" size="sm" className="gap-2">
+                    <Check className="h-4 w-4" />
+                    Request Sent
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-2 transition-all hover:bg-primary/10 hover:text-primary"
+                    onClick={() => handleSendFriendRequest(user.id)}
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Follow
+                  </Button>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </motion.div>
     );
   };
 
   return (
-    <Card>
+    <Card className="border shadow hover:shadow-md transition-all">
       <CardHeader className="pb-3">
-        <CardTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
-          {t('social.findFriends')}
-        </CardTitle>
+        <motion.div
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <CardTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+            Find Friends
+          </CardTitle>
+        </motion.div>
       </CardHeader>
       <CardContent>
-        <div className="flex gap-2 mb-6">
+        <motion.div 
+          className="flex gap-2 mb-6"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
           <Input 
-            placeholder={t('social.searchByNameOrUsername')}
+            placeholder="Search by name or username"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            className="transition-all focus:ring-2 focus:ring-primary/20"
           />
           <Button 
             onClick={handleSearch}
             disabled={loading || !searchQuery.trim()}
-            className="gap-2"
+            className="gap-2 transition-transform hover:scale-105"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-            {t('common.search')}
+            Search
           </Button>
-        </div>
+        </motion.div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-3 mb-6">
-            <TabsTrigger value="search" disabled={loading}>
-              <Search className="h-4 w-4 mr-2" /> {t('social.searchResults')}
-            </TabsTrigger>
-            <TabsTrigger value="discover">
-              <Users className="h-4 w-4 mr-2" /> {t('social.discover')}
-            </TabsTrigger>
-            <TabsTrigger value="all">
-              <User className="h-4 w-4 mr-2" /> {t('social.allUsers')}
-            </TabsTrigger>
-          </TabsList>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.3 }}
+          >
+            <TabsList className="grid grid-cols-3 mb-6">
+              <TabsTrigger value="search" disabled={loading} className="transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Search className="h-4 w-4 mr-2" /> Results
+              </TabsTrigger>
+              <TabsTrigger value="discover" className="transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Users className="h-4 w-4 mr-2" /> Discover
+              </TabsTrigger>
+              <TabsTrigger value="all" className="transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <User className="h-4 w-4 mr-2" /> All Users
+              </TabsTrigger>
+            </TabsList>
+          </motion.div>
           
           <TabsContent value="search">
             {loading ? (
@@ -304,28 +335,42 @@ const UserSearch = () => {
               renderUserList(
                 searchResults,
                 searchQuery ? 
-                  t('social.noSearchResults', { query: searchQuery }) : 
-                  t('social.searchToFindUsers')
+                  `No results found for "${searchQuery}"` : 
+                  'Search for users by name or username'
               )
             )}
           </TabsContent>
           
           <TabsContent value="discover">
-            <h3 className="text-lg font-medium mb-4">{t('social.suggestedUsers')}</h3>
+            <motion.h3 
+              initial={{ opacity: 0, x: -5 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+              className="text-lg font-medium mb-4"
+            >
+              Suggested Users
+            </motion.h3>
             
             {renderUserList(
               popularUsers,
-              t('social.noSuggestedUsers'),
+              'No suggested users available at the moment',
               isLoadingPopular
             )}
           </TabsContent>
           
           <TabsContent value="all">
-            <h3 className="text-lg font-medium mb-4">{t('social.allRegisteredUsers')}</h3>
+            <motion.h3 
+              initial={{ opacity: 0, x: -5 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+              className="text-lg font-medium mb-4"
+            >
+              All Users
+            </motion.h3>
             
             {renderUserList(
               allUsers,
-              t('social.noUsersFound'),
+              'No users found',
               isLoadingAllUsers
             )}
           </TabsContent>

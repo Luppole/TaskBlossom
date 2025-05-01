@@ -72,7 +72,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300;
   }
 }
 
@@ -101,7 +101,7 @@ html[dir="rtl"] .text-end {
   text-align: left;
 }
 
-/* Dark mode improvements */
+/* Improve dark mode styles */
 .dark .bg-white {
   background-color: hsl(var(--background));
 }
@@ -120,4 +120,54 @@ html[dir="rtl"] .text-end {
 .dark .shadow-lg,
 .dark .shadow-xl {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+}
+
+/* Animation utilities */
+.animate-entrance {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.animate-hover {
+  transition: all 0.2s ease-in-out;
+}
+
+.animate-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Additional glassmorphism effects */
+.glass-card {
+  @apply bg-white/80 dark:bg-black/50 backdrop-blur-md border border-white/20 dark:border-white/10;
+}
+
+.glass-button {
+  @apply bg-white/20 dark:bg-white/5 backdrop-blur-sm hover:bg-white/30 dark:hover:bg-white/10 transition-all;
+}
+
+/* Improved focus states */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 dark:focus:ring-offset-black transition-all;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-secondary/50;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary/30 hover:bg-primary/50 rounded-full transition-colors;
+}
+
+.dark ::-webkit-scrollbar-track {
+  @apply bg-black/30;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-primary/30 hover:bg-primary/50;
 }

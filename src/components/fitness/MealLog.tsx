@@ -49,6 +49,13 @@ const MealCard = ({
     dinner: <Pizza className="h-5 w-5" />,
     snack: <Apple className="h-5 w-5" />,
   };
+
+  const mealTypeLabels = {
+    breakfast: 'Breakfast',
+    lunch: 'Lunch',
+    dinner: 'Dinner',
+    snack: 'Snacks',
+  };
   
   return (
     <Card className={`border shadow-sm hover:shadow-md transition-all ${isRTL ? 'rtl' : ''}`}>
@@ -58,11 +65,11 @@ const MealCard = ({
             {mealTypeIcons[type]}
           </div>
           <span className={`${isRTL ? 'mr-2' : 'ml-2'} font-semibold`}>
-            {t(`fitness.${type}`)}
+            {mealTypeLabels[type]}
           </span>
           {totalCalories > 0 && (
             <Badge variant="secondary" className="ml-auto">
-              {t('fitness.caloriesCount', { count: totalCalories })}
+              {totalCalories} kcal
             </Badge>
           )}
         </CardTitle>
@@ -103,13 +110,13 @@ const MealCard = ({
                     </div>
                     <div className={`flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
                       <span className={`${isRTL ? 'ml-2' : 'mr-2'} font-semibold`}>
-                        {t('fitness.caloriesCount', { count: food.calories })}
+                        {food.calories} kcal
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => onRemoveFood(food.id)}
-                        className="h-7 w-7 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        className="h-7 w-7 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
@@ -119,7 +126,7 @@ const MealCard = ({
               </div>
             ) : (
               <div className="text-muted-foreground text-sm text-center py-4 border border-dashed rounded-lg">
-                {t('fitness.noMealLogged', { mealType: t(`fitness.${type}`).toLowerCase() })}
+                No foods logged for {mealTypeLabels[type].toLowerCase()}
               </div>
             )}
           </AnimatePresence>
@@ -129,20 +136,20 @@ const MealCard = ({
           <div className={`flex ${isRTL ? 'flex-row-reverse' : ''} items-end space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
             <div className="flex-1">
               <Label htmlFor={`${type}-food`} className={`text-xs font-medium ${isRTL ? 'text-right block' : ''}`}>
-                {t('fitness.foodName')}
+                Food Name
               </Label>
               <Input
                 id={`${type}-food`}
                 value={newFood.name}
                 onChange={(e) => onFoodChange('name', e.target.value)}
-                placeholder={t('fitness.addFood')}
+                placeholder="Add Food"
                 className="h-8"
                 dir={isRTL ? 'rtl' : 'ltr'}
               />
             </div>
             <div className="w-24">
               <Label htmlFor={`${type}-calories`} className={`text-xs font-medium ${isRTL ? 'text-right block' : ''}`}>
-                {t('fitness.calories')}
+                Calories
               </Label>
               <Input
                 id={`${type}-calories`}
@@ -157,10 +164,10 @@ const MealCard = ({
             <Button
               size="sm"
               onClick={onAddFood}
-              className="mb-[2px]"
+              className="mb-[2px] transition-all hover:scale-105"
             >
               <Plus className={`h-4 w-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />
-              {t('common.add')}
+              Add
             </Button>
           </div>
         </div>
@@ -187,10 +194,10 @@ const MealLog = () => {
   });
   
   const mealDescriptions = {
-    breakfast: t('fitness.breakfastDesc', "Morning meal to start your day"),
-    lunch: t('fitness.lunchDesc', "Midday meal to keep you going"),
-    dinner: t('fitness.dinnerDesc', "Evening meal to finish your day"),
-    snack: t('fitness.snackDesc', "Small bites between meals")
+    breakfast: "Morning meal to start your day",
+    lunch: "Midday meal to keep you going",
+    dinner: "Evening meal to finish your day",
+    snack: "Small bites between meals"
   };
   
   const getMealByType = (type: 'breakfast' | 'lunch' | 'dinner' | 'snack') => {
@@ -213,7 +220,7 @@ const MealLog = () => {
     };
     
     if (!food.name.trim() || food.calories <= 0) {
-      toast.error(t('common.validationError'));
+      toast.error('Please fill in both name and calories');
       return;
     }
     
@@ -223,7 +230,7 @@ const MealLog = () => {
       if (existingMeal) {
         const updatedFoods = [...existingMeal.foods, food];
         await updateMeal(existingMeal.id, { foods: updatedFoods });
-        toast.success(t('common.save'));
+        toast.success('Food added!');
       } else {
         const newMeal = {
           date: today,
@@ -233,7 +240,7 @@ const MealLog = () => {
         };
         
         await createMeal(newMeal);
-        toast.success(t('common.save'));
+        toast.success('Meal created!');
       }
       
       setNewFoods({
@@ -245,7 +252,7 @@ const MealLog = () => {
       
     } catch (error) {
       console.error('Error adding food:', error);
-      toast.error(t('common.error'));
+      toast.error('Something went wrong');
     }
   };
   
@@ -257,13 +264,13 @@ const MealLog = () => {
       const updatedFoods = meal.foods.filter(food => food.id !== foodId);
       
       await updateMeal(meal.id, { foods: updatedFoods });
-      toast.success(t('common.delete'));
+      toast.success('Food removed');
       
       refreshMeals();
       
     } catch (error) {
       console.error('Error removing food:', error);
-      toast.error(t('common.error'));
+      toast.error('Something went wrong');
     }
   };
   
@@ -299,7 +306,7 @@ const MealLog = () => {
     return (
       <div className="space-y-6">
         <div className={`flex justify-between items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <h2 className="text-xl font-semibold">{t('fitness.todayFoodLog')}</h2>
+          <h2 className="text-xl font-semibold">Today's Food Log</h2>
           <p className="text-muted-foreground">
             {format(today, 'PPP')}
           </p>
@@ -316,10 +323,20 @@ const MealLog = () => {
   }
 
   return (
-    <div className={`space-y-6 ${isRTL ? 'text-right' : 'text-left'}`}>
-      <div className={`flex justify-between items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
+    <motion.div 
+      className={`space-y-6 ${isRTL ? 'text-right' : 'text-left'}`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <motion.div 
+        className={`flex justify-between items-center ${isRTL ? 'flex-row-reverse' : ''}`}
+        initial={{ y: -20 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+      >
         <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
-          {t('fitness.todayFoodLog')}
+          Today's Food Log
         </h2>
         <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
           <Clock className="h-4 w-4 text-muted-foreground" />
@@ -328,11 +345,11 @@ const MealLog = () => {
           </p>
           {getTotalCalories() > 0 && (
             <Badge variant="outline" className="bg-primary/10 border-primary/20 text-primary font-medium">
-              {t('fitness.totalCalories', { count: getTotalCalories() })}
+              {getTotalCalories()} kcal today
             </Badge>
           )}
         </div>
-      </div>
+      </motion.div>
       
       {error && (
         <Alert variant="destructive">
@@ -355,6 +372,8 @@ const MealLog = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.1 }}
+            whileHover={{ scale: 1.01 }}
+            className="transition-all"
           >
             <MealCard
               type={mealType}
@@ -371,7 +390,7 @@ const MealLog = () => {
           </motion.div>
         ))}
       </motion.div>
-    </div>
+    </motion.div>
   );
 };
 
