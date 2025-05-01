@@ -754,7 +754,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       // If query is empty, return all users (limited to 20)
       const searchCondition = query 
-        ? `username.ilike.%${query}%,full_name.ilike.%${query}%,email.ilike.%${query}%` 
+        ? `username.ilike.%${query}%,full_name.ilike.%${query}%` 
         : '';
       
       const { data, error } = await supabase
@@ -771,8 +771,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const filteredData = data.filter(profile => {
           const usernameMatch = profile.username?.toLowerCase().includes(query.toLowerCase());
           const fullNameMatch = profile.full_name?.toLowerCase().includes(query.toLowerCase());
-          const emailMatch = profile.email?.toLowerCase().includes(query.toLowerCase());
-          return usernameMatch || fullNameMatch || emailMatch;
+          return usernameMatch || fullNameMatch;
         });
         return filteredData;
       }

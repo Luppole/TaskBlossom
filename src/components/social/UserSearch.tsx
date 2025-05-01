@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
@@ -16,7 +15,7 @@ interface UserSearchResult {
   username?: string;
   full_name?: string;
   avatar_url?: string;
-  email: string;
+  email?: string;
   isRequestSent: boolean;
   isFriend: boolean;
 }
@@ -34,7 +33,6 @@ const UserSearch = () => {
     user, 
     sendFriendRequest, 
     getFriends, 
-    searchUsers, 
     searchUsersByName, 
     removeFriend 
   } = useSupabase();

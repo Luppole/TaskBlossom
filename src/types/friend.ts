@@ -44,6 +44,8 @@ export interface UserProfile {
   full_name?: string;
   avatar_url?: string;
   email?: string;
+  bio?: string;
+  updated_at?: string;
   settings?: {
     publicProfile: boolean;
     shareProgress: boolean;
