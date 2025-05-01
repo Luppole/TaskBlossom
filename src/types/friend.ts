@@ -22,7 +22,8 @@ export type ActivityType =
   | 'workout_completed' 
   | 'goal_achieved'
   | 'weight_updated'
-  | 'friend_added';
+  | 'friend_added'
+  | 'friend_removed';
 
 export interface ActivityItem {
   id: string;
@@ -36,9 +37,14 @@ export interface ActivityItem {
 }
 
 export interface UserProfile {
-  userId: string;
-  displayName: string;
-  settings: {
+  id: string;
+  userId?: string;
+  displayName?: string;
+  username?: string;
+  full_name?: string;
+  avatar_url?: string;
+  email?: string;
+  settings?: {
     publicProfile: boolean;
     shareProgress: boolean;
     shareFitness: boolean;

@@ -11,6 +11,7 @@ import { Plus, Loader2 } from 'lucide-react';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 
 const Categories: React.FC = () => {
   const { user, getCategories, saveCategories, getTasks } = useFirebase();
@@ -63,7 +64,7 @@ const Categories: React.FC = () => {
     if (!newCategoryName.trim()) return;
     
     const newCategory: TaskCategory = {
-      id: `cat-${Date.now()}`,
+      id: uuidv4(), // Use UUID instead of string prefix
       name: newCategoryName,
       color: newCategoryColor
     };

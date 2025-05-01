@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useFirebase } from '@/contexts/FirebaseContext';
-import { Search, UserPlus, Check, User, Loader2, Users } from 'lucide-react';
+import { useSupabase } from '@/contexts/SupabaseContext'; 
+import { Search, UserPlus, Check, User, Loader2, Users, UserMinus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -25,38 +25,62 @@ const UserSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('search');
+  const [activeTab, setActiveTab] = useState('discover');
   const [popularUsers, setPopularUsers] = useState<UserSearchResult[]>([]);
   const [isLoadingPopular, setIsLoadingPopular] = useState(false);
-  const { user, sendFriendRequest, getFriends, searchUsers } = useFirebase();
+  const [allUsers, setAllUsers] = useState<UserSearchResult[]>([]);
+  const [isLoadingAllUsers, setIsLoadingAllUsers] = useState(false);
+  const { 
+    user, 
+    sendFriendRequest, 
+    getFriends, 
+    searchUsers, 
+    searchUsersByName, 
+    removeFriend 
+  } = useSupabase();
   const { t } = useTranslation();
 
-  // Get popular users on component mount
+  // Get all users on component mount
   useEffect(() => {
-    const loadPopularUsers = async () => {
-      setIsLoadingPopular(true);
+    const loadAllUsers = async () => {
+      setIsLoadingAllUsers(true);
       try {
-        // In a real app, you'd have an API for this
-        // For now, we'll just use the search function with empty query
-        const users = await searchUsers('');
-        setPopularUsers(users.slice(0, 5).map(userData => ({
-          id: userData.id,
-          username: userData.username || userData.displayName || 'User',
-          full_name: userData.full_name || '',
-          avatar_url: userData.avatar_url || '',
-          email: userData.email,
-          isRequestSent: false,
-          isFriend: false
-        })));
+        // Get current user's friends
+        const friends = await getFriends();
+        const friendIds = friends.map(friend => friend.userId);
+        
+        // Fetch all users
+        const users = await searchUsersByName('');
+        
+        const formattedUsers = users
+          .filter(userData => userData.id !== user?.id) // Filter out the current user
+          .map(userData => ({
+            id: userData.id,
+            username: userData.username || userData.displayName || 'User',
+            full_name: userData.full_name || '',
+            avatar_url: userData.avatar_url || '',
+            email: userData.email || '',
+            isRequestSent: false, // We'll update this later as needed
+            isFriend: friendIds.includes(userData.id)
+          }));
+        
+        setAllUsers(formattedUsers);
+        
+        // Also populate popular users (for now just use the first 5)
+        setPopularUsers(formattedUsers.slice(0, 5));
       } catch (error) {
-        console.error('Error loading popular users:', error);
+        console.error('Error loading users:', error);
+        toast.error(t('common.error'));
       } finally {
+        setIsLoadingAllUsers(false);
         setIsLoadingPopular(false);
       }
     };
 
-    loadPopularUsers();
-  }, [searchUsers]);
+    if (user) {
+      loadAllUsers();
+    }
+  }, [user, getFriends, searchUsersByName, t]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -69,17 +93,19 @@ const UserSearch = () => {
       const friendIds = friends.map(friend => friend.userId);
       
       // Search for users by username, full name, or email
-      const results = await searchUsers(searchQuery);
+      const results = await searchUsersByName(searchQuery);
       
-      const formattedResults: UserSearchResult[] = results.map(userData => ({
-        id: userData.id,
-        username: userData.username || userData.displayName || 'User',
-        full_name: userData.full_name || '',
-        avatar_url: userData.avatar_url || '',
-        email: userData.email,
-        isRequestSent: false,
-        isFriend: friendIds.includes(userData.id)
-      }));
+      const formattedResults: UserSearchResult[] = results
+        .filter(userData => userData.id !== user?.id) // Filter out the current user
+        .map(userData => ({
+          id: userData.id,
+          username: userData.username || userData.displayName || 'User',
+          full_name: userData.full_name || '',
+          avatar_url: userData.avatar_url || '',
+          email: userData.email || '',
+          isRequestSent: false,
+          isFriend: friendIds.includes(userData.id)
+        }));
       
       setSearchResults(formattedResults);
       // If we get results, switch to search tab
@@ -112,6 +138,13 @@ const UserSearch = () => {
         )  
       );
       
+      // Update in all users list
+      setAllUsers(prev => 
+        prev.map(user => 
+          user.id === userId ? { ...user, isRequestSent: true } : user
+        )  
+      );
+      
       toast.success(t('social.friendRequestSent'));
     } catch (error) {
       console.error('Error sending friend request:', error);
@@ -119,7 +152,48 @@ const UserSearch = () => {
     }
   };
 
-  const renderUserList = (users: UserSearchResult[], emptyMessage: string) => {
+  const handleRemoveFriend = async (userId: string) => {
+    try {
+      await removeFriend(userId);
+      
+      // Update the UI to show this friend was removed
+      setSearchResults(prev => 
+        prev.map(result => 
+          result.id === userId ? { ...result, isFriend: false } : result
+        )
+      );
+      
+      // Also update in popular users if present
+      setPopularUsers(prev => 
+        prev.map(user => 
+          user.id === userId ? { ...user, isFriend: false } : user
+        )  
+      );
+      
+      // Update in all users list
+      setAllUsers(prev => 
+        prev.map(user => 
+          user.id === userId ? { ...user, isFriend: false } : user
+        )  
+      );
+      
+      toast.success(t('social.friendRemoved'));
+    } catch (error) {
+      console.error('Error removing friend:', error);
+      toast.error(t('common.error'));
+    }
+  };
+
+  const renderUserList = (users: UserSearchResult[], emptyMessage: string, isLoading: boolean = false) => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+          <span>{t('common.loading')}</span>
+        </div>
+      );
+    }
+    
     if (users.length === 0) {
       return (
         <div className="text-center py-8 text-muted-foreground">
@@ -147,9 +221,14 @@ const UserSearch = () => {
             </div>
             <div>
               {user.isFriend ? (
-                <Button disabled variant="outline" size="sm" className="gap-2">
-                  <Check className="h-4 w-4" />
-                  {t('social.alreadyFriends')}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2"
+                  onClick={() => handleRemoveFriend(user.id)}
+                >
+                  <UserMinus className="h-4 w-4" />
+                  {t('social.unfollow')}
                 </Button>
               ) : user.isRequestSent ? (
                 <Button disabled variant="outline" size="sm" className="gap-2">
@@ -164,7 +243,7 @@ const UserSearch = () => {
                   onClick={() => handleSendFriendRequest(user.id)}
                 >
                   <UserPlus className="h-4 w-4" />
-                  {t('social.sendRequest')}
+                  {t('social.follow')}
                 </Button>
               )}
             </div>
@@ -198,12 +277,15 @@ const UserSearch = () => {
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-2 mb-6">
+          <TabsList className="grid grid-cols-3 mb-6">
             <TabsTrigger value="search" disabled={loading}>
               <Search className="h-4 w-4 mr-2" /> {t('social.searchResults')}
             </TabsTrigger>
             <TabsTrigger value="discover">
               <Users className="h-4 w-4 mr-2" /> {t('social.discover')}
+            </TabsTrigger>
+            <TabsTrigger value="all">
+              <User className="h-4 w-4 mr-2" /> {t('social.allUsers')}
             </TabsTrigger>
           </TabsList>
           
@@ -225,15 +307,20 @@ const UserSearch = () => {
           <TabsContent value="discover">
             <h3 className="text-lg font-medium mb-4">{t('social.suggestedUsers')}</h3>
             
-            {isLoadingPopular ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            ) : (
-              renderUserList(
-                popularUsers,
-                t('social.noSuggestedUsers')
-              )
+            {renderUserList(
+              popularUsers,
+              t('social.noSuggestedUsers'),
+              isLoadingPopular
+            )}
+          </TabsContent>
+          
+          <TabsContent value="all">
+            <h3 className="text-lg font-medium mb-4">{t('social.allRegisteredUsers')}</h3>
+            
+            {renderUserList(
+              allUsers,
+              t('social.noUsersFound'),
+              isLoadingAllUsers
             )}
           </TabsContent>
         </Tabs>

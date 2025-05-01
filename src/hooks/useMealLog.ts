@@ -8,7 +8,6 @@ export const useMealLog = (date: Date) => {
   const [meals, setMeals] = useState<MealLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // Add a state to track if initial fetch has completed
   const [hasLoaded, setHasLoaded] = useState(false);
 
   const fetchMeals = useCallback(async () => {
@@ -35,12 +34,13 @@ export const useMealLog = (date: Date) => {
     // Only fetch on initial load or date change
     setHasLoaded(false);
     fetchMeals();
-  }, [date]);
+  }, [date, fetchMeals]);
 
   return { 
     meals, 
     isLoading, 
     error,
-    refreshMeals: fetchMeals 
+    refreshMeals: fetchMeals,
+    hasLoaded
   };
 };

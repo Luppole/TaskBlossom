@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -216,7 +217,7 @@ const MealLog = () => {
                 </div>
               ) : (
                 <div className="text-muted-foreground text-sm text-center py-4 border border-dashed rounded-lg">
-                  {t('fitness.noFoods', { mealType: t(`fitness.${type}`).toLowerCase() })}
+                  {t('fitness.noMealLogged', { mealType: t(`fitness.${type}`).toLowerCase() })}
                 </div>
               )}
             </AnimatePresence>

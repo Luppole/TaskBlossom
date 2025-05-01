@@ -258,17 +258,38 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!user) throw new Error('User not authenticated');
     
     try {
+      // Ensure categories have proper UUIDs
       for (const category of categories) {
-        const { error } = await supabase
-          .from('categories')
-          .upsert({
-            id: category.id,
-            name: category.name,
-            color: category.color,
-            user_id: user.id
-          });
+        // Validate that the ID is a valid UUID format
+        const validUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category.id);
+        
+        if (!validUuid) {
+          console.warn(`Category ID ${category.id} is not a valid UUID, generating a new one`);
+          const { data: newCategory } = await supabase
+            .from('categories')
+            .insert({
+              name: category.name,
+              color: category.color,
+              user_id: user.id
+            })
+            .select()
+            .single();
           
-        if (error) throw error;
+          if (newCategory) {
+            category.id = newCategory.id;
+          }
+        } else {
+          const { error } = await supabase
+            .from('categories')
+            .upsert({
+              id: category.id,
+              name: category.name,
+              color: category.color,
+              user_id: user.id
+            });
+            
+          if (error) throw error;
+        }
       }
     } catch (error) {
       console.error('Error saving categories:', error);
@@ -382,6 +403,8 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         
         const endOfDay = new Date(date);
         endOfDay.setHours(23, 59, 59, 999);
+        
+        console.log(`Fetching meals between ${startOfDay.toISOString()} and ${endOfDay.toISOString()}`);
         
         query = query
           .gte('date', startOfDay.toISOString())
@@ -729,14 +752,30 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!user) return [];
     
     try {
+      // If query is empty, return all users (limited to 20)
+      const searchCondition = query 
+        ? `username.ilike.%${query}%,full_name.ilike.%${query}%,email.ilike.%${query}%` 
+        : '';
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .or(`username.ilike.%${query}%,full_name.ilike.%${query}%`)
-        .not('id', 'eq', user.id)
-        .limit(10);
+        .not('id', 'eq', user.id) // Don't include the current user
+        .order('username', { ascending: true })
+        .limit(20);
       
       if (error) throw error;
+      
+      // If a query was provided, filter client-side
+      if (query && data) {
+        const filteredData = data.filter(profile => {
+          const usernameMatch = profile.username?.toLowerCase().includes(query.toLowerCase());
+          const fullNameMatch = profile.full_name?.toLowerCase().includes(query.toLowerCase());
+          const emailMatch = profile.email?.toLowerCase().includes(query.toLowerCase());
+          return usernameMatch || fullNameMatch || emailMatch;
+        });
+        return filteredData;
+      }
       
       return data || [];
     } catch (error) {
