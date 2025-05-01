@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { FriendRequest } from '@/types/friend';
 import { useFirebase } from '@/contexts/FirebaseContext';
@@ -13,7 +12,6 @@ const FriendRequests = () => {
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const { getFriendRequests, acceptFriendRequest, rejectFriendRequest } = useFirebase();
-  const { t } = useTranslation();
 
   useEffect(() => {
     const loadFriendRequests = async () => {
@@ -34,10 +32,10 @@ const FriendRequests = () => {
     try {
       await acceptFriendRequest(requestId);
       setFriendRequests(prev => prev.filter(request => request.id !== requestId));
-      toast.success(t('social.friendRequestAccepted'));
+      toast.success('Friend request accepted!');
     } catch (error) {
       console.error('Error accepting friend request:', error);
-      toast.error(t('common.error'));
+      toast.error('An error occurred');
     }
   };
 
@@ -45,10 +43,10 @@ const FriendRequests = () => {
     try {
       await rejectFriendRequest(requestId);
       setFriendRequests(prev => prev.filter(request => request.id !== requestId));
-      toast.success(t('social.friendRequestRejected'));
+      toast.success('Friend request rejected');
     } catch (error) {
       console.error('Error rejecting friend request:', error);
-      toast.error(t('common.error'));
+      toast.error('An error occurred');
     }
   };
 
@@ -56,11 +54,11 @@ const FriendRequests = () => {
     return (
       <div>
         <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 mb-4">
-          {t('social.friendRequests')}
+          Friend Requests
         </h2>
         <div className="flex items-center justify-center py-6">
           <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
-          <span>{t('common.loading')}</span>
+          <span>Loading...</span>
         </div>
       </div>
     );
@@ -70,11 +68,11 @@ const FriendRequests = () => {
     return (
       <div>
         <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 mb-4">
-          {t('social.friendRequests')}
+          Friend Requests
         </h2>
         <div className="text-center py-8 text-muted-foreground">
           <UserPlus className="mx-auto h-8 w-8 mb-2 opacity-50" />
-          <p>{t('social.noFriendRequests')}</p>
+          <p>You don't have any friend requests</p>
         </div>
       </div>
     );
@@ -83,7 +81,7 @@ const FriendRequests = () => {
   return (
     <div>
       <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 mb-4">
-        {t('social.friendRequests')}
+        Friend Requests
       </h2>
       <div className="space-y-4">
         {friendRequests.map(request => (
@@ -109,7 +107,7 @@ const FriendRequests = () => {
                 onClick={() => handleAccept(request.id)}
               >
                 <Check className="h-4 w-4" />
-                {t('common.accept')}
+                Accept
               </Button>
               <Button 
                 size="sm" 
@@ -118,7 +116,7 @@ const FriendRequests = () => {
                 onClick={() => handleReject(request.id)}
               >
                 <X className="h-4 w-4" />
-                {t('common.reject')}
+                Reject
               </Button>
             </div>
           </div>

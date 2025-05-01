@@ -41,9 +41,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
+      // Apply theme to document
       if (savedTheme) {
         setThemeState(savedTheme);
-        document.documentElement.setAttribute('data-theme', savedTheme);
+        applyTheme(savedTheme);
       }
 
       if (savedDirection) {
@@ -58,10 +59,36 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     initializeTheme();
   }, [user, getUserProfile]);
 
+  // Helper function to apply theme to document
+  const applyTheme = (selectedTheme: Theme) => {
+    if (selectedTheme === 'dark' || 
+        (selectedTheme === 'system' && 
+         window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  };
+
+  // Listen for system theme changes when theme is set to 'system'
+  useEffect(() => {
+    if (theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = () => {
+        applyTheme('system');
+      };
+
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+  }, [theme]);
+
   const setTheme = async (newTheme: Theme) => {
     setThemeState(newTheme);
     localStorage.setItem('theme', newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
+    applyTheme(newTheme);
     
     // Persist to user profile if logged in
     if (user && updateUserProfile && isInitialized) {

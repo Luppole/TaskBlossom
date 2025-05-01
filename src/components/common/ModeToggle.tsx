@@ -8,17 +8,12 @@ import { toast } from 'sonner';
 export function ModeToggle() {
   const { theme, toggleTheme } = useTheme();
   
-  useEffect(() => {
-    // Update HTML theme attribute when theme changes
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-  
   const handleToggleTheme = () => {
     toggleTheme();
     toast.success(
       theme === 'dark' 
-        ? 'Switched to light mode' 
-        : 'Switched to dark mode', 
+        ? 'Light mode activated' 
+        : 'Dark mode activated', 
       { duration: 1500 }
     );
   };

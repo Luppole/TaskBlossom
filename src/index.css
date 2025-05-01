@@ -100,3 +100,24 @@ html[dir="rtl"] .text-start {
 html[dir="rtl"] .text-end {
   text-align: left;
 }
+
+/* Dark mode improvements */
+.dark .bg-white {
+  background-color: hsl(var(--background));
+}
+
+.dark .border-gray-200 {
+  border-color: hsl(var(--border));
+}
+
+.dark .text-gradient {
+  background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent-foreground)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.dark .shadow-md,
+.dark .shadow-lg,
+.dark .shadow-xl {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+}
