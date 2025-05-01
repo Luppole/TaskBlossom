@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { UserProfile } from '@/types/friend';
 
 interface UserSearchResult {
   id: string;
@@ -41,7 +43,11 @@ const UserSearch = () => {
   // Get all users on component mount
   useEffect(() => {
     const loadAllUsers = async () => {
+      if (!user || isLoadingAllUsers) return;
+      
       setIsLoadingAllUsers(true);
+      setIsLoadingPopular(true);
+      
       try {
         // Get current user's friends
         const friends = await getFriends();
@@ -54,7 +60,7 @@ const UserSearch = () => {
           .filter(userData => userData.id !== user?.id) // Filter out the current user
           .map(userData => ({
             id: userData.id,
-            username: userData.username || userData.displayName || 'User',
+            username: userData.username || userData.full_name || 'User',
             full_name: userData.full_name || '',
             avatar_url: userData.avatar_url || '',
             email: userData.email || '',
@@ -90,14 +96,14 @@ const UserSearch = () => {
       const friends = await getFriends();
       const friendIds = friends.map(friend => friend.userId);
       
-      // Search for users by username, full name, or email
+      // Search for users by username or full name
       const results = await searchUsersByName(searchQuery);
       
       const formattedResults: UserSearchResult[] = results
         .filter(userData => userData.id !== user?.id) // Filter out the current user
         .map(userData => ({
           id: userData.id,
-          username: userData.username || userData.displayName || 'User',
+          username: userData.username || userData.full_name || 'User',
           full_name: userData.full_name || '',
           avatar_url: userData.avatar_url || '',
           email: userData.email || '',
@@ -254,7 +260,9 @@ const UserSearch = () => {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle>{t('social.findFriends')}</CardTitle>
+        <CardTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+          {t('social.findFriends')}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex gap-2 mb-6">

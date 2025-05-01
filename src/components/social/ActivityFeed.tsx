@@ -1,12 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ActivityItem, ActivityType } from '@/types/friend';
 import { useFirebase } from '@/contexts/FirebaseContext';
-import { Activity, Dumbbell, Utensils, Scale, UserPlus } from 'lucide-react';
+import { Activity, Dumbbell, Utensils, Scale, UserPlus, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const ActivityIcon = ({ type }: { type: ActivityType }) => {
   switch (type) {
@@ -73,8 +75,16 @@ const ActivityFeed = () => {
   if (loading) {
     return (
       <Card>
+        <CardHeader>
+          <CardTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+            {t('social.friendActivity')}
+          </CardTitle>
+        </CardHeader>
         <CardContent className="p-6">
-          <div className="text-center py-8">{t('common.loading')}</div>
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+            <span>{t('common.loading')}</span>
+          </div>
         </CardContent>
       </Card>
     );
@@ -83,6 +93,11 @@ const ActivityFeed = () => {
   if (activities.length === 0) {
     return (
       <Card>
+        <CardHeader>
+          <CardTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+            {t('social.friendActivity')}
+          </CardTitle>
+        </CardHeader>
         <CardContent className="p-6">
           <div className="text-center py-8">
             <Activity className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
@@ -102,14 +117,20 @@ const ActivityFeed = () => {
 
   return (
     <Card>
+      <CardHeader>
+        <CardTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+          {t('social.friendActivity')}
+        </CardTitle>
+      </CardHeader>
       <CardContent className="p-6">
-        <h2 className="text-xl font-semibold mb-6">{t('social.friendActivity')}</h2>
         <div className="space-y-6">
           {activities.map(activity => (
             <div key={activity.id} className="flex items-start gap-4">
-              <div className="bg-muted rounded-full p-2 mt-1">
-                <ActivityIcon type={activity.type} />
-              </div>
+              <Avatar className="mt-1">
+                <AvatarFallback className="bg-muted">
+                  <ActivityIcon type={activity.type} />
+                </AvatarFallback>
+              </Avatar>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <Button 

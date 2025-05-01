@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { FriendRequest } from '@/types/friend';
 import { useFirebase } from '@/contexts/FirebaseContext';
-import { Check, X, UserPlus } from 'lucide-react';
+import { Check, X, UserPlus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const FriendRequests = () => {
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
@@ -52,13 +53,25 @@ const FriendRequests = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-4">{t('common.loading')}</div>;
+    return (
+      <div>
+        <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 mb-4">
+          {t('social.friendRequests')}
+        </h2>
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+          <span>{t('common.loading')}</span>
+        </div>
+      </div>
+    );
   }
 
   if (friendRequests.length === 0) {
     return (
       <div>
-        <h2 className="text-xl font-semibold mb-4">{t('social.friendRequests')}</h2>
+        <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 mb-4">
+          {t('social.friendRequests')}
+        </h2>
         <div className="text-center py-8 text-muted-foreground">
           <UserPlus className="mx-auto h-8 w-8 mb-2 opacity-50" />
           <p>{t('social.noFriendRequests')}</p>
@@ -69,15 +82,24 @@ const FriendRequests = () => {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">{t('social.friendRequests')}</h2>
+      <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 mb-4">
+        {t('social.friendRequests')}
+      </h2>
       <div className="space-y-4">
         {friendRequests.map(request => (
-          <div key={request.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-            <div>
-              <p className="font-medium">{request.senderName}</p>
-              <p className="text-sm text-muted-foreground">
-                {format(request.createdAt, 'MMM d, yyyy')}
-              </p>
+          <div key={request.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted/80 transition-colors">
+            <div className="flex items-center space-x-3">
+              <Avatar className="h-10 w-10">
+                <AvatarFallback>
+                  {request.senderName[0].toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-medium">{request.senderName}</p>
+                <p className="text-sm text-muted-foreground">
+                  {format(request.createdAt, 'MMM d, yyyy')}
+                </p>
+              </div>
             </div>
             <div className="flex space-x-2">
               <Button 

@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { FriendData } from '@/types/friend';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { UserCircle, UserMinus, Loader2, Users } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const FriendsList = () => {
   const [friends, setFriends] = useState<FriendData[]>([]);
@@ -53,9 +53,14 @@ const FriendsList = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
-        <span>{t('common.loading')}</span>
+      <div>
+        <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 mb-4">
+          {t('social.yourFriends')}
+        </h2>
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+          <span>{t('common.loading')}</span>
+        </div>
       </div>
     );
   }
@@ -63,48 +68,48 @@ const FriendsList = () => {
   if (friends.length === 0) {
     return (
       <div>
-        <h2 className="text-xl font-semibold mb-4">{t('social.yourFriends')}</h2>
-        <Card>
-          <CardContent className="p-6 text-center">
-            <Users className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-xl font-medium mb-2">{t('social.noFriendsYet')}</h3>
-            <p className="text-muted-foreground mb-6">{t('social.findFriendsDescription')}</p>
-          </CardContent>
-        </Card>
+        <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 mb-4">
+          {t('social.yourFriends')}
+        </h2>
+        <div className="text-center py-8 text-muted-foreground">
+          <Users className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+          <h3 className="text-xl font-medium mb-2">{t('social.noFriendsYet')}</h3>
+          <p className="text-muted-foreground mb-6">{t('social.findFriendsDescription')}</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">{t('social.yourFriends')}</h2>
+      <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 mb-4">
+        {t('social.yourFriends')}
+      </h2>
       <div className="space-y-4">
         {friends.map(friend => (
-          <Card key={friend.userId} className="overflow-hidden">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="bg-primary/10 w-10 h-10 rounded-full flex items-center justify-center">
-                    <UserCircle className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">{friend.displayName}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {t('social.friendSince')} {format(friend.addedAt, 'MMM d, yyyy')}
-                    </p>
-                  </div>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => setFriendToRemove(friend)}
-                  className="text-muted-foreground hover:text-destructive"
-                >
-                  <UserMinus className="h-4 w-4" />
-                </Button>
+          <div key={friend.userId} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted/80 transition-colors">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  {friend.displayName[0].toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h3 className="font-medium">{friend.displayName}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {t('social.friendSince')} {format(friend.addedAt, 'MMM d, yyyy')}
+                </p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setFriendToRemove(friend)}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <UserMinus className="h-4 w-4" />
+            </Button>
+          </div>
         ))}
       </div>
 

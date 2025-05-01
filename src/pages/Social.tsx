@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from 'framer-motion';
-import { UserSearch as UserSearchIcon, Users, Activity, UserCircle, Lock, LogIn } from 'lucide-react';
+import { UserSearch, Users, Activity, UserCircle, Lock, LogIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,12 +19,21 @@ const Social = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   
-  // Redirect unauthenticated users
+  // Handle URL params for tab selection
   useEffect(() => {
-    if (!user) {
-      // We'll show a login prompt instead of redirecting
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab && ['friends', 'activity', 'discover'].includes(tab)) {
+      setActiveTab(tab);
     }
-  }, [user]);
+  }, []);
+  
+  // Update URL when tab changes
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', activeTab);
+    window.history.replaceState({}, '', url);
+  }, [activeTab]);
   
   // If not logged in, show a message to login
   if (!user) {
@@ -78,10 +87,12 @@ const Social = () => {
         transition={{ duration: 0.5 }}
       >
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">{t('social.title')}</h1>
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+            {t('social.title')}
+          </h1>
         </div>
         
-        <Tabs defaultValue="friends" value={activeTab} onValueChange={setActiveTab} className="mt-6">
+        <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="mt-6">
           <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto">
             <TabsTrigger value="friends" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -94,7 +105,7 @@ const Social = () => {
             </TabsTrigger>
             
             <TabsTrigger value="discover" className="flex items-center gap-2">
-              <UserSearchIcon className="h-4 w-4" />
+              <UserSearch className="h-4 w-4" />
               <span className="hidden sm:inline">{t('social.discover')}</span>
             </TabsTrigger>
           </TabsList>
