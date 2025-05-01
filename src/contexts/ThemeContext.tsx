@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { useSupabase } from './SupabaseContext';
 import { toast } from 'sonner';
 
@@ -21,6 +21,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('system');
   const [direction, setDirectionState] = useState<'ltr' | 'rtl'>('ltr');
   const [isInitialized, setIsInitialized] = useState(false);
+  const updatePending = useRef(false);
+
+  // Helper function to apply theme to document
+  const applyTheme = useCallback((selectedTheme: Theme) => {
+    const isDark = selectedTheme === 'dark' || 
+      (selectedTheme === 'system' && 
+       window.matchMedia('(prefers-color-scheme: dark)').matches);
+    
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  }, []);
 
   // Load theme and direction from user profile or localStorage
   useEffect(() => {
@@ -57,20 +73,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
 
     initializeTheme();
-  }, [user, getUserProfile]);
-
-  // Helper function to apply theme to document
-  const applyTheme = (selectedTheme: Theme) => {
-    if (selectedTheme === 'dark' || 
-        (selectedTheme === 'system' && 
-         window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.setAttribute('data-theme', 'light');
-    }
-  };
+  }, [user, getUserProfile, applyTheme]);
 
   // Listen for system theme changes when theme is set to 'system'
   useEffect(() => {
@@ -83,9 +86,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       mediaQuery.addEventListener('change', handleChange);
       return () => mediaQuery.removeEventListener('change', handleChange);
     }
-  }, [theme]);
+  }, [theme, applyTheme]);
 
-  const setTheme = async (newTheme: Theme) => {
+  const setTheme = useCallback(async (newTheme: Theme) => {
+    if (updatePending.current) return;
+    updatePending.current = true;
+    
     setThemeState(newTheme);
     localStorage.setItem('theme', newTheme);
     applyTheme(newTheme);
@@ -94,18 +100,24 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (user && updateUserProfile && isInitialized) {
       try {
         await updateUserProfile({ theme: newTheme });
+        console.log('Theme preference saved to user profile');
       } catch (error) {
         console.error('Error saving theme to user profile:', error);
       }
     }
-  };
+    
+    updatePending.current = false;
+  }, [user, updateUserProfile, isInitialized, applyTheme]);
   
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-  };
+  }, [theme, setTheme]);
   
-  const setDirection = async (newDirection: 'ltr' | 'rtl') => {
+  const setDirection = useCallback(async (newDirection: 'ltr' | 'rtl') => {
+    if (updatePending.current) return;
+    updatePending.current = true;
+    
     setDirectionState(newDirection);
     localStorage.setItem('direction', newDirection);
     document.documentElement.dir = newDirection;
@@ -115,22 +127,28 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (user && updateUserProfile && isInitialized) {
       try {
         await updateUserProfile({ direction: newDirection });
+        console.log('Direction preference saved to user profile');
       } catch (error) {
         console.error('Error saving direction to user profile:', error);
       }
     }
-  };
+    
+    updatePending.current = false;
+  }, [user, updateUserProfile, isInitialized]);
   
-  const toggleDirection = () => {
+  const toggleDirection = useCallback(() => {
     const newDirection = direction === 'ltr' ? 'rtl' : 'ltr';
     setDirection(newDirection);
     toast.success(
       direction === 'ltr' 
         ? 'Switched to right-to-left' 
         : 'Switched to left-to-right', 
-      { duration: 1500 }
+      { 
+        duration: 1500,
+        position: 'top-center'
+      }
     );
-  };
+  }, [direction, setDirection]);
 
   const value = {
     theme,

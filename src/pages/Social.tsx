@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { UserSearch, Users, Activity, UserCircle, Lock, LogIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
@@ -45,16 +45,27 @@ const Social = () => {
           transition={{ duration: 0.5 }}
           className="mb-6"
         >
-          <div className="bg-primary/10 p-6 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+          <motion.div 
+            className="bg-primary/10 p-6 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center"
+            animate={{ 
+              scale: [1, 1.05, 1],
+              opacity: [1, 0.9, 1]
+            }}
+            transition={{ 
+              duration: 2,
+              repeat: Infinity,
+              repeatType: "reverse" 
+            }}
+          >
             <Lock className="h-10 w-10 text-primary" />
-          </div>
+          </motion.div>
           
           <h1 className="text-2xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
-            {t('social.requiresLogin')}
+            Login Required
           </h1>
           
           <p className="text-muted-foreground mb-8 max-w-sm mx-auto">
-            {t('social.loginDescription')}
+            Please sign in to access the social features and connect with other users
           </p>
           
           <div className="flex gap-4 justify-center">
@@ -64,20 +75,30 @@ const Social = () => {
               onClick={() => navigate('/')}
             >
               <UserCircle className="h-4 w-4" />
-              {t('common.returnToDashboard')}
+              Return to Dashboard
             </Button>
             <Button 
               className="bg-primary hover:bg-primary/90 gap-2" 
-              onClick={() => navigate('/settings')}
+              onClick={() => navigate('/login')}
             >
               <LogIn className="h-4 w-4" />
-              {t('auth.signIn')}
+              Sign In
             </Button>
           </div>
         </motion.div>
       </div>
     );
   }
+  
+  const tabContainerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
+  const tabContentVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0 }
+  };
   
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -88,51 +109,68 @@ const Social = () => {
       >
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
-            {t('social.title')}
+            Social Hub
           </h1>
         </div>
         
         <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="mt-6">
-          <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto">
-            <TabsTrigger value="friends" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('social.friends')}</span>
-            </TabsTrigger>
-            
-            <TabsTrigger value="activity" className="flex items-center gap-2">
-              <Activity className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('social.activity')}</span>
-            </TabsTrigger>
-            
-            <TabsTrigger value="discover" className="flex items-center gap-2">
-              <UserSearch className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('social.discover')}</span>
-            </TabsTrigger>
-          </TabsList>
-          
           <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
+            variants={tabContainerVariants}
+            initial="hidden"
+            animate="visible"
             transition={{ duration: 0.3 }}
-            className="mt-6"
           >
-            <TabsContent value="friends" className="mt-0">
-              <Card className="p-4">
-                <FriendRequests />
-                <div className="my-6 border-t border-border"></div>
-                <FriendsList />
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="activity" className="mt-0">
-              <ActivityFeed />
-            </TabsContent>
-            
-            <TabsContent value="discover" className="mt-0">
-              <UserSearchComponent />
-            </TabsContent>
+            <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto">
+              <TabsTrigger value="friends" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+                <motion.div whileHover={{ scale: 1.2 }} transition={{ type: "spring", stiffness: 400 }}>
+                  <Users className="h-4 w-4" />
+                </motion.div>
+                <span className="hidden sm:inline">Friends</span>
+              </TabsTrigger>
+              
+              <TabsTrigger value="activity" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+                <motion.div whileHover={{ scale: 1.2 }} transition={{ type: "spring", stiffness: 400 }}>
+                  <Activity className="h-4 w-4" />
+                </motion.div>
+                <span className="hidden sm:inline">Activity</span>
+              </TabsTrigger>
+              
+              <TabsTrigger value="discover" className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+                <motion.div whileHover={{ scale: 1.2 }} transition={{ type: "spring", stiffness: 400 }}>
+                  <UserSearch className="h-4 w-4" />
+                </motion.div>
+                <span className="hidden sm:inline">Discover</span>
+              </TabsTrigger>
+            </TabsList>
           </motion.div>
+          
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              variants={tabContentVariants}
+              initial="hidden"
+              animate="visible"
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="mt-6"
+            >
+              <TabsContent value="friends" className="mt-0">
+                <Card className="p-4">
+                  <FriendRequests />
+                  <div className="my-6 border-t border-border"></div>
+                  <FriendsList />
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="activity" className="mt-0">
+                <ActivityFeed />
+              </TabsContent>
+              
+              <TabsContent value="discover" className="mt-0">
+                <UserSearchComponent />
+              </TabsContent>
+            </motion.div>
+          </AnimatePresence>
         </Tabs>
       </motion.div>
     </div>

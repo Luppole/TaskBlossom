@@ -15,6 +15,7 @@ export const useMealLog = (date: Date) => {
   const previousDateRef = useRef<string | null>(null);
   const isFetchingRef = useRef(false);
   const loadAttempts = useRef(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchMeals = useCallback(async (force: boolean = false) => {
     // Skip if already fetching or if already loaded for this date and not forced
@@ -27,6 +28,14 @@ export const useMealLog = (date: Date) => {
       console.log('Too many load attempts, skipping automatic load');
       return;
     }
+    
+    // Cancel any ongoing request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
     
     try {
       isFetchingRef.current = true;
@@ -44,8 +53,10 @@ export const useMealLog = (date: Date) => {
       previousDateRef.current = dateString;
       loadAttempts.current += 1;
     } catch (err) {
-      setError('Failed to load meals');
-      console.error('Error loading meals:', err);
+      if ((err as Error).name !== 'AbortError') {
+        setError('Failed to load meals');
+        console.error('Error loading meals:', err);
+      }
     } finally {
       setIsLoading(false);
       isFetchingRef.current = false;
@@ -62,6 +73,13 @@ export const useMealLog = (date: Date) => {
     if (dateString !== previousDateRef.current) {
       loadAttempts.current = 0;
     }
+    
+    // Clean up function to abort any pending requests when the component unmounts or dependencies change
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [fetchMeals, dateString]);
 
   // Function to manually refresh meals

@@ -1,14 +1,7 @@
 
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { format } from 'date-fns';
-import { Plus, Coffee, Apple, Pizza, Utensils, Trash2, Clock, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSupabase } from '@/contexts/SupabaseContext';
 import { toast } from 'sonner';
@@ -16,167 +9,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { useTranslation } from 'react-i18next';
 import { useMealLog } from '@/hooks/useMealLog';
 import { MealLog as MealLogType } from '@/types/task';
+import MealCard, { MealType } from './meal/MealCard';
+import MealStats from './meal/MealStats';
 
-// Extracted MealCard component to reduce complexity
-const MealCard = ({ 
-  type, 
-  meal, 
-  totalCalories, 
-  isLoading, 
-  newFood,
-  isRTL,
-  onFoodChange,
-  onAddFood,
-  onRemoveFood,
-  mealDescription
-}: { 
-  type: 'breakfast' | 'lunch' | 'dinner' | 'snack',
-  meal: MealLogType,
-  totalCalories: number,
-  isLoading: boolean,
-  newFood: { id: string, name: string, calories: number },
-  isRTL: boolean,
-  mealDescription: string,
-  onFoodChange: (field: 'name' | 'calories', value: string | number) => void,
-  onAddFood: () => void,
-  onRemoveFood: (foodId: string) => void
-}) => {
-  const { t } = useTranslation();
-  
-  const mealTypeIcons = {
-    breakfast: <Coffee className="h-5 w-5" />,
-    lunch: <Utensils className="h-5 w-5" />,
-    dinner: <Pizza className="h-5 w-5" />,
-    snack: <Apple className="h-5 w-5" />,
-  };
-
-  const mealTypeLabels = {
-    breakfast: 'Breakfast',
-    lunch: 'Lunch',
-    dinner: 'Dinner',
-    snack: 'Snacks',
-  };
-  
-  return (
-    <Card className={`border shadow-sm hover:shadow-md transition-all ${isRTL ? 'rtl' : ''}`}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex items-center">
-          <div className="p-2 rounded-full bg-primary/10 text-primary">
-            {mealTypeIcons[type]}
-          </div>
-          <span className={`${isRTL ? 'mr-2' : 'ml-2'} font-semibold`}>
-            {mealTypeLabels[type]}
-          </span>
-          {totalCalories > 0 && (
-            <Badge variant="secondary" className="ml-auto">
-              {totalCalories} kcal
-            </Badge>
-          )}
-        </CardTitle>
-        <CardDescription className="text-sm text-muted-foreground mt-1">
-          {mealDescription}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pt-2">
-        {isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-5 w-full" />
-            <Skeleton className="h-5 w-4/5" />
-          </div>
-        ) : (
-          <AnimatePresence>
-            {meal.foods.length > 0 ? (
-              <div className="space-y-2">
-                {meal.foods.map(food => (
-                  <motion.div 
-                    key={food.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className={`flex justify-between items-center text-sm p-3 bg-background rounded-lg border ${isRTL ? 'flex-row-reverse text-right' : 'text-left'}`}
-                  >
-                    <div className={`flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
-                      <div className={isRTL ? 'ml-2' : 'mr-2'}>
-                        {mealTypeIcons[type]}
-                      </div>
-                      <div>
-                        <span className="font-medium">{food.name}</span>
-                        <div className={`text-xs text-muted-foreground flex items-center mt-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                          <Clock className={`h-3 w-3 ${isRTL ? 'ml-1' : 'mr-1'}`} />
-                          {format(new Date(), 'h:mm a')}
-                        </div>
-                      </div>
-                    </div>
-                    <div className={`flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
-                      <span className={`${isRTL ? 'ml-2' : 'mr-2'} font-semibold`}>
-                        {food.calories} kcal
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onRemoveFood(food.id)}
-                        className="h-7 w-7 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-muted-foreground text-sm text-center py-4 border border-dashed rounded-lg">
-                No foods logged for {mealTypeLabels[type].toLowerCase()}
-              </div>
-            )}
-          </AnimatePresence>
-        )}
-        
-        <div className="mt-4 space-y-3 p-3 rounded-lg border">
-          <div className={`flex ${isRTL ? 'flex-row-reverse' : ''} items-end space-x-2 ${isRTL ? 'space-x-reverse' : ''}`}>
-            <div className="flex-1">
-              <Label htmlFor={`${type}-food`} className={`text-xs font-medium ${isRTL ? 'text-right block' : ''}`}>
-                Food Name
-              </Label>
-              <Input
-                id={`${type}-food`}
-                value={newFood.name}
-                onChange={(e) => onFoodChange('name', e.target.value)}
-                placeholder="Add Food"
-                className="h-8"
-                dir={isRTL ? 'rtl' : 'ltr'}
-              />
-            </div>
-            <div className="w-24">
-              <Label htmlFor={`${type}-calories`} className={`text-xs font-medium ${isRTL ? 'text-right block' : ''}`}>
-                Calories
-              </Label>
-              <Input
-                id={`${type}-calories`}
-                type="number"
-                min="0"
-                value={newFood.calories}
-                onChange={(e) => onFoodChange('calories', e.target.value)}
-                className="h-8"
-                dir="ltr"
-              />
-            </div>
-            <Button
-              size="sm"
-              onClick={onAddFood}
-              className="mb-[2px] transition-all hover:scale-105"
-            >
-              <Plus className={`h-4 w-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />
-              Add
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-// Main MealLog component
 const MealLog = () => {
   const { user, createMeal, updateMeal } = useSupabase();
   const { t, i18n } = useTranslation();
@@ -200,7 +35,7 @@ const MealLog = () => {
     snack: "Small bites between meals"
   };
   
-  const getMealByType = (type: 'breakfast' | 'lunch' | 'dinner' | 'snack') => {
+  const getMealByType = (type: MealType) => {
     return meals.find(meal => meal.mealType === type) || {
       id: '',
       date: today,
@@ -210,7 +45,7 @@ const MealLog = () => {
     };
   };
   
-  const handleAddFood = async (mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack') => {
+  const handleAddFood = async (mealType: MealType) => {
     const food = {
       id: newFoods[mealType].id,
       name: newFoods[mealType].name,
@@ -230,7 +65,10 @@ const MealLog = () => {
       if (existingMeal) {
         const updatedFoods = [...existingMeal.foods, food];
         await updateMeal(existingMeal.id, { foods: updatedFoods });
-        toast.success('Food added!');
+        toast.success('Food added!', {
+          description: `Added ${food.name} to ${mealType}`,
+          duration: 2000,
+        });
       } else {
         const newMeal = {
           date: today,
@@ -240,7 +78,10 @@ const MealLog = () => {
         };
         
         await createMeal(newMeal);
-        toast.success('Meal created!');
+        toast.success('Meal created!', {
+          description: `Started logging ${mealType} with ${food.name}`,
+          duration: 2000,
+        });
       }
       
       setNewFoods({
@@ -256,15 +97,16 @@ const MealLog = () => {
     }
   };
   
-  const handleRemoveFood = async (mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack', foodId: string) => {
+  const handleRemoveFood = async (mealType: MealType, foodId: string) => {
     try {
       const meal = meals.find(m => m.mealType === mealType);
       if (!meal) return;
       
+      const foodToRemove = meal.foods.find(f => f.id === foodId);
       const updatedFoods = meal.foods.filter(food => food.id !== foodId);
       
       await updateMeal(meal.id, { foods: updatedFoods });
-      toast.success('Food removed');
+      toast.success(`Removed ${foodToRemove?.name || 'food'}`);
       
       refreshMeals();
       
@@ -275,7 +117,7 @@ const MealLog = () => {
   };
   
   const handleFoodChange = (
-    mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack',
+    mealType: MealType,
     field: 'name' | 'calories',
     value: string | number
   ) => {
@@ -288,7 +130,7 @@ const MealLog = () => {
     });
   };
   
-  const getTotalMealCalories = (mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack') => {
+  const getTotalMealCalories = (mealType: MealType) => {
     const meal = getMealByType(mealType);
     if (!meal.foods.length) return 0;
     
@@ -302,15 +144,23 @@ const MealLog = () => {
     }, 0);
   };
 
+  // Create meal breakdown
+  const mealBreakdown = {
+    breakfast: getTotalMealCalories('breakfast'),
+    lunch: getTotalMealCalories('lunch'),
+    dinner: getTotalMealCalories('dinner'),
+    snack: getTotalMealCalories('snack'),
+  };
+
   if (error && !user) {
     return (
       <div className="space-y-6">
-        <div className={`flex justify-between items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <h2 className="text-xl font-semibold">Today's Food Log</h2>
-          <p className="text-muted-foreground">
-            {format(today, 'PPP')}
-          </p>
-        </div>
+        <MealStats 
+          today={today}
+          totalCalories={getTotalCalories()}
+          mealBreakdown={mealBreakdown}
+          isRTL={isRTL}
+        />
         
         <Alert variant="destructive" className="my-6">
           <AlertCircle className="h-4 w-4" />
@@ -329,27 +179,13 @@ const MealLog = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <motion.div 
-        className={`flex justify-between items-center ${isRTL ? 'flex-row-reverse' : ''}`}
-        initial={{ y: -20 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-      >
-        <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
-          Today's Food Log
-        </h2>
-        <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <Clock className="h-4 w-4 text-muted-foreground" />
-          <p className="text-muted-foreground">
-            {format(today, 'PPP')}
-          </p>
-          {getTotalCalories() > 0 && (
-            <Badge variant="outline" className="bg-primary/10 border-primary/20 text-primary font-medium">
-              {getTotalCalories()} kcal today
-            </Badge>
-          )}
-        </div>
-      </motion.div>
+      {/* Stats section with today's date and total calories */}
+      <MealStats 
+        today={today}
+        totalCalories={getTotalCalories()}
+        mealBreakdown={mealBreakdown}
+        isRTL={isRTL}
+      />
       
       {error && (
         <Alert variant="destructive">
@@ -360,6 +196,7 @@ const MealLog = () => {
         </Alert>
       )}
       
+      {/* Meal cards grid */}
       <motion.div 
         className="grid grid-cols-1 md:grid-cols-2 gap-4"
         initial={{ opacity: 0 }}

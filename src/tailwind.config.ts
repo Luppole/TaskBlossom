@@ -102,6 +102,22 @@ export default {
         "pulse-light": {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.8" },
+        },
+        "floating": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-5px)" },
+        },
+        "shimmer": {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
+        "ping-slow": {
+          "0%": { transform: "scale(1)", opacity: "1" },
+          "75%, 100%": { transform: "scale(1.5)", opacity: "0" },
+        },
+        "bounce-subtle": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-1px)" },
         }
       },
       animation: {
@@ -113,6 +129,21 @@ export default {
         "scale-out": "scale-out 0.2s ease-out",
         "spin-slow": "spin-slow 8s linear infinite",
         "pulse-light": "pulse-light 2s ease-in-out infinite",
+        "floating": "floating 3s ease-in-out infinite",
+        "shimmer": "shimmer 2s linear infinite",
+        "ping-slow": "ping-slow 3s cubic-bezier(0, 0, 0.2, 1) infinite",
+        "bounce-subtle": "bounce-subtle 2s ease-in-out infinite",
+      },
+      transitionProperty: {
+        'height': 'height',
+        'spacing': 'margin, padding',
+        'width': 'width',
+        'max-height': 'max-height'
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-subtle': 'linear-gradient(to right, var(--tw-gradient-stops))',
+        'gradient-shimmer': 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 100%)',
       },
     },
   },
