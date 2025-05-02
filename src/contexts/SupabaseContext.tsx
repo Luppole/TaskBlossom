@@ -3,6 +3,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase, createUserProfile } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { UserSettings, DEFAULT_USER_SETTINGS } from '@/types/settings';
 
 interface SupabaseContextType {
   user: User | null;
@@ -38,6 +39,7 @@ interface SupabaseContextType {
   searchUsersByName: (query: string) => Promise<any[]>;
   updateUserProfile: (profileData: any) => Promise<void>;
   getUserProfile: (userId?: string) => Promise<any>;
+  updateUserSettings: (settings: Partial<UserSettings>) => Promise<void>;
 }
 
 export const SupabaseContext = createContext<SupabaseContextType | undefined>(undefined);
@@ -49,12 +51,14 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const { t } = useTranslation();
 
   useEffect(() => {
+    // First set up auth state listener for all future state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
       console.log('Supabase auth event:', event);
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
     });
 
+    // Then check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       console.log('Retrieved session:', currentSession ? 'Yes' : 'No');
       setSession(currentSession);
@@ -84,7 +88,8 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         password,
         options: {
           data: {
-            display_name: name
+            display_name: name,
+            full_name: name
           }
         }
       });
@@ -617,12 +622,20 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (friendsError) throw friendsError;
 
       const friends = [];
-      for (const friend of friendsData) {
+      for (const friend of friendsData || []) {
+        // Get the friend's profile info
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', friend.friend_id)
+          .single();
+        
         friends.push({
           id: friend.id,
           userId: friend.friend_id,
-          displayName: 'Friend',
-          addedAt: new Date(friend.created_at)
+          displayName: profileData?.full_name || profileData?.username || 'Friend',
+          avatar_url: profileData?.avatar_url,
+          addedAt: new Date(friend.created_at || new Date())
         });
       }
 
@@ -640,18 +653,36 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const { data, error } = await supabase
         .from('friend_requests')
-        .select('*')
+        .select(`
+          id,
+          sender_id,
+          status,
+          created_at
+        `)
         .eq('recipient_id', user.id)
         .eq('status', 'pending');
 
       if (error) throw error;
 
-      return data.map(request => ({
-        id: request.id,
-        senderId: request.sender_id,
-        senderName: 'User',
-        createdAt: new Date(request.created_at)
-      }));
+      const requests = [];
+      for (const request of data || []) {
+        // Get sender's profile
+        const { data: senderProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', request.sender_id)
+          .single();
+        
+        requests.push({
+          id: request.id,
+          senderId: request.sender_id,
+          senderName: senderProfile?.full_name || senderProfile?.username || 'User',
+          avatar_url: senderProfile?.avatar_url,
+          createdAt: new Date(request.created_at || new Date())
+        });
+      }
+
+      return requests;
     } catch (error) {
       console.error('Error getting friend requests:', error);
       toast.error('Failed to load friend requests');
@@ -663,6 +694,30 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!user) throw new Error('User not authenticated');
 
     try {
+      // Check if request already exists
+      const { data: existingRequest } = await supabase
+        .from('friend_requests')
+        .select('*')
+        .match({ sender_id: user.id, recipient_id: userId, status: 'pending' })
+        .maybeSingle();
+      
+      if (existingRequest) {
+        toast.info('Friend request already sent');
+        return;
+      }
+      
+      // Check if they're already friends
+      const { data: existingFriend } = await supabase
+        .from('friends')
+        .select('*')
+        .match({ user_id: user.id, friend_id: userId })
+        .maybeSingle();
+      
+      if (existingFriend) {
+        toast.info('You are already friends with this user');
+        return;
+      }
+
       const { error } = await supabase
         .from('friend_requests')
         .insert({
@@ -692,6 +747,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (requestError) throw requestError;
 
+      // Create two-way friendship (user -> friend and friend -> user)
       const { error: friendError } = await supabase.from('friends').insert([
         { user_id: user.id, friend_id: requestData.sender_id },
         { user_id: requestData.sender_id, friend_id: user.id }
@@ -699,6 +755,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (friendError) throw friendError;
 
+      // Update request status
       const { error: updateError } = await supabase
         .from('friend_requests')
         .update({ status: 'accepted' })
@@ -734,11 +791,11 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!user) throw new Error('User not authenticated');
 
     try {
+      // Remove both friendship records
       const { error } = await supabase
         .from('friends')
         .delete()
-        .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
-        .or(`user_id.eq.${friendId},friend_id.eq.${friendId}`);
+        .or(`and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`);
 
       if (error) throw error;
     } catch (error) {
@@ -752,29 +809,18 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!user) return [];
     
     try {
-      // If query is empty, return all users (limited to 20)
-      const searchCondition = query 
-        ? `username.ilike.%${query}%,full_name.ilike.%${query}%` 
-        : '';
-      
-      const { data, error } = await supabase
+      let queryBuilder = supabase
         .from('profiles')
         .select('*')
-        .not('id', 'eq', user.id) // Don't include the current user
-        .order('username', { ascending: true })
-        .limit(20);
+        .neq('id', user.id); // Don't include the current user
+      
+      if (query) {
+        queryBuilder = queryBuilder.or(`username.ilike.%${query}%,full_name.ilike.%${query}%,email.ilike.%${query}%`);
+      }
+      
+      const { data, error } = await queryBuilder.order('username', { ascending: true }).limit(20);
       
       if (error) throw error;
-      
-      // If a query was provided, filter client-side
-      if (query && data) {
-        const filteredData = data.filter(profile => {
-          const usernameMatch = profile.username?.toLowerCase().includes(query.toLowerCase());
-          const fullNameMatch = profile.full_name?.toLowerCase().includes(query.toLowerCase());
-          return usernameMatch || fullNameMatch;
-        });
-        return filteredData;
-      }
       
       return data || [];
     } catch (error) {
@@ -799,10 +845,11 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (error) throw error;
     } catch (error) {
       console.error('Error updating profile:', error);
+      throw error;
     }
   };
 
-  const getUserProfile = async (userId: string = user?.id) => {
+  const getUserProfile = async (userId: string = user?.id || '') => {
     if (!userId) return null;
     
     try {
@@ -833,6 +880,28 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error) {
       console.error('Error getting user profile:', error);
       return null;
+    }
+  };
+
+  const updateUserSettings = async (settings: Partial<UserSettings>) => {
+    if (!user) throw new Error('User not authenticated');
+    
+    try {
+      // Get current profile
+      const profile = await getUserProfile(user.id);
+      
+      // Update settings
+      await updateUserProfile({
+        settings: {
+          ...(profile?.settings || DEFAULT_USER_SETTINGS),
+          ...settings
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error updating user settings:', error);
+      toast.error('Failed to update settings');
+      throw error;
     }
   };
 
@@ -870,7 +939,8 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       removeFriend,
       searchUsersByName,
       updateUserProfile,
-      getUserProfile
+      getUserProfile,
+      updateUserSettings
     }}>
       {children}
     </SupabaseContext.Provider>

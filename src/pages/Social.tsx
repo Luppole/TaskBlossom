@@ -7,15 +7,14 @@ import { UserSearch, Users, Activity, UserCircle, Lock, LogIn } from 'lucide-rea
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useFirebase } from '@/contexts/FirebaseContext';
-import FriendRequests from '@/components/social/FriendRequests';
-import FriendsList from '@/components/social/FriendsList';
+import { useSupabase } from '@/contexts/SupabaseContext';
+import FriendsSection from '@/components/social/FriendsSection';
 import ActivityFeed from '@/components/social/ActivityFeed';
 import UserSearchComponent from '@/components/social/UserSearch';
 
 const Social = () => {
   const [activeTab, setActiveTab] = useState("friends");
-  const { user } = useFirebase();
+  const { user } = useSupabase();
   const navigate = useNavigate();
   const { t } = useTranslation();
   
@@ -155,11 +154,7 @@ const Social = () => {
               className="mt-6"
             >
               <TabsContent value="friends" className="mt-0">
-                <Card className="p-4">
-                  <FriendRequests />
-                  <div className="my-6 border-t border-border"></div>
-                  <FriendsList />
-                </Card>
+                <FriendsSection />
               </TabsContent>
               
               <TabsContent value="activity" className="mt-0">

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Search, User, Users, Loader2 } from 'lucide-react';
@@ -5,8 +6,8 @@ import { useSupabase } from '@/contexts/SupabaseContext';
 import { toast } from 'sonner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { motion } from 'framer-motion';
-import { UserProfile } from '@/types/friend';
-import SearchHeader from './user-search/SearchHeader';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import UserList from './user-search/UserList';
 
 interface UserSearchResult {
@@ -21,6 +22,7 @@ interface UserSearchResult {
 
 const UserSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterBy, setFilterBy] = useState<'name' | 'email'>('name');
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('search');
@@ -92,11 +94,19 @@ const UserSearch = () => {
       const friends = await getFriends();
       const friendIds = friends.map(friend => friend.userId);
       
-      // Search for users by username or full name
+      // Search for users by username, full name, or email based on filter
       const results = await searchUsersByName(searchQuery);
       
       const formattedResults: UserSearchResult[] = results
         .filter(userData => userData.id !== user?.id) // Filter out the current user
+        .filter(userData => {
+          if (filterBy === 'name') {
+            return (userData.username?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                    userData.full_name?.toLowerCase().includes(searchQuery.toLowerCase()));
+          } else {
+            return userData.email?.toLowerCase().includes(searchQuery.toLowerCase());
+          }
+        })
         .map(userData => ({
           id: userData.id,
           username: userData.username || userData.full_name || 'User',
@@ -140,8 +150,11 @@ const UserSearch = () => {
         action: {
           label: "View Friends",
           onClick: () => {
-            // Navigate to friends tab or perform another action
-            console.log("Navigate to friends tab");
+            // Navigate to friends tab
+            const socialPage = document.querySelector('a[href="/social"]');
+            if (socialPage) {
+              (socialPage as HTMLElement).click();
+            }
           }
         }
       });
@@ -196,13 +209,64 @@ const UserSearch = () => {
         </motion.div>
       </CardHeader>
       <CardContent>
-        <SearchHeader 
-          searchQuery={searchQuery}
-          onSearchQueryChange={setSearchQuery}
-          onSearch={handleSearch}
-          loading={loading}
-          onShowAll={handleShowAllUsers}
-        />
+        <motion.div 
+          className="flex flex-col gap-2 mb-6"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex-1">
+              <Input 
+                placeholder="Search for users"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="transition-all focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <select
+                className="bg-muted text-foreground px-3 py-2 rounded-md text-sm border border-muted transition-all w-24"
+                value={filterBy}
+                onChange={(e) => setFilterBy(e.target.value as 'name' | 'email')}
+              >
+                <option value="name">Name</option>
+                <option value="email">Email</option>
+              </select>
+              
+              <motion.div whileTap={{ scale: 0.95 }}>
+                <Button 
+                  onClick={handleSearch}
+                  disabled={loading || !searchQuery.trim()}
+                  className="gap-2 transition-transform hover:scale-105"
+                  variant="default"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  Search
+                </Button>
+              </motion.div>
+            </div>
+          </div>
+          
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="flex justify-end"
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleShowAllUsers}
+              className="text-primary hover:text-primary/80 hover:bg-primary/5 gap-1"
+            >
+              <Users className="h-3.5 w-3.5" />
+              Show all users
+            </Button>
+          </motion.div>
+        </motion.div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <motion.div
