@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -26,18 +27,17 @@ const AchievementsPage: React.FC = () => {
       
       setLoading(true);
       try {
-        // Fetch badges
+        // Fetch badges - we type cast the response since TypeScript doesn't know about our new tables yet
         const { data: badgeData, error: badgeError } = await supabase
           .from('badges')
-          .select('*');
+          .select('*') as { data: any[], error: any };
         
         if (badgeError) throw badgeError;
         
         // Fetch user's achievements
         const { data: achievementData, error: achievementError } = await supabase
           .from('user_achievements')
-          .select('*, badge_id(*)')
-          .eq('user_id', user.id);
+          .select('*, badge_id(*)') as { data: any[], error: any };
         
         if (achievementError) throw achievementError;
         

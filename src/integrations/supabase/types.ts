@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      badges: {
+        Row: {
+          description: string
+          icon: string
+          id: string
+          name: string
+          rarity: string
+          unlocked_at: string | null
+        }
+        Insert: {
+          description: string
+          icon: string
+          id?: string
+          name: string
+          rarity: string
+          unlocked_at?: string | null
+        }
+        Update: {
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+          rarity?: string
+          unlocked_at?: string | null
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           color: string
@@ -218,6 +245,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          badge_id: string
+          completed: boolean
+          completed_at: string | null
+          created_at: string | null
+          current_count: number
+          description: string
+          id: string
+          progress: number
+          required_count: number
+          title: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string | null
+          current_count?: number
+          description: string
+          id?: string
+          progress?: number
+          required_count?: number
+          title: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string | null
+          current_count?: number
+          description?: string
+          id?: string
+          progress?: number
+          required_count?: number
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workouts: {
         Row: {
