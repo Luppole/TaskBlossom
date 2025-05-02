@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, createUserProfile } from '@/integrations/supabase/client';
@@ -890,12 +891,20 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Get current profile
       const profile = await getUserProfile(user.id);
       
-      // Update settings
+      // Create a base settings object, using defaults if no settings exist
+      const currentSettings = profile?.settings 
+        ? (typeof profile.settings === 'object' ? profile.settings as UserSettings : DEFAULT_USER_SETTINGS)
+        : DEFAULT_USER_SETTINGS;
+      
+      // Update settings with new values
+      const updatedSettings = {
+        ...currentSettings,
+        ...settings
+      };
+      
+      // Save to profile
       await updateUserProfile({
-        settings: {
-          ...(profile?.settings || DEFAULT_USER_SETTINGS),
-          ...settings
-        }
+        settings: updatedSettings
       });
       
     } catch (error) {
