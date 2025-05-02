@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,9 +9,10 @@ import { Achievement, Badge } from '@/types/achievement';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const AchievementsPage: React.FC = () => {
-  const { supabase, user } = useSupabase();
+  const { user } = useSupabase();
   const [activeTab, setActiveTab] = useState('achievements');
   const [filter, setFilter] = useState<'all' | 'completed' | 'in-progress'>('all');
   const [achievements, setAchievements] = useState<Achievement[]>([]);
@@ -85,7 +85,8 @@ const AchievementsPage: React.FC = () => {
     };
     
     fetchData();
-  }, [user, supabase, toast]);
+  }, [user, toast]);
+  
   
   const filteredAchievements = achievements.filter(achievement => {
     if (filter === 'all') return true;
