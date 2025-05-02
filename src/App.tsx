@@ -24,6 +24,10 @@ import { FirebaseProvider } from "./contexts/FirebaseContext"; // We keep this f
 import "./i18n/i18n";
 import ParticleBackground from "./components/common/ParticleBackground";
 import Achievements from "./pages/Achievements";
+import AdminLayout from "./components/layout/AdminLayout";
+import AdminAchievements from "./pages/admin/AdminAchievements";
+import AdminBadges from "./pages/admin/AdminBadges";
+import AdminUsers from "./pages/admin/AdminUsers";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -68,6 +72,15 @@ const AnimatedRoutes = () => {
         <Route path="/social" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Social /></div></AppShell></PrivateRoute>} />
         <Route path="/achievements" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Achievements /></div></AppShell></PrivateRoute>} />
         <Route path="/profile/:userId" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Profile /></div></AppShell></PrivateRoute>} />
+        
+        {/* Admin routes */}
+        <Route path="/admin" element={<PrivateRoute><AdminLayout /></PrivateRoute>}>
+          <Route index element={<Navigate to="/admin/achievements" replace />} />
+          <Route path="achievements" element={<AdminAchievements />} />
+          <Route path="badges" element={<AdminBadges />} />
+          <Route path="users" element={<AdminUsers />} />
+        </Route>
+        
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>

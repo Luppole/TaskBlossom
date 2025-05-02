@@ -10,8 +10,9 @@ import { Link, NavLink } from 'react-router-dom';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Settings, User, Dumbbell, Users, Calendar, CheckCircle, Tag, LayoutDashboard, Menu, Award } from 'lucide-react';
+import { Settings, User, Dumbbell, Users, Calendar, CheckCircle, Tag, LayoutDashboard, Menu, Award, ShieldAlert } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useSupabase } from '@/contexts/SupabaseContext';
 
 const AppShell = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -41,7 +42,11 @@ const AppShell = ({ children }: { children: React.ReactNode }) => {
 
 const Sidebar = () => {
   const { user, logOut } = useFirebase();
+  const { user: supaUser } = useSupabase();
   const [open, setOpen] = React.useState(false);
+  
+  // Check if user is admin - typically you'd do this using a roles system, but for simplicity:
+  const isAdmin = supaUser && supaUser.email === 'admin@example.com';
 
   return (
     <div className="flex flex-col h-[90vh] pt-6 pr-4 pl-3 bg-background rounded-xl shadow-lg min-w-[192px]">
@@ -196,6 +201,21 @@ const Sidebar = () => {
             <Award className="h-5 w-5" />
             <span className="text-sm">Achievements</span>
           </NavLink>
+          
+          {/* Admin Link - Only visible for admins */}
+          {isAdmin && (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-accent/50 ${
+                  isActive ? 'bg-accent text-accent-foreground font-medium' : 'text-muted-foreground'
+                }`
+              }
+            >
+              <ShieldAlert className="h-5 w-5" />
+              <span className="text-sm">Admin</span>
+            </NavLink>
+          )}
         </div>
       </nav>
 
