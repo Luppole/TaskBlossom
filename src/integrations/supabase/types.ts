@@ -129,6 +129,7 @@ export type Database = {
           bio: string | null
           full_name: string | null
           id: string
+          settings: Json | null
           updated_at: string | null
           username: string | null
         }
@@ -137,6 +138,7 @@ export type Database = {
           bio?: string | null
           full_name?: string | null
           id: string
+          settings?: Json | null
           updated_at?: string | null
           username?: string | null
         }
@@ -145,6 +147,7 @@ export type Database = {
           bio?: string | null
           full_name?: string | null
           id?: string
+          settings?: Json | null
           updated_at?: string | null
           username?: string | null
         }
