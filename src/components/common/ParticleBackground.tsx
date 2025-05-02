@@ -21,7 +21,7 @@ export default function ParticleBackground() {
   return (
     <Particles
       id="tsparticles"
-      className="fixed inset-0 -z-10"
+      className="fixed inset-0 -z-50 pointer-events-none"
       init={particlesInit}
       loaded={particlesLoaded}
       options={{
@@ -29,13 +29,13 @@ export default function ParticleBackground() {
         fpsLimit: 60,
         particles: {
           color: {
-            value: isDark ? "#8358ff" : "#9b87f5",
+            value: isDark ? "#6366f1" : "#8b5cf6",
           },
           links: {
-            color: isDark ? "#8358ff" : "#9b87f5",
-            distance: 150,
+            color: isDark ? "#6366f1" : "#8b5cf6",
+            distance: 180,
             enable: true,
-            opacity: isDark ? 0.15 : 0.3,
+            opacity: isDark ? 0.1 : 0.2,
             width: 1,
           },
           collisions: {
@@ -44,30 +44,48 @@ export default function ParticleBackground() {
           move: {
             enable: true,
             outModes: {
-              default: "bounce",
+              default: "out",
             },
             random: true,
-            speed: 0.6,
+            speed: 0.4,
             direction: "none",
+            straight: false,
           },
           number: {
             density: {
               enable: true,
-              area: 800,
+              area: 1200,
             },
-            value: 40,
+            value: 30,
           },
           opacity: {
-            value: isDark ? 0.3 : 0.5,
+            value: isDark ? 0.2 : 0.3,
+            animation: {
+              enable: true,
+              speed: 0.2,
+              minimumValue: 0.1,
+            },
           },
           shape: {
             type: "circle",
           },
           size: {
             value: { min: 1, max: 3 },
+            animation: {
+              enable: true,
+              speed: 1,
+              minimumValue: 0.5,
+              sync: false
+            }
           },
         },
         detectRetina: true,
+        backgroundMask: {
+          enable: false,
+        },
+        background: {
+          color: "transparent",
+        },
       }}
     />
   );
