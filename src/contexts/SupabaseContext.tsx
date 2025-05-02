@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, createUserProfile } from '@/integrations/supabase/client';
@@ -891,10 +890,31 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Get current profile
       const profile = await getUserProfile(user.id);
       
-      // Create a base settings object, using defaults if no settings exist
-      const currentSettings = profile?.settings 
-        ? (typeof profile.settings === 'object' ? profile.settings as UserSettings : DEFAULT_USER_SETTINGS)
-        : DEFAULT_USER_SETTINGS;
+      // Safely parse settings from profile
+      let currentSettings: UserSettings = DEFAULT_USER_SETTINGS;
+      
+      if (profile?.settings) {
+        // Make sure profile.settings is an object, not an array
+        if (typeof profile.settings === 'object' && !Array.isArray(profile.settings)) {
+          // Convert the unknown object to UserSettings, applying defaults for missing properties
+          currentSettings = {
+            ...DEFAULT_USER_SETTINGS,
+            // Only pick properties that exist in UserSettings
+            darkMode: 'darkMode' in profile.settings ? !!profile.settings.darkMode : DEFAULT_USER_SETTINGS.darkMode,
+            defaultView: 'defaultView' in profile.settings ? 
+              (String(profile.settings.defaultView) as 'today' | 'calendar' | 'tasks') : DEFAULT_USER_SETTINGS.defaultView,
+            pushNotifications: 'pushNotifications' in profile.settings ? !!profile.settings.pushNotifications : DEFAULT_USER_SETTINGS.pushNotifications,
+            taskReminders: 'taskReminders' in profile.settings ? !!profile.settings.taskReminders : DEFAULT_USER_SETTINGS.taskReminders,
+            overdueAlerts: 'overdueAlerts' in profile.settings ? !!profile.settings.overdueAlerts : DEFAULT_USER_SETTINGS.overdueAlerts,
+            rtlLayout: 'rtlLayout' in profile.settings ? !!profile.settings.rtlLayout : DEFAULT_USER_SETTINGS.rtlLayout,
+            publicProfile: 'publicProfile' in profile.settings ? !!profile.settings.publicProfile : DEFAULT_USER_SETTINGS.publicProfile,
+            shareProgress: 'shareProgress' in profile.settings ? !!profile.settings.shareProgress : DEFAULT_USER_SETTINGS.shareProgress,
+            shareFitness: 'shareFitness' in profile.settings ? !!profile.settings.shareFitness : DEFAULT_USER_SETTINGS.shareFitness
+          };
+        } else {
+          console.warn('Profile settings is not an object, using default settings');
+        }
+      }
       
       // Update settings with new values
       const updatedSettings = {
