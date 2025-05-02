@@ -815,7 +815,8 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         .neq('id', user.id); // Don't include the current user
       
       if (query) {
-        queryBuilder = queryBuilder.or(`username.ilike.%${query}%,full_name.ilike.%${query}%,email.ilike.%${query}%`);
+        // Only search by username and full_name as email doesn't exist in profiles table
+        queryBuilder = queryBuilder.or(`username.ilike.%${query}%,full_name.ilike.%${query}%`);
       }
       
       const { data, error } = await queryBuilder.order('username', { ascending: true }).limit(20);

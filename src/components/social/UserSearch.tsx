@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Search, User, Users, Loader2 } from 'lucide-react';
@@ -15,14 +14,13 @@ interface UserSearchResult {
   username?: string;
   full_name?: string;
   avatar_url?: string;
-  email?: string;
   isRequestSent: boolean;
   isFriend: boolean;
 }
 
 const UserSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterBy, setFilterBy] = useState<'name' | 'email'>('name');
+  const [filterBy, setFilterBy] = useState<'name'>('name');
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('search');
@@ -61,7 +59,6 @@ const UserSearch = () => {
             username: userData.username || userData.full_name || 'User',
             full_name: userData.full_name || '',
             avatar_url: userData.avatar_url || '',
-            email: userData.email || '',
             isRequestSent: false, // We'll update this later as needed
             isFriend: friendIds.includes(userData.id)
           }));
@@ -94,25 +91,21 @@ const UserSearch = () => {
       const friends = await getFriends();
       const friendIds = friends.map(friend => friend.userId);
       
-      // Search for users by username, full name, or email based on filter
+      // Search for users by username or full name
       const results = await searchUsersByName(searchQuery);
       
       const formattedResults: UserSearchResult[] = results
         .filter(userData => userData.id !== user?.id) // Filter out the current user
         .filter(userData => {
-          if (filterBy === 'name') {
-            return (userData.username?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                    userData.full_name?.toLowerCase().includes(searchQuery.toLowerCase()));
-          } else {
-            return userData.email?.toLowerCase().includes(searchQuery.toLowerCase());
-          }
+          // Only filter by name since we don't have email in the profiles table
+          return (userData.username?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                  userData.full_name?.toLowerCase().includes(searchQuery.toLowerCase()));
         })
         .map(userData => ({
           id: userData.id,
           username: userData.username || userData.full_name || 'User',
           full_name: userData.full_name || '',
           avatar_url: userData.avatar_url || '',
-          email: userData.email || '',
           isRequestSent: false,
           isFriend: friendIds.includes(userData.id)
         }));
@@ -230,10 +223,9 @@ const UserSearch = () => {
               <select
                 className="bg-muted text-foreground px-3 py-2 rounded-md text-sm border border-muted transition-all w-24"
                 value={filterBy}
-                onChange={(e) => setFilterBy(e.target.value as 'name' | 'email')}
+                onChange={(e) => setFilterBy(e.target.value as 'name')}
               >
                 <option value="name">Name</option>
-                <option value="email">Email</option>
               </select>
               
               <motion.div whileTap={{ scale: 0.95 }}>
