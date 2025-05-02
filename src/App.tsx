@@ -22,6 +22,8 @@ import { SupabaseProvider, useSupabase } from "./contexts/SupabaseContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { FirebaseProvider } from "./contexts/FirebaseContext"; // We keep this for now for backward compatibility
 import "./i18n/i18n";
+import ParticleBackground from "./components/common/ParticleBackground";
+import Achievements from "./pages/Achievements";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -64,6 +66,7 @@ const AnimatedRoutes = () => {
         <Route path="/settings" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Settings /></div></AppShell></PrivateRoute>} />
         <Route path="/fitness" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Fitness /></div></AppShell></PrivateRoute>} />
         <Route path="/social" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Social /></div></AppShell></PrivateRoute>} />
+        <Route path="/achievements" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Achievements /></div></AppShell></PrivateRoute>} />
         <Route path="/profile/:userId" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Profile /></div></AppShell></PrivateRoute>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
@@ -81,6 +84,7 @@ const App = () => {
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
+                <ParticleBackground />
                 <AnimatedRoutes />
               </TooltipProvider>
             </ThemeProvider>

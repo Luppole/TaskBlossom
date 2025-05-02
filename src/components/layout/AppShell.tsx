@@ -10,7 +10,7 @@ import { Link, NavLink } from 'react-router-dom';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Settings, User, Dumbbell, Users, Calendar, CheckCircle, Tag, LayoutDashboard, Menu } from 'lucide-react';
+import { Settings, User, Dumbbell, Users, Calendar, CheckCircle, Tag, LayoutDashboard, Menu, Award } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const AppShell = ({ children }: { children: React.ReactNode }) => {
@@ -183,6 +183,18 @@ const Sidebar = () => {
           >
             <Users className="h-5 w-5" />
             <span className="text-sm">Social</span>
+          </NavLink>
+
+          <NavLink
+            to="/achievements"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-accent/50 ${
+                isActive ? 'bg-accent text-accent-foreground font-medium' : 'text-muted-foreground'
+              }`
+            }
+          >
+            <Award className="h-5 w-5" />
+            <span className="text-sm">Achievements</span>
           </NavLink>
         </div>
       </nav>
