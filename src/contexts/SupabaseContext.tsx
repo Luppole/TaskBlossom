@@ -830,25 +830,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  const updateUserProfile = async (profileData: any) => {
-    if (!user) throw new Error('User not authenticated');
-    
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          ...profileData,
-          updated_at: new Date().toISOString()
-        });
-    
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      throw error;
-    }
-  };
-
   const getUserProfile = async (userId: string = user?.id || '') => {
     if (!userId) return null;
     
@@ -880,6 +861,25 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error) {
       console.error('Error getting user profile:', error);
       return null;
+    }
+  };
+
+  const updateUserProfile = async (profileData: any) => {
+    if (!user) throw new Error('User not authenticated');
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          ...profileData,
+          updated_at: new Date().toISOString()
+        });
+    
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      throw error;
     }
   };
 

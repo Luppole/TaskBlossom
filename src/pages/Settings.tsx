@@ -1,28 +1,52 @@
-
 import React, { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useFirebase } from '@/contexts/FirebaseContext';
+import { useSupabase } from '@/contexts/SupabaseContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Moon, Bell, Shield, Lock, Info, CheckCircle, Settings as SettingsIcon } from 'lucide-react';
 import LanguageSwitcher from '@/components/settings/LanguageSwitcher';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTheme } from '@/contexts/ThemeContext';
+import { DEFAULT_USER_SETTINGS } from '@/types/settings';
 
 const Settings = () => {
-  const { userSettings, updateSettings, user } = useFirebase();
+  const { user, getUserProfile, updateUserSettings } = useSupabase();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+  const [userSettings, setUserSettings] = React.useState(DEFAULT_USER_SETTINGS);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   useEffect(() => {
     if (!user) {
       navigate('/login');
+      return;
     }
-  }, [user, navigate]);
+    
+    const loadUserSettings = async () => {
+      try {
+        setIsLoading(true);
+        const profile = await getUserProfile(user.id);
+        if (profile) {
+          // If settings exist in profile, use them, otherwise use defaults
+          setUserSettings({
+            ...DEFAULT_USER_SETTINGS,
+            ...(profile.settings || {})
+          });
+        }
+      } catch (error) {
+        console.error('Error loading user settings:', error);
+        toast.error('Failed to load settings');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadUserSettings();
+  }, [user, navigate, getUserProfile]);
 
   // Sync theme state with user settings when userSettings loads
   useEffect(() => {
@@ -41,15 +65,19 @@ const Settings = () => {
   }, [userSettings?.rtlLayout]);
 
   const handleToggle = async (setting: keyof typeof userSettings, value: boolean) => {
-    if (!userSettings) return;
-    
     try {
+      // Update local state first for immediate UI feedback
+      setUserSettings(prev => ({
+        ...prev,
+        [setting]: value
+      }));
+      
       // Special handling for dark mode to sync with ThemeContext
       if (setting === 'darkMode') {
         setTheme(value ? 'dark' : 'light');
       }
       
-      await updateSettings({ [setting]: value });
+      await updateUserSettings({ [setting]: value });
       
       toast.success(
         `${setting.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} ${value ? 'enabled' : 'disabled'}`, 
@@ -61,14 +89,24 @@ const Settings = () => {
     } catch (error) {
       console.error('Error updating settings:', error);
       toast.error('Failed to update setting');
+      
+      // Revert UI state on error
+      setUserSettings(prev => ({
+        ...prev,
+        [setting]: !value
+      }));
     }
   };
 
   const handleSelectChange = async (setting: string, value: string) => {
-    if (!userSettings) return;
-    
     try {
-      await updateSettings({ [setting]: value });
+      // Update local state first
+      setUserSettings(prev => ({
+        ...prev,
+        [setting]: value
+      }));
+      
+      await updateUserSettings({ [setting]: value });
       toast.success(`Default view updated!`);
     } catch (error) {
       console.error('Error updating settings:', error);
@@ -76,7 +114,7 @@ const Settings = () => {
     }
   };
 
-  if (!user || !userSettings) {
+  if (isLoading) {
     return (
       <div className="w-full h-64 flex items-center justify-center">
         <motion.div
@@ -357,7 +395,7 @@ const Settings = () => {
                 </Label>
                 <Switch
                   id="public-profile"
-                  checked={userSettings?.publicProfile}
+                  checked={userSettings?.publicProfile || false}
                   onCheckedChange={(checked) => handleToggle('publicProfile', checked)}
                   className="transition-all data-[state=checked]:bg-primary"
                 />
