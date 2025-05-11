@@ -3,7 +3,7 @@ import React from 'react';
 import { Badge } from '@/types/achievement';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Award, Badge as BadgeIcon, Star, Trophy, Sparkles } from 'lucide-react';
+import { Award, Star, Trophy, Medal } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface BadgeDisplayProps {
@@ -30,8 +30,8 @@ export const BadgeDisplay: React.FC<BadgeDisplayProps> = ({
       case 'star': return <Star className="h-full w-full" />;
       case 'award': return <Award className="h-full w-full" />;
       case 'trophy': return <Trophy className="h-full w-full" />;
-      case 'sparkles': return <Sparkles className="h-full w-full" />;
-      default: return <BadgeIcon className="h-full w-full" />;
+      case 'medal': return <Medal className="h-full w-full" />;
+      default: return <Award className="h-full w-full" />;
     }
   };
   
@@ -66,7 +66,7 @@ export const BadgeDisplay: React.FC<BadgeDisplayProps> = ({
         {getBadgeIcon()}
         {!isUnlocked && (
           <div className="absolute inset-0 rounded-full flex items-center justify-center bg-background/50 backdrop-blur-sm">
-            <BadgeIcon className="h-1/2 w-1/2 text-gray-400 opacity-60" />
+            <Award className="h-1/2 w-1/2 text-gray-400 opacity-60" />
           </div>
         )}
       </div>

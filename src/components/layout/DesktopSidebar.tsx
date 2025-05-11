@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +11,8 @@ import {
   Settings,
   User,
   Activity,
-  StickyNote
+  StickyNote,
+  Award
 } from 'lucide-react';
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
@@ -45,6 +47,11 @@ const DesktopSidebar: React.FC = () => {
       label: t('common.stickyNotes'),
       icon: StickyNote,
       href: '/sticky-notes',
+    },
+    {
+      label: t('common.achievements'),
+      icon: Award,
+      href: '/achievements',
     },
     {
       label: t('common.profile'),
