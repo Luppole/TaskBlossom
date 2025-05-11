@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,6 +27,7 @@ import AdminLayout from "./components/layout/AdminLayout";
 import AdminAchievements from "./pages/admin/AdminAchievements";
 import AdminBadges from "./pages/admin/AdminBadges";
 import AdminUsers from "./pages/admin/AdminUsers";
+import StickyNotes from '@/pages/StickyNotes';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -72,6 +72,7 @@ const AnimatedRoutes = () => {
         <Route path="/social" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Social /></div></AppShell></PrivateRoute>} />
         <Route path="/achievements" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Achievements /></div></AppShell></PrivateRoute>} />
         <Route path="/profile/:userId" element={<PrivateRoute><AppShell><div className="px-4 sm:px-6 md:px-8"><Profile /></div></AppShell></PrivateRoute>} />
+        <Route path="/sticky-notes" element={<StickyNotes />} />
         
         {/* Admin routes */}
         <Route path="/admin" element={<PrivateRoute><AdminLayout /></PrivateRoute>}>

@@ -1,4 +1,3 @@
-
 export default {
   common: {
     appName: 'TaskBlossom',
@@ -17,6 +16,7 @@ export default {
     accept: 'Accept',
     reject: 'Reject',
     returnToDashboard: 'Return to Dashboard',
+    stickyNotes: 'Sticky Notes',
   },
   auth: {
     signIn: 'Sign In',

@@ -1,102 +1,97 @@
-
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useSupabase } from '@/contexts/SupabaseContext';
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-} from '@/components/ui/sidebar';
-import { Calendar, Tag, CheckCircle, Settings, LayoutDashboard, Dumbbell, Users } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useFirebase } from '@/contexts/FirebaseContext';
+  Calendar,
+  Home,
+  List,
+  Settings,
+  User,
+  Activity,
+  StickyNote
+} from 'lucide-react';
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 
 const DesktopSidebar: React.FC = () => {
-  const location = useLocation();
-  const { user } = useFirebase();
+  const { t } = useTranslation();
+  const { theme, toggleTheme } = useTheme();
+  const { user } = useSupabase();
   
-  const menuItems = [
+  const sidebarItems = [
     {
-      title: 'Today',
-      path: '/',
-      icon: LayoutDashboard,
+      label: t('common.home'),
+      icon: Home,
+      href: '/',
     },
     {
-      title: 'Calendar',
-      path: '/calendar',
+      label: t('common.today'),
       icon: Calendar,
+      href: '/today',
     },
     {
-      title: 'Tasks',
-      path: '/tasks',
-      icon: CheckCircle,
+      label: t('common.tasks'),
+      icon: List,
+      href: '/tasks',
     },
     {
-      title: 'Categories',
-      path: '/categories',
-      icon: Tag,
+      label: t('common.activity'),
+      icon: Activity,
+      href: '/activity',
     },
     {
-      title: 'Fitness',
-      path: '/fitness',
-      icon: Dumbbell,
-      requiresAuth: true,
+      label: t('common.stickyNotes'),
+      icon: StickyNote,
+      href: '/sticky-notes',
     },
     {
-      title: 'Social',
-      path: '/social',
-      icon: Users,
-      requiresAuth: true,
+      label: t('common.profile'),
+      icon: User,
+      href: `/profile/${user?.id}`,
     },
     {
-      title: 'Settings',
-      path: '/settings',
+      label: t('common.settings'),
       icon: Settings,
+      href: '/settings',
     },
   ];
-
-  // Filter out items that require authentication if user is not logged in
-  const filteredMenuItems = menuItems.filter(item => !item.requiresAuth || user);
-
+  
   return (
-    <Sidebar>
-      <SidebarHeader className="p-4">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="text-2xl">🌸</span>
-          <span className="font-heading font-semibold text-lg">TaskBlossom</span>
-        </Link>
-      </SidebarHeader>
-      
-      <SidebarContent>
-        <SidebarMenu>
-          {filteredMenuItems.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild className={cn(
-                "flex items-center gap-3",
-                location.pathname === item.path && "bg-accent text-primary font-medium"
-              )}>
-                <Link to={item.path}>
-                  <item.icon className="h-5 w-5" />
-                  <span>{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+    <aside className="hidden md:flex flex-col w-64 border-r bg-secondary h-full">
+      <div className="px-4 py-6">
+        <h2 className="font-bold text-2xl">{t('common.appName')}</h2>
+      </div>
+      <nav className="flex-1 px-4 py-6">
+        <ul>
+          {sidebarItems.map((item) => (
+            <li key={item.label} className="mb-1">
+              <NavLink
+                to={item.href}
+                className={({ isActive }) =>
+                  `flex items-center px-3 py-2 rounded-md text-sm font-medium
+                  ${isActive
+                    ? 'bg-muted text-foreground'
+                    : 'hover:bg-muted hover:text-foreground'}`
+                }
+              >
+                <item.icon className="mr-2 h-4 w-4" />
+                {item.label}
+              </NavLink>
+            </li>
           ))}
-        </SidebarMenu>
-      </SidebarContent>
-      
-      <SidebarFooter className="p-4">
-        <div className="bg-accent rounded-lg p-3 text-sm">
-          <p className="font-medium mb-1">Pro Tip</p>
-          <p className="text-muted-foreground">
-            Use <span className="font-medium">Tab+N</span> to quickly add a new task.
-          </p>
+        </ul>
+      </nav>
+      <div className="flex-none px-4 py-6">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="dark-mode" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            {t('common.darkMode')}
+          </Label>
+          <Switch id="dark-mode" checked={theme === 'dark'} onCheckedChange={toggleTheme} />
         </div>
-      </SidebarFooter>
-    </Sidebar>
+      </div>
+    </aside>
   );
 };
 

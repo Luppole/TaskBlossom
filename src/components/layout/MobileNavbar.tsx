@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Calendar, CheckSquare, Settings, Users, Dumbbell } from 'lucide-react';
+import { LayoutDashboard, Calendar, CheckSquare, Settings, Users, Dumbbell, Home, List, User, Activity, StickyNote } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const MobileNavbar = () => {
@@ -76,6 +75,17 @@ const MobileNavbar = () => {
         >
           <Settings className="h-5 w-5" />
           <span className="text-xs mt-1">{t('navigation.settings')}</span>
+        </NavLink>
+        
+        <NavLink 
+          to="/sticky-notes" 
+          className={({ isActive }) => `
+            flex flex-col items-center justify-center w-full h-full
+            ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary'}
+          `}
+        >
+          <StickyNote className="h-5 w-5" />
+          <span className="text-xs mt-1">{t('common.stickyNotes')}</span>
         </NavLink>
       </div>
     </nav>
